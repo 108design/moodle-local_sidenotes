@@ -73,3 +73,8 @@ Original authorship and copyright notices are retained.
 
 GNU General Public License version 3 or later. See [LICENSE.md](LICENSE.md) for the full terms.
 Bundled dependencies retain the licences listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
