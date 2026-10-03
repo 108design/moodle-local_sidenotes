@@ -292,13 +292,13 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
             center.setAttribute('aria-busy', 'true');
             fetch(url, {credentials: 'same-origin', signal: request.signal, headers: {'X-Requested-With': 'XMLHttpRequest'}})
                 .then(function(response) {
-                    if (!response.ok) {throw new Error('SideNotes search failed (' + response.status + ').');}
+                    if (!response.ok) {throw new Error('Side Notes search failed (' + response.status + ').');}
                     return response.text();
                 }).then(function(html) {
                     if (activeRequest !== request || generation !== mutation) {return;}
                     var next = new DOMParser().parseFromString(html, 'text/html');
                     var nextResults = next.querySelector('[data-region="sidenotes-results"]');
-                    if (!nextResults) {throw new Error('SideNotes search returned an invalid response.');}
+                    if (!nextResults) {throw new Error('Side Notes search returned an invalid response.');}
                     var pinned = Array.from(results.querySelectorAll('[data-noteid]')).filter(function(card) {
                         return stateFor(card).editing || stateFor(card).pending;
                     });

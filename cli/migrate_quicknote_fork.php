@@ -9,7 +9,7 @@ require_once($CFG->libdir . '/clilib.php');
 [$options, $unrecognised] = cli_get_params(['apply' => false, 'help' => false], ['h' => 'help']);
 if ($unrecognised) {cli_error('Unknown options.');}
 if ($options['help']) {
-    echo "Explicit enhanced QuickNote 0.12.0 cutover into an empty SideNotes archive.\n"
+    echo "Explicit enhanced QuickNote 0.12.0 cutover into an empty Side Notes archive.\n"
         . "Back up code, full database and Moodle file storage first. Enable maintenance mode, then use --apply.\n"
         . "All owners and rich data/settings/permissions are copied and verified; QuickNote UI is then disabled.\n"
         . "Source data/code are retained. Original QuickNote uses the separate owner import in the overview.\n";

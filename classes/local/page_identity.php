@@ -45,7 +45,7 @@ final class page_identity {
         $urlport = $urlparts['port'] ?? self::default_port($urlparts['scheme'] ?? '');
         $baseport = $baseparts['port'] ?? self::default_port($baseparts['scheme'] ?? '');
         if (strtolower($urlparts['host']) !== strtolower($baseparts['host']) || $urlport !== $baseport) {
-            throw new invalid_parameter_exception('SideNotes only accepts URLs from this Moodle installation.');
+            throw new invalid_parameter_exception('Side Notes only accepts URLs from this Moodle installation.');
         }
 
         $path = $urlparts['path'] ?? '/';
@@ -123,7 +123,7 @@ final class page_identity {
     }
 
     /**
-     * Build a safe source-page link that opens the SideNotes drawer after navigation.
+     * Build a safe source-page link that opens the Side Notes drawer after navigation.
      *
      * Existing anchors and text fragments are retained, while the drawer argument is
      * excluded from the canonical page identity by canonicalise().

@@ -172,7 +172,7 @@ final class quicknote_importer {
                 'noteid' => $sourceid, 'userid' => $userid]);
         if (!$tags) {return 0;}
         if (!tag_manager::is_enabled()) {
-            throw new \coding_exception('Enable the private SideNotes tag area before importing tagged notes.');
+            throw new \coding_exception('Enable the private Side Notes tag area before importing tagged notes.');
         }
         tag_manager::set_for_note($noteid, $userid, array_map(static fn($tag) => $tag->rawname ?: $tag->name, $tags));
         $targets = tag_manager::get_for_note($noteid, $userid);
@@ -207,7 +207,7 @@ final class quicknote_importer {
         $preferences = $DB->get_records_select('user_preferences', $DB->sql_like('name', ':prefix'),
             ['prefix' => $DB->sql_like_escape($prefix) . '%']);
         if (!$preferences) {return;}
-        if (!tag_manager::is_enabled()) {throw new \coding_exception('Enable SideNotes tags before colour migration.');}
+        if (!tag_manager::is_enabled()) {throw new \coding_exception('Enable Side Notes tags before colour migration.');}
         $collection = \core_tag_area::get_collection('local_sidenotes', 'local_sidenotes_notes');
         foreach ($preferences as $preference) {
             $id = substr($preference->name, strlen($prefix));

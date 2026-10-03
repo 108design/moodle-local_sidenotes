@@ -1,8 +1,8 @@
-# SideNotes for Moodle
+# Side Notes for Moodle
 
 Keep private notes alongside Moodle course content. Save a quotation while reading,
 add your own thoughts, organise notes with coloured tags, and return to the original
-page when you need it. SideNotes supports learners' course notes and an optional
+page when you need it. Side Notes supports learners' course notes and an optional
 administrator mode for notes elsewhere on the site.
 
 ## Features
@@ -25,9 +25,9 @@ before enabling it for learners.
 
 1. Install the plugin as `local/sidenotes` below Moodle's plugin directory.
 2. Complete installation through **Site administration → Notifications**.
-3. Review the SideNotes site settings and the availability settings in your courses.
+3. Review the Side Notes site settings and the availability settings in your courses.
 
-## Using SideNotes
+## Using Side Notes
 
 Open the notes drawer while viewing a course page. Select a passage to save it as
 a quotation, or create a note and enter your own text. Changes are saved as you edit.
@@ -57,14 +57,14 @@ automatically during installation or upgrade, and the original notes are preserv
 The import keeps note text, quotations, source links, courses and timestamps.
 Supported Markdown notes, screenshots and private tags are also retained. Notes
 already imported are skipped, and later changes in QuickNote do not overwrite
-your SideNotes copies. Site settings and role permissions are configured separately.
+your Side Notes copies. Site settings and role permissions are configured separately.
 
-SideNotes can be installed alongside QuickNote. QuickNote is needed only when
+Side Notes can be installed alongside QuickNote. QuickNote is needed only when
 importing its existing notes.
 
 ## Maintainer and origin
 
-SideNotes is an independently maintained derivative of
+Side Notes is an independently maintained derivative of
 [QuickNote by Matheus Mathias](https://github.com/Matheu46/moodle-local_quicknote).
 Maintained by Andreas Giesen <andreas@108design.com> (108design).
 Original authorship and copyright notices are retained.

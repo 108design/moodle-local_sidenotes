@@ -15,7 +15,7 @@ for (const minify of [false, true]) {
 const lock = JSON.parse(await readFile(new URL('package-lock.json', import.meta.url), 'utf8'));
 await mkdir(new URL('thirdparty/', plugin), {recursive: true});
 const notices = ['# Bundled editor dependencies', '',
-    'SideNotes remains GNU GPL v3 or later. The locally bundled editor uses the following MIT-licensed components.',
+    'Side Notes remains GNU GPL v3 or later. The locally bundled editor uses the following MIT-licensed components.',
     'No CDN, hosted editor or telemetry service is used. Build sources and pinned npm lockfile are in editor/.', ''];
 for (const [location, info] of Object.entries(lock.packages)) {
     if (!location || info.dev || info.optional) {continue;}

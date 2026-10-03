@@ -7,7 +7,7 @@
 // (at your option) any later version.
 
 /**
- * German language strings for the personal SideNotes fork.
+ * German language strings for the personal Side Notes fork.
  *
  * @package     local_sidenotes
  * @copyright   2026 Andreas Giesen
@@ -19,7 +19,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['allcourses'] = 'Alle Kurse';
 $string['allpages'] = 'Alle Seiten';
 $string['alltags'] = 'Alle Tags';
-$string['sidenotes:use'] = 'Private SideNotes-Notizen verwenden';
+$string['sidenotes:use'] = 'Private Side Notes-Notizen verwenden';
 $string['exportmd'] = 'Als Markdown exportieren';
 $string['exportpdf'] = 'Als PDF exportieren';
 $string['filterbycourse'] = 'Nach Kurs filtern';
@@ -41,16 +41,16 @@ $string['note:viewintext'] = 'Auf der Seite anzeigen';
 $string['notescenter'] = 'Notizübersicht';
 $string['perpage'] = 'Notizen pro Seite';
 $string['perpage_desc'] = 'Maximale Zahl der Notizen pro Seite in der Notizübersicht.';
-$string['pluginname'] = 'SideNotes';
+$string['pluginname'] = 'Side Notes';
 $string['import:title'] = 'Aus QuickNote importieren';
-$string['import:offer'] = '{$a} Deiner QuickNote-Notizen können nach SideNotes übernommen werden.';
-$string['import:explanation'] = 'Kopiere Deine eigenen QuickNote-Notizen nach SideNotes. Text, Zitate, Seiten-/Kursbezug und Zeitstempel bleiben erhalten; die Originalnotizen bleiben unverändert. Ursprünglicher Klartext bleibt Klartext. Markdown, Tags und Screenshots des erweiterten Forks werden ebenfalls übernommen. Bereits importierte Notizen werden übersprungen, auch wenn Du die Kopie gelöscht hast. Spätere Änderungen am Original überschreiben SideNotes nicht. Rechte und Plugin-Einstellungen werden nicht importiert. Notizen aus nicht verfügbaren Kursen bleiben schreibgeschützt.';
+$string['import:offer'] = '{$a} Deiner QuickNote-Notizen können nach Side Notes übernommen werden.';
+$string['import:explanation'] = 'Kopiere Deine eigenen QuickNote-Notizen nach Side Notes. Text, Zitate, Seiten-/Kursbezug und Zeitstempel bleiben erhalten; die Originalnotizen bleiben unverändert. Ursprünglicher Klartext bleibt Klartext. Markdown, Tags und Screenshots des erweiterten Forks werden ebenfalls übernommen. Bereits importierte Notizen werden übersprungen, auch wenn Du die Kopie gelöscht hast. Spätere Änderungen am Original überschreiben Side Notes nicht. Rechte und Plugin-Einstellungen werden nicht importiert. Notizen aus nicht verfügbaren Kursen bleiben schreibgeschützt.';
 $string['import:pending'] = 'Neue importierbare Notizen: {$a}';
 $string['import:confirm'] = 'Meine Notizen jetzt importieren';
-$string['import:complete'] = '{$a} Notizen nach SideNotes importiert.';
+$string['import:complete'] = '{$a} Notizen nach Side Notes importiert.';
 $string['privacy:metadata:imports'] = 'Private QuickNote-Importzuordnungen: Besitzer, Kurs, ursprüngliche Notiz-ID und Erstellungszeit, Zielnotiz-ID und Importzeit. Nach dem Löschen einzelner Notizen zum Schutz vor erneutem Import aufbewahrt.';
 $string['position'] = 'Position';
-$string['position_desc'] = 'Position des SideNotes-Schalters und der Seitenleiste.';
+$string['position_desc'] = 'Position des Side Notes-Schalters und der Seitenleiste.';
 $string['position_left'] = 'Links';
 $string['position_right'] = 'Rechts';
 $string['privacy:metadata:local_sidenotes_notes'] = 'Private, von Nutzern erstellte Schnellnotizen.';
@@ -66,8 +66,8 @@ $string['privacy:metadata:local_sidenotes_notes:timecreated'] = 'Erstellungszeit
 $string['privacy:metadata:local_sidenotes_notes:timemodified'] = 'Zeit der letzten Änderung.';
 $string['privacy:metadata:local_sidenotes_notes:url'] = 'Ursprungsseite der Notiz.';
 $string['privacy:metadata:local_sidenotes_notes:userid'] = 'Nutzer, der die Notiz erstellt hat.';
-$string['privacy:metadata:files'] = 'Screenshots, die in private SideNotes-Notizen eingefügt wurden.';
-$string['privacy:metadata:tags'] = 'Private Kategorisierungs-Tags von SideNotes-Notizen.';
+$string['privacy:metadata:files'] = 'Screenshots, die in private Side Notes-Notizen eingefügt wurden.';
+$string['privacy:metadata:tags'] = 'Private Kategorisierungs-Tags von Side Notes-Notizen.';
 $string['search'] = 'Suchen';
 $string['search:clear'] = 'Suche leeren';
 $string['search:noresultstext'] = 'Keine passenden Notizen gefunden.';
@@ -80,26 +80,26 @@ $string['screenshot:uploading'] = 'Screenshot wird hochgeladen …';
 $string['sidebar:close'] = 'Notizen schließen';
 $string['sidebar:title'] = 'Meine Notizen';
 $string['sidebar:toggle'] = 'Notizen öffnen';
-$string['tagarea_local_sidenotes_notes'] = 'SideNotes-Notizen';
-$string['tagcollection_sidenotes_private'] = 'Private SideNotes-Tags';
+$string['tagarea_local_sidenotes_notes'] = 'Side Notes-Notizen';
+$string['tagcollection_sidenotes_private'] = 'Private Side Notes-Tags';
 $string['tags'] = 'Tags';
 $string['tags:placeholder'] = 'Tags durch Kommas trennen';
 $string['unknownpage'] = 'Moodle-Seite';
 $string['viewnotescenter'] = 'Notizübersicht öffnen';
-$string['sidenotes:usecourse'] = 'Eigene SideNotes-Notizen in zugänglichen Kursen verwenden';
-$string['sidenotes:managecourse'] = 'SideNotes-Verfügbarkeit im Kurs einstellen';
+$string['sidenotes:usecourse'] = 'Eigene Side Notes-Notizen in zugänglichen Kursen verwenden';
+$string['sidenotes:managecourse'] = 'Side Notes-Verfügbarkeit im Kurs einstellen';
 $string['settings:courseenabled'] = 'Kursnotizen aktivieren';
-$string['settings:courseenabled_desc'] = 'Private Notizen für Studierende und Lehrende in zugänglichen Kursen. Kursverantwortliche können SideNotes im Kurs oder einzelnen Aktivitäten deaktivieren. Notizen bleiben erhalten.';
+$string['settings:courseenabled_desc'] = 'Private Notizen für Studierende und Lehrende in zugänglichen Kursen. Kursverantwortliche können Side Notes im Kurs oder einzelnen Aktivitäten deaktivieren. Notizen bleiben erhalten.';
 $string['settings:coursedefault'] = 'In Kursen standardmäßig aktiv';
-$string['settings:coursedefault_desc'] = 'Standard für Kurse ohne eigene SideNotes-Einstellung.';
+$string['settings:coursedefault_desc'] = 'Standard für Kurse ohne eigene Side Notes-Einstellung.';
 $string['settings:sitewideenabled'] = 'Seitenweite Nutzung zusätzlich aktivieren';
-$string['settings:sitewideenabled_desc'] = 'Notizen auch auf Start-, Verwaltungs- und anderen Moodle-Seiten. Nur für Administratoren und explizit mit dem Systemrecht „SideNotes verwenden“ ausgestattete Nutzer. Kein Zugriff auf fremde Notizen.';
-$string['course:settings'] = 'SideNotes im Kurs';
+$string['settings:sitewideenabled_desc'] = 'Notizen auch auf Start-, Verwaltungs- und anderen Moodle-Seiten. Nur für Administratoren und explizit mit dem Systemrecht „Side Notes verwenden“ ausgestattete Nutzer. Kein Zugriff auf fremde Notizen.';
+$string['course:settings'] = 'Side Notes im Kurs';
 $string['course:enabled'] = 'Kursnotizen erlauben';
 $string['course:inherit'] = 'Website-Standard verwenden';
 $string['course:excluded'] = 'In diesen Aktivitäten deaktivieren';
 $string['course:help'] = 'Betrifft nur den Kursbetrieb. Berechtigte Nutzer der zusätzlichen seitenweiten Funktion behalten Zugriff. Vorhandene private Notizen werden nicht gelöscht.';
-$string['access:denied'] = 'SideNotes ist für Dich in diesem Bereich nicht verfügbar.';
+$string['access:denied'] = 'Side Notes ist für Dich in diesem Bereich nicht verfügbar.';
 $string['error:busy'] = 'Die Notiz wird gerade gespeichert. Bitte versuche es erneut.';
 $string['error:conflict'] = 'Der Text wurde inzwischen anderweitig geändert. Deine Eingabe bleibt erhalten. Bitte kopiere sie vor dem Neuladen und gleiche die Änderungen ab.';
 $string['note:unbound'] = 'Ohne Seitenbindung';
@@ -129,7 +129,7 @@ $string['tags:deleteconfirm'] = 'Diesen Tag aus allen Deinen Notizen entfernen? 
 $string['tags:empty'] = 'Noch keine Tags. Du kannst sie direkt an einer Notiz hinzufügen.';
 $string['tags:emptyname'] = 'Bitte einen Tagnamen eingeben.';
 $string['tags:readonly'] = 'Dieser Tag wird auch in einem derzeit nicht bearbeitbaren Bereich verwendet. Du kannst seine Farbe ändern, aber erst nach Freigabe des Bereichs umbenennen oder entfernen.';
-$string['privacy:metadata:tagcolours'] = 'Eigene Grundfarben für private SideNotes-Tags, gespeichert als Moodle-Nutzereinstellungen.';
+$string['privacy:metadata:tagcolours'] = 'Eigene Grundfarben für private Side Notes-Tags, gespeichert als Moodle-Nutzereinstellungen.';
 $string['editor:heading'] = 'Überschrift';
 $string['editor:paragraph'] = 'Normaler Text';
 $string['editor:bold'] = 'Fett';

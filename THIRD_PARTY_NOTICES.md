@@ -1,6 +1,6 @@
 # Bundled editor dependencies
 
-SideNotes remains GNU GPL v3 or later. The locally bundled editor uses the following MIT-licensed components.
+Side Notes remains GNU GPL v3 or later. The locally bundled editor uses the following MIT-licensed components.
 No CDN, hosted editor or telemetry service is used. Build sources and pinned npm lockfile are in editor/.
 
 - @tiptap/core 3.31.4 — MIT; notice in thirdparty/tiptap-core.txt
