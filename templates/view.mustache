@@ -1,0 +1,158 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+    @template local_sidenotes/view
+    @copyright 2026 Matheus Mathias
+    @copyright 2026 Andreas Giesen (downstream changes)
+    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    View template for local_sidenotes.
+
+    Example context (json):
+    {
+        "filterbycourse": "Filter by course",
+        "allcourses": "All courses",
+        "nonotesfound": "No notes found.",
+        "searchnotes": "Search notes...",
+        "search": "Search",
+        "exportpdf": "Export to PDF",
+        "hasnotestosearch": true,
+        "hasnotes": true,
+        "coursefilter": 0,
+        "searchterm": "",
+        "config": {
+            "wwwroot": "http://localhost/moodle"
+        },
+        "courses": [
+            {
+                "id": 1,
+                "fullname": "Digital Systems",
+                "selected": false
+            }
+        ],
+        "notes": [
+            {
+                "coursefullname": "Digital Systems",
+                "content": "Remember to review logic gates for the exam.",
+                "timeupdated": "May 28, 2026, 14:03",
+                "quote": "The NAND gate is universal.",
+                "quoteurl": "http://localhost/moodle/mod/page/view.php?id=2"
+            }
+        ]
+    }
+}}
+
+<div class="local-sidenotes-center">
+    {{#quicknoteimports}}
+    <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between">
+        <span>{{#str}} import:offer, local_sidenotes, {{quicknoteimports}} {{/str}}</span>
+        <a href="{{config.wwwroot}}/local/sidenotes/import.php" class="btn btn-outline-primary ml-2">{{#str}} import:title, local_sidenotes {{/str}}</a>
+    </div>
+    {{/quicknoteimports}}
+    <div class="mb-3">
+        <button type="button" class="btn btn-primary" data-action="add-note"><i class="fa fa-plus mr-1" aria-hidden="true"></i>{{#str}} center:add, local_sidenotes {{/str}}</button>
+        {{#tagsenabled}}<a href="{{config.wwwroot}}/local/sidenotes/tags.php" class="btn btn-secondary ml-2"><i class="fa fa-tags mr-1" aria-hidden="true"></i>{{#str}} tags:manage, local_sidenotes {{/str}}</a>{{/tagsenabled}}
+        <small class="text-muted ml-2">{{#str}} center:addhint, local_sidenotes {{/str}}</small>
+    </div>
+    <datalist id="sidenotes-private-tags">{{#usertags}}<option value="{{name}}"></option>{{/usertags}}</datalist>
+    <template data-region="new-note-template">{{#draftnote}}{{> local_sidenotes/center_card }}{{/draftnote}}</template>
+    <div class="local-sidenotes-center__controls mb-4">
+        <form method="GET" action="{{config.wwwroot}}/local/sidenotes/view.php" class="local-sidenotes-center__filters">
+            <div class="local-sidenotes-center__filter-row">
+                <div class="local-sidenotes-center__filter-group">
+                    <label for="coursefilter" class="font-weight-bold mb-0">{{filterbycourse}}</label>
+                    <select name="coursefilter" id="coursefilter" class="custom-select form-select">
+                        <option value="0">{{allcourses}}</option>
+                        <option value="-1" {{#unboundselected}}selected{{/unboundselected}}>{{#str}} note:unbound, local_sidenotes {{/str}}</option>
+                        {{#courses}}
+                            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{fullname}}</option>
+                        {{/courses}}
+                    </select>
+                </div>
+                {{#tagsenabled}}
+                <div class="local-sidenotes-center__filter-group">
+                    <label for="tagfilter" class="font-weight-bold mb-0">{{filterbytag}}</label>
+                    <select name="tagfilter" id="tagfilter" class="custom-select form-select">
+                        <option value="0">{{alltags}}</option>
+                        {{#usertags}}
+                            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                        {{/usertags}}
+                    </select>
+                </div>
+                {{/tagsenabled}}
+                <div class="local-sidenotes-center__search-group">
+                    <div class="input-group">
+                        <label class="sr-only" for="searchterm">{{searchnotes}}</label>
+                        <div class="local-sidenotes-center__search-wrapper">
+                            <input type="text" name="searchterm" id="searchterm" class="form-control local-sidenotes-center__search-input" placeholder="{{searchnotes}}" value="{{searchterm}}">
+                            <button type="button" class="btn btn-sm btn-link local-sidenotes-center__search-clear" id="clearsearch" title="{{#str}} search:clear, local_sidenotes {{/str}}" aria-label="{{#str}} search:clear, local_sidenotes {{/str}}" {{^searchterm}}hidden{{/searchterm}}>
+                                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="input-group-append">
+                            <button class="btn btn-primary local-sidenotes-center__search-submit" type="submit" title="{{search}}" aria-label="{{search}}">
+                                <i class="fa fa-search" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="local-sidenotes-center__exports" data-region="sidenotes-exports" {{^hasnotes}}hidden{{/hasnotes}}>
+            {{#hasnotes}}
+            <a href="{{mdurl}}" class="local-sidenotes-center__export" title="{{exportmd}}" aria-label="{{exportmd}}">
+                <i class="fa fa-file-text-o" aria-hidden="true"></i>
+            </a>
+            <a href="{{pdfurl}}" class="local-sidenotes-center__export" title="{{exportpdf}}" aria-label="{{exportpdf}}">
+                <i class="fa fa-file-pdf-o" aria-hidden="true"></i>
+            </a>
+            {{/hasnotes}}
+        </div>
+    </div>
+
+    <div class="row" data-region="sidenotes-results">
+        {{#notes}}
+        {{> local_sidenotes/center_card }}
+        {{/notes}}
+        {{^notes}}
+        <div class="col-12">
+            <div class="alert alert-info">
+                {{#hasnotestosearch}}
+                    {{noresultstext}}
+                {{/hasnotestosearch}}
+                {{^hasnotestosearch}}
+                    {{nonotesfound}}
+                {{/hasnotestosearch}}
+            </div>
+        </div>
+        {{/notes}}
+    </div>
+
+    <div data-region="sidenotes-pagination">
+        {{#pagingbar}}
+        <div class="mt-4 mb-4 d-flex justify-content-center">
+            {{{pagingbar}}}
+        </div>
+        {{/pagingbar}}
+    </div>
+</div>
+
+{{#js}}
+require(['local_sidenotes/center'], function(view) {
+    view.init();
+});
+{{/js}}

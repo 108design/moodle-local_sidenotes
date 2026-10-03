@@ -1,0 +1,74 @@
+<?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+namespace local_sidenotes\external;
+
+use context_system;
+use local_sidenotes\local\page_identity;
+use local_sidenotes\local\tag_manager;
+use local_sidenotes\local\access_policy;
+
+/**
+ * Retrieve the current user's notes for one page plus their global notes.
+ *
+ * @package     local_sidenotes
+ * @copyright   2026 Matheus Mathias
+ * @copyright   2026 Andreas Giesen (downstream changes)
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class get_notes extends \core_external\external_api {
+    public static function execute_parameters(): \core_external\external_function_parameters {
+        return new \core_external\external_function_parameters([
+            'courseid' => new \core_external\external_value(PARAM_INT, 'Course id or 0.', VALUE_DEFAULT, 0),
+            'pageurl' => new \core_external\external_value(PARAM_RAW, 'Current Moodle page URL.', VALUE_DEFAULT, ''),
+        ]);
+    }
+
+    public static function execute(int $courseid = 0, string $pageurl = ''): array {
+        global $DB, $USER;
+        $params = self::validate_parameters(self::execute_parameters(), ['courseid' => $courseid, 'pageurl' => $pageurl]);
+
+        require_login();
+        $context = context_system::instance();
+        self::validate_context($context);
+        $allowedurl = $params['pageurl'] ?: ($courseid > 0
+            ? new \moodle_url('/course/view.php', ['id' => $courseid]) : new \moodle_url('/'))->out(false);
+        access_policy::require_page((int) $params['courseid'], $allowedurl);
+
+        $queryparams = ['userid' => $USER->id];
+        if ($params['pageurl'] !== '') {
+            $queryparams['pagehash'] = page_identity::hash($params['pageurl']);
+            $select = 'userid = :userid AND (pagehash = :pagehash OR isglobal = 1)';
+        } else if ($params['courseid'] > 0) {
+            $queryparams['courseid'] = $params['courseid'];
+            $select = 'userid = :userid AND (courseid = :courseid OR isglobal = 1)';
+        } else {
+            $queryparams['pagehash'] = page_identity::hash($allowedurl);
+            $select = 'userid = :userid AND (pagehash = :pagehash OR isglobal = 1)';
+        }
+
+        $records = $DB->get_records_select(
+            'local_sidenotes_notes', $select, $queryparams, 'isglobal DESC, timemodified DESC, id DESC'
+        );
+        $records = array_values($records);
+        $tags = tag_manager::get_for_notes(array_column($records, 'id'), (int) $USER->id);
+        $result = [];
+        foreach ($records as $record) {
+            if (!access_policy::sitewide() && !access_policy::unbound($record)
+                    && !access_policy::page_allowed((int) $record->courseid, (string) $record->url)) {
+                continue;
+            }
+            $result[] = save_note::export_note($record, $tags[(int) $record->id] ?? []);
+        }
+        return $result;
+    }
+
+    public static function execute_returns(): \core_external\external_multiple_structure {
+        return new \core_external\external_multiple_structure(save_note::note_structure());
+    }
+}

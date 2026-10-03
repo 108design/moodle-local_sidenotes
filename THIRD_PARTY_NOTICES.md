@@ -1,0 +1,51 @@
+# Bundled editor dependencies
+
+SideNotes remains GNU GPL v3 or later. The locally bundled editor uses the following MIT-licensed components.
+No CDN, hosted editor or telemetry service is used. Build sources and pinned npm lockfile are in editor/.
+
+- @tiptap/core 3.31.4 — MIT; notice in thirdparty/tiptap-core.txt
+- @tiptap/extension-blockquote 3.31.4 — MIT; notice in thirdparty/tiptap-extension-blockquote.txt
+- @tiptap/extension-bold 3.31.4 — MIT; notice in thirdparty/tiptap-extension-bold.txt
+- @tiptap/extension-bullet-list 3.31.4 — MIT; notice in thirdparty/tiptap-extension-bullet-list.txt
+- @tiptap/extension-code 3.31.4 — MIT; notice in thirdparty/tiptap-extension-code.txt
+- @tiptap/extension-code-block 3.31.4 — MIT; notice in thirdparty/tiptap-extension-code-block.txt
+- @tiptap/extension-document 3.31.4 — MIT; notice in thirdparty/tiptap-extension-document.txt
+- @tiptap/extension-dropcursor 3.31.4 — MIT; notice in thirdparty/tiptap-extension-dropcursor.txt
+- @tiptap/extension-gapcursor 3.31.4 — MIT; notice in thirdparty/tiptap-extension-gapcursor.txt
+- @tiptap/extension-hard-break 3.31.4 — MIT; notice in thirdparty/tiptap-extension-hard-break.txt
+- @tiptap/extension-heading 3.31.4 — MIT; notice in thirdparty/tiptap-extension-heading.txt
+- @tiptap/extension-horizontal-rule 3.31.4 — MIT; notice in thirdparty/tiptap-extension-horizontal-rule.txt
+- @tiptap/extension-image 3.31.4 — MIT; notice in thirdparty/tiptap-extension-image.txt
+- @tiptap/extension-italic 3.31.4 — MIT; notice in thirdparty/tiptap-extension-italic.txt
+- @tiptap/extension-link 3.31.4 — MIT; notice in thirdparty/tiptap-extension-link.txt
+- @tiptap/extension-list 3.31.4 — MIT; notice in thirdparty/tiptap-extension-list.txt
+- @tiptap/extension-list-item 3.31.4 — MIT; notice in thirdparty/tiptap-extension-list-item.txt
+- @tiptap/extension-list-keymap 3.31.4 — MIT; notice in thirdparty/tiptap-extension-list-keymap.txt
+- @tiptap/extension-ordered-list 3.31.4 — MIT; notice in thirdparty/tiptap-extension-ordered-list.txt
+- @tiptap/extension-paragraph 3.31.4 — MIT; notice in thirdparty/tiptap-extension-paragraph.txt
+- @tiptap/extension-strike 3.31.4 — MIT; notice in thirdparty/tiptap-extension-strike.txt
+- @tiptap/extension-table 3.31.4 — MIT; notice in thirdparty/tiptap-extension-table.txt
+- @tiptap/extension-text 3.31.4 — MIT; notice in thirdparty/tiptap-extension-text.txt
+- @tiptap/extension-underline 3.31.4 — MIT; notice in thirdparty/tiptap-extension-underline.txt
+- @tiptap/extensions 3.31.4 — MIT; notice in thirdparty/tiptap-extensions.txt
+- @tiptap/markdown 3.31.4 — MIT; notice in thirdparty/tiptap-markdown.txt
+- @tiptap/pm 3.31.4 — MIT; notice in thirdparty/tiptap-pm.txt
+- @tiptap/starter-kit 3.31.4 — MIT; notice in thirdparty/tiptap-starter-kit.txt
+- linkifyjs 4.3.3 — MIT; notice in thirdparty/linkifyjs.txt
+- marked 17.0.6 — MIT; notice in thirdparty/marked.txt
+- orderedmap 2.1.1 — MIT; notice in thirdparty/orderedmap.txt
+- prosemirror-changeset 2.4.4 — MIT; notice in thirdparty/prosemirror-changeset.txt
+- prosemirror-commands 1.7.2 — MIT; notice in thirdparty/prosemirror-commands.txt
+- prosemirror-dropcursor 1.8.4 — MIT; notice in thirdparty/prosemirror-dropcursor.txt
+- prosemirror-gapcursor 1.4.1 — MIT; notice in thirdparty/prosemirror-gapcursor.txt
+- prosemirror-history 1.5.1 — MIT; notice in thirdparty/prosemirror-history.txt
+- prosemirror-inputrules 1.5.1 — MIT; notice in thirdparty/prosemirror-inputrules.txt
+- prosemirror-keymap 1.2.3 — MIT; notice in thirdparty/prosemirror-keymap.txt
+- prosemirror-model 1.25.12 — MIT; notice in thirdparty/prosemirror-model.txt
+- prosemirror-schema-list 1.5.1 — MIT; notice in thirdparty/prosemirror-schema-list.txt
+- prosemirror-state 1.4.4 — MIT; notice in thirdparty/prosemirror-state.txt
+- prosemirror-tables 1.8.5 — MIT; notice in thirdparty/prosemirror-tables.txt
+- prosemirror-transform 1.12.2 — MIT; notice in thirdparty/prosemirror-transform.txt
+- prosemirror-view 1.42.6 — MIT; notice in thirdparty/prosemirror-view.txt
+- rope-sequence 1.3.4 — MIT; notice in thirdparty/rope-sequence.txt
+- w3c-keyname 2.2.8 — MIT; notice in thirdparty/w3c-keyname.txt

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sidenotes/db" VERSION="2026100300" COMMENT="XMLDB file for local_sidenotes"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+    <TABLES>
+        <TABLE NAME="local_sidenotes_notes" COMMENT="Private page-specific and global quick notes stored per user">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+                <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+                <FIELD NAME="content" TYPE="text" NOTNULL="false"/>
+                <FIELD NAME="contentformat" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="2"/>
+                <FIELD NAME="quote" TYPE="text" NOTNULL="false"/>
+                <FIELD NAME="quoteurl" TYPE="text" NOTNULL="false"/>
+                <FIELD NAME="url" TYPE="text" NOTNULL="true"/>
+                <FIELD NAME="pagehash" TYPE="char" LENGTH="64" NOTNULL="true"/>
+                <FIELD NAME="pagetitle" TYPE="char" LENGTH="255" NOTNULL="false"/>
+                <FIELD NAME="isglobal" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="useridcourseid_ix" UNIQUE="false" FIELDS="userid, courseid"/>
+                <INDEX NAME="usermodified_ix" UNIQUE="false" FIELDS="userid, timemodified"/>
+                <INDEX NAME="userpageglobal_ix" UNIQUE="false" FIELDS="userid, pagehash, isglobal"/>
+            </INDEXES>
+        </TABLE>
+        <TABLE NAME="local_sidenotes_course" COMMENT="Per-course settings for SideNotes">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+                <FIELD NAME="enabled" TYPE="int" LENGTH="4" NOTNULL="false"/>
+                <FIELD NAME="module_settings" TYPE="text" NOTNULL="false"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="courseid_ix" UNIQUE="true" FIELDS="courseid"/>
+            </INDEXES>
+        </TABLE>
+        <TABLE NAME="local_sidenotes_import" COMMENT="Private import receipts preventing repeated QuickNote imports">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+                <FIELD NAME="sourceid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="sourcecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="noteid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="timeimported" TYPE="int" LENGTH="10" NOTNULL="true"/>
+            </FIELDS>
+            <KEYS><KEY NAME="primary" TYPE="primary" FIELDS="id"/></KEYS>
+            <INDEXES>
+                <INDEX NAME="sourceowner_ix" UNIQUE="true" FIELDS="userid, sourceid, sourcecreated"/>
+                <INDEX NAME="noteid_ix" UNIQUE="false" FIELDS="noteid"/>
+            </INDEXES>
+        </TABLE>
+    </TABLES>
+</XMLDB>

@@ -1,0 +1,191 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+    @template local_sidenotes/sidebar
+    @copyright 2026 Matheus Mathias
+    @copyright 2026 Andreas Giesen (downstream changes)
+    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    Sidebar template for local_sidenotes.
+
+    Example context (json):
+    {
+        "courseid": "2",
+        "title": "Notes",
+        "placeholder": "Type your note here...",
+        "emptytext": "No notes found.",
+        "togglelabel": "Open SideNotes",
+        "closelabel": "Close",
+        "addlabel": "Add note"
+    }
+}}
+
+<div
+    id="local-sidenotes-root"
+    class="local-sidenotes {{positionclass}}"
+    data-courseid="{{courseid}}"
+    data-pageurl="{{pageurl}}"
+    data-pagetitle="{{pagetitle}}"
+    data-placeholder="{{placeholder}}"
+    data-emptytext="{{emptytext}}"
+    data-savingtext="{{savingtext}}"
+    data-savedtext="{{savedtext}}"
+    data-errortext="{{errortext}}"
+    data-updatedlabel="{{updatedlabel}}"
+    data-highlightlabel="{{highlightlabel}}"
+    data-deleteconfirm="{{deleteconfirm}}"
+    data-noresultstext="{{noresultstext}}"
+    data-globalbadge="{{globalbadge}}"
+    data-globalnotes="{{#str}} sidebar:globalnotes, local_sidenotes {{/str}}"
+    data-globalcount="{{#str}} sidebar:globalcount, local_sidenotes {{/str}}"
+    data-pageempty="{{#str}} sidebar:pageempty, local_sidenotes {{/str}}"
+    data-uploadingtext="{{uploadingtext}}"
+    data-deleteimagelabel="{{deleteimagelabel}}"
+    data-tagplaceholder="{{tagplaceholder}}"
+    data-removetaglabel="{{#str}} tags:remove, local_sidenotes, __TAG__ {{/str}}"
+    data-previewlabel="{{previewlabel}}"
+    data-tagsenabled="{{tagsenabled}}"
+>
+    <button
+        type="button"
+        class="local-sidenotes__toggle"
+        data-action="toggle"
+        aria-controls="local-sidenotes-panel"
+        aria-expanded="false"
+        title="{{togglelabel}}"
+        aria-label="{{togglelabel}}"
+    >
+        <span class="local-sidenotes__toggle-icon local-sidenotes__toggle-icon--edit">
+            <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+        </span>
+        <span class="local-sidenotes__toggle-icon local-sidenotes__toggle-icon--close">
+            {{#pix}} e/cancel, core {{/pix}}
+        </span>
+    </button>
+
+    <aside
+        id="local-sidenotes-panel"
+        class="local-sidenotes__panel"
+        data-region="panel"
+        aria-hidden="true"
+    >
+        <div class="local-sidenotes__header">
+            <h3 class="local-sidenotes__title">{{title}}</h3>
+            <button
+                type="button"
+                class="local-sidenotes__close"
+                data-action="close"
+                title="{{closelabel}}"
+                aria-label="{{closelabel}}"
+            >
+                {{#pix}} e/cancel, core {{/pix}}
+            </button>
+        </div>
+
+        <div class="local-sidenotes__toolbar">
+            <button type="button" class="btn btn-primary" data-action="add">
+                <i class="fa fa-plus" aria-hidden="true"></i> {{addlabel}}
+            </button>
+
+        <div class="local-sidenotes__search position-relative">
+            <label class="sr-only" for="local-sidenotes-search">{{#str}} search:placeholder, local_sidenotes {{/str}}</label>
+            <input
+                id="local-sidenotes-search"
+                type="text"
+                class="form-control local-sidenotes__search-input"
+                data-action="search"
+                placeholder="{{#str}} search:placeholder, local_sidenotes {{/str}}"
+            >
+            <button
+                type="button"
+                class="btn btn-sm btn-link local-sidenotes__search-clear"
+                data-action="clear-search"
+                title="{{#str}} search:clear, local_sidenotes {{/str}}"
+                aria-label="{{#str}} search:clear, local_sidenotes {{/str}}"
+                hidden
+            >
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        </div>
+        </div>
+
+        <div class="local-sidenotes__notes" data-region="notes-list">
+            <p class="local-sidenotes__empty">{{emptytext}}</p>
+        </div>
+        <template data-region="note-template">
+            <article class="local-sidenotes__note" data-note-key="">
+                <div class="local-sidenotes__note-actions">
+                    <span class="local-sidenotes__status" data-region="note-status"></span>
+                    <button
+                        type="button"
+                        class="btn btn-link btn-sm local-sidenotes__delete"
+                        data-action="delete-note"
+                        data-noteid=""
+                        title="{{#str}} note:delete, local_sidenotes {{/str}}"
+                        aria-label="{{#str}} note:delete, local_sidenotes {{/str}}"
+                    >
+                        {{#pix}} i/delete, core {{/pix}}
+                    </button>
+                </div>
+
+                <div class="local-sidenotes-center__tagstrip local-sidenotes__tagstrip" data-region="note-tags-wrapper" hidden>
+                    <div class="local-sidenotes-center__tags" data-region="note-tags" aria-label="{{taglabel}}"></div>
+                    <form class="local-sidenotes-center__tag-form" data-region="tag-form">
+                        <input type="text" class="form-control form-control-sm" data-region="tag-input" maxlength="100"
+                            placeholder="{{#str}} tags:add, local_sidenotes {{/str}}" aria-label="{{#str}} tags:add, local_sidenotes {{/str}}" autocomplete="off">
+                        <button type="submit" class="local-sidenotes-center__card-action" aria-label="{{#str}} tags:add, local_sidenotes {{/str}}" title="{{#str}} tags:add, local_sidenotes {{/str}}"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                    </form>
+                </div>
+
+                <div class="local-sidenotes__quote-wrapper" data-region="note-quote-wrapper" hidden>
+                    <blockquote class="local-sidenotes__quote" data-region="note-quote"></blockquote>
+                    <a
+                        class="local-sidenotes__quote-link"
+                        data-region="note-quote-link"
+                        href="#"
+                        hidden
+                    >
+                        {{#str}} note:viewintext, local_sidenotes {{/str}}
+                    </a>
+                </div>
+
+                <div class="position-relative local-sidenotes__textarea-wrapper">
+                    <textarea
+                        class="local-sidenotes__textarea"
+                        data-note-key=""
+                        placeholder="{{placeholder}}"
+                        aria-label="{{placeholder}}"
+                    ></textarea>
+                </div>
+
+                <div class="local-sidenotes__screenshots" data-region="screenshots"></div>
+                <div class="local-sidenotes__note-tools">
+                    <p class="local-sidenotes__paste-hint">{{pastehint}}</p>
+                    <button type="button" class="btn btn-sm btn-link local-sidenotes__copy-btn" data-action="copy-note" title="{{#str}} copy, core {{/str}}" aria-label="{{#str}} copy, core {{/str}}">
+                        <i class="fa-regular fa-copy" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+            </article>
+        </template>
+
+        <div class="local-sidenotes__footer mt-3 pt-3 border-top text-center">
+            <a href="{{config.wwwroot}}/local/sidenotes/view.php" class="btn btn-link">
+                {{#str}} viewnotescenter, local_sidenotes {{/str}}
+            </a>
+        </div>
+    </aside>
+</div>
