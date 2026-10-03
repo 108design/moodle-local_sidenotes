@@ -20,7 +20,7 @@ does not make other users' notes visible to administrators.
 ## Installation
 
 Requires Moodle 4.2 or later and its corresponding PHP and database requirements.
-The current release is **1.4.0**. Check the notes interface with your site's theme
+The current release is **1.4.1**. Check the notes interface with your site's theme
 before enabling it for learners.
 
 1. Install the plugin as `local/sidenotes` below Moodle's plugin directory.
