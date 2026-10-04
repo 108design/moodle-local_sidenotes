@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<libraries>
+  <library>
+    <location>thirdparty/photoswipe</location>
+    <name>PhotoSwipe</name>
+    <version>5.4.4</version>
+    <license>MIT</license>
+    <licenseversion></licenseversion>
+  </library>
+</libraries>

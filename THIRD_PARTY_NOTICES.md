@@ -49,3 +49,7 @@ No CDN, hosted editor or telemetry service is used. Build sources and pinned npm
 - prosemirror-view 1.42.6 — MIT; notice in thirdparty/prosemirror-view.txt
 - rope-sequence 1.3.4 — MIT; notice in thirdparty/rope-sequence.txt
 - w3c-keyname 2.2.8 — MIT; notice in thirdparty/w3c-keyname.txt
+
+## Image viewer
+
+- PhotoSwipe 5.4.4 — MIT; notice in thirdparty/photoswipe/LICENSE. Sources and CSS in thirdparty/photoswipe/.

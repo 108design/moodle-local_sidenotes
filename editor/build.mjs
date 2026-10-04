@@ -27,4 +27,6 @@ for (const [location, info] of Object.entries(lock.packages)) {
     await writeFile(new URL('thirdparty/' + name + '.txt', plugin), await readFile(new URL(licence, directory)));
     notices.push('- ' + location.replace(/^node_modules\//, '') + ' ' + info.version + ' — MIT; notice in thirdparty/' + name + '.txt');
 }
+notices.push('', '## Image viewer', '',
+    '- PhotoSwipe 5.4.4 — MIT; notice in thirdparty/photoswipe/LICENSE. Sources and CSS in thirdparty/photoswipe/.');
 await writeFile(new URL('THIRD_PARTY_NOTICES.md', plugin), notices.join('\n') + '\n');

@@ -25,8 +25,9 @@ define([
     'core/ajax',
     'core/notification',
     'core/str',
-    'core/user_date'
-], function(Editor, Ajax, Notification, Str, UserDate) {
+    'core/user_date',
+    'local_sidenotes/screenshot_gallery'
+], function(Editor, Ajax, Notification, Str, UserDate, Gallery) {
     var SELECTORS = {
         root: '#local-sidenotes-root',
         panel: '[data-region="panel"]',
@@ -280,6 +281,7 @@ define([
 
             var link = document.createElement('a');
             link.href = screenshot.url;
+            link.setAttribute('data-sidenotes-image', '1');
             link.target = '_blank';
             link.rel = 'noopener';
             var image = document.createElement('img');
@@ -1087,6 +1089,7 @@ define([
         });
 
         document.addEventListener('keyup', function(e) {
+            if (Gallery.consumeEscape(e)) {return;}
             if (e.key === 'Escape' && state.root.classList.contains('is-open')) {
                 setOpenState(false);
             }
@@ -1485,6 +1488,7 @@ define([
             state.highlightbutton = createHighlightButton();
             state.highlightselectiontext = '';
 
+            Gallery.init(rootEl);
             bindEvents();
             loadNotes();
             if (consumeOpenDrawerLink()) {

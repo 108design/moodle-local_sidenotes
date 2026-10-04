@@ -176,3 +176,11 @@ $string['quote:more'] = 'More';
 $string['quote:less'] = 'Less';
 $string['tags:filtercount'] = '{$a} selected';
 $string['search:removefilter'] = 'Remove filter: {$a}';
+
+$string['image:close'] = 'Close image viewer';
+$string['image:previous'] = 'Previous image';
+$string['image:next'] = 'Next image';
+$string['image:zoom'] = 'Zoom image';
+$string['image:error'] = 'The image could not be loaded.';
+$string['image:gallery'] = 'Note screenshots';
+$string['image:thumbnail'] = 'Show image {$a}';

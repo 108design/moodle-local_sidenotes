@@ -85,7 +85,7 @@ Click a preview to open the full-size screenshot.
 - Private coloured tags for organising and finding notes.
 - Complete notes with a header checkbox; restore them from a personal archive or permanently delete them.
 - Combine multiple tag filters: selected tags appear as chips and all must match.
-- Screenshots pasted into notes, with controls to remove them again.
+- Screenshots pasted into notes, with a lightbox, zoom and thumbnail navigation, and controls to remove them again.
 - Markdown and PDF downloads.
 
 Notes, screenshots and tags belong to their author. Enabling administrator mode
@@ -94,7 +94,7 @@ does not make other users' notes visible to administrators.
 ## Installation
 
 Requires Moodle 4.2 or later and its corresponding PHP and database requirements.
-The current release is **1.6.0**. Check the notes interface with your site's theme
+The current release is **1.7.0**. Check the notes interface with your site's theme
 before enabling it for learners.
 
 1. Install the plugin as `local/sidenotes` below Moodle's plugin directory.
@@ -106,6 +106,9 @@ before enabling it for learners.
 Open the notes drawer while viewing a course page. Select a passage to save it as
 a quotation, or create a note and enter your own text. Changes are saved as you edit.
 Paste a screenshot into the note to attach it.
+Click a screenshot to open the images of that note in a lightbox. Zoom in, move between
+images using the arrows or thumbnail strip, and press Escape to return to your note.
+This also works in the archive; its notes remain read-only.
 
 Use the notes overview to search, filter by course or tag, edit notes, and export
 them. The **Show on every page** option makes a course note available throughout

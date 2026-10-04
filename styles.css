@@ -949,6 +949,16 @@
     }
 }
 
+/* Standalone private-note lightbox: keep it above the open notes drawer. */
+.pswp.pswp--sidenotes { z-index: 1500; }
+.pswp--sidenotes .sidenotes-lightbox-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: .75rem 1rem; color: #fff; background: rgba(0, 0, 0, .65); }
+.pswp--sidenotes .sidenotes-lightbox-caption { margin: 0 0 .5rem; font-size: .875rem; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pswp--sidenotes .sidenotes-lightbox-strip { display: flex; gap: .5rem; overflow-x: auto; padding: .2rem; max-width: 100%; width: max-content; margin: auto; }
+.pswp--sidenotes .sidenotes-lightbox-strip button { flex: none; background: transparent; border: 2px solid transparent; border-radius: .25rem; padding: 2px; opacity: .65; }
+.pswp--sidenotes .sidenotes-lightbox-strip button[aria-current="true"], .pswp--sidenotes .sidenotes-lightbox-strip button:hover { opacity: 1; border-color: #fff; }
+.pswp--sidenotes .sidenotes-lightbox-strip button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; opacity: 1; }
+.pswp--sidenotes .sidenotes-lightbox-strip img { display: block; width: 4rem; height: 3rem; object-fit: contain; }
+
 /* BEGIN GENERATED SHARED SEARCH BAR */
 /* Shared native search bar. Generated into each independent consumer's styles.css. */
 .local-plugin-search-bar {

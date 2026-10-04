@@ -166,3 +166,11 @@ $string['quote:more'] = 'Mehr';
 $string['quote:less'] = 'Weniger';
 $string['tags:filtercount'] = '{$a} ausgewählt';
 $string['search:removefilter'] = 'Filter entfernen: {$a}';
+
+$string['image:close'] = 'Bildansicht schließen';
+$string['image:previous'] = 'Vorheriges Bild';
+$string['image:next'] = 'Nächstes Bild';
+$string['image:zoom'] = 'Bild vergrößern';
+$string['image:error'] = 'Das Bild konnte nicht geladen werden.';
+$string['image:gallery'] = 'Screenshots der Notiz';
+$string['image:thumbnail'] = 'Bild {$a} anzeigen';

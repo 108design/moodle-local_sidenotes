@@ -45,7 +45,7 @@
             {{/canedit}}
             <div class="local-sidenotes-center__screenshots" data-region="note-screenshots">
                 {{#screenshots}}<div class="local-sidenotes-center__image" data-fileid="{{id}}">
-                    <a href="{{url}}" target="_blank" rel="noopener"><img src="{{url}}" alt="{{filename}}" loading="lazy"></a>
+                    <a href="{{url}}" target="_blank" rel="noopener" data-sidenotes-image="1"><img src="{{url}}" alt="{{filename}}" loading="lazy"></a>
                     {{#canedit}}<button type="button" class="local-sidenotes-center__image-delete" data-action="delete-image" title="{{#str}} screenshot:delete, local_sidenotes {{/str}}" aria-label="{{#str}} screenshot:delete, local_sidenotes {{/str}}"><i class="fa fa-times" aria-hidden="true"></i></button>{{/canedit}}
                 </div>{{/screenshots}}
             </div>

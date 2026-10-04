@@ -6,12 +6,14 @@
  * @copyright 2026 Andreas Giesen
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['core/ajax', 'core/notification', 'core/str', 'local_sidenotes/mini_editor', 'core/user_date', 'core_filters/events'],
-function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
+define(['core/ajax', 'core/notification', 'core/str', 'local_sidenotes/mini_editor', 'core/user_date', 'core_filters/events',
+    'local_sidenotes/screenshot_gallery'],
+function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
     return {init: function() {
         var center = document.querySelector('.local-sidenotes-center');
         if (!center || center.dataset.initialized) {return;}
         center.dataset.initialized = '1';
+        Gallery.init(center);
         var search = document.getElementById('searchterm'), form = search.form;
         var clear = document.getElementById('clearsearch');
         var results = center.querySelector('[data-region="sidenotes-results"]');
@@ -218,6 +220,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
             var image = document.createElement('div'); image.className = 'local-sidenotes-center__image';
             image.dataset.fileid = String(screenshot.id);
             var link = document.createElement('a'); link.href = screenshot.url; link.target = '_blank'; link.rel = 'noopener';
+            link.setAttribute('data-sidenotes-image', '1');
             var img = document.createElement('img'); img.src = screenshot.url; img.alt = screenshot.filename; link.append(img);
             var remove = document.createElement('button'); remove.type = 'button';
             remove.className = 'local-sidenotes-center__image-delete'; remove.dataset.action = 'delete-image';
