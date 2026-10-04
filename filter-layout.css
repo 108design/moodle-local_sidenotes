@@ -1,0 +1,21 @@
+/* Side Notes field arrangement. Shared search-bar primitives precede these scoped rules. */
+.local-sidenotes-center__managerbar {display: block; margin-bottom: 0;}
+.local-sidenotes-center__views {width: 100%;}
+.local-sidenotes-center__top-actions {display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;}
+.local-sidenotes-center__addhint {flex: 1 1 20rem;}
+.local-sidenotes-center__tools {display: flex; align-items: center; gap: 1rem; margin-left: auto;}
+.local-sidenotes-center__tools .local-sidenotes-center__exports {width: auto; margin: 0; padding: 0;}
+.local-sidenotes-center__filters {width: 100%;}
+.local-sidenotes-center__filter-row {display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem;}
+.local-sidenotes-center__filter-group,
+.local-sidenotes-center__search-group {display: block; min-width: 0; width: 100%;}
+.local-sidenotes-center__filter-label {display: block; margin: 0 0 .375rem; font-size: .7rem; font-weight: 600; line-height: 1.2; letter-spacing: .06em; text-transform: uppercase; color: var(--bs-secondary-color, #555);}
+.local-sidenotes-center__filter-group select {width: 100%; min-width: 0;}
+.local-sidenotes-center__search-wrapper {width: 100%;}
+.local-sidenotes-center__search-wrapper > .form-control {border-radius: var(--bs-border-radius, .375rem);}
+.local-sidenotes-center__filter-row :is(select, summary, #searchterm) {height: 2.75rem;}
+.local-sidenotes-center__filter-chips .badge {text-decoration: none;}
+@container (min-width: 42rem) {
+    .local-sidenotes-center__filter-row {grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr);}
+    .local-sidenotes-center__filter-row:not(:has(#tagfilter)) {grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);}
+}

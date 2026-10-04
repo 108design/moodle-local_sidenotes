@@ -55,25 +55,41 @@
     }
 }}
 
-<div class="local-sidenotes-center">
+<div class="local-sidenotes-center" data-archive="{{#archive}}1{{/archive}}{{^archive}}0{{/archive}}">
+    <div class="local-sidenotes-center__managerbar" data-region="archive-navigation">
+        {{> local_sidenotes/navigation }}
+    </div>
+    <div class="local-sidenotes-center__top-actions mb-3">
+        {{#archive}}<button type="button" class="btn btn-outline-danger btn-sm" data-action="empty-archive" {{^canemptyarchive}}disabled{{/canemptyarchive}}>
+            <i class="fa fa-trash mr-1" aria-hidden="true"></i>{{#str}} archive:clear, local_sidenotes {{/str}}
+        </button>{{/archive}}
+        {{^archive}}<small class="text-muted local-sidenotes-center__addhint">{{#str}} center:addhint, local_sidenotes {{/str}}</small>{{/archive}}
+        <div class="local-sidenotes-center__tools">
+            {{^archive}}<button type="button" class="btn btn-primary" data-action="add-note"><i class="fa fa-plus mr-1" aria-hidden="true"></i>{{#str}} center:add, local_sidenotes {{/str}}</button>{{/archive}}
+            <div class="local-sidenotes-center__exports" data-region="sidenotes-exports" {{^hasnotes}}hidden{{/hasnotes}}>
+                {{#hasnotes}}
+                <a href="{{mdurl}}" class="local-sidenotes-center__export" title="{{exportmd}}" aria-label="{{exportmd}}"><i class="fa fa-file-text-o" aria-hidden="true"></i></a>
+                <a href="{{pdfurl}}" class="local-sidenotes-center__export" title="{{exportpdf}}" aria-label="{{exportpdf}}"><i class="fa fa-file-pdf-o" aria-hidden="true"></i></a>
+                {{/hasnotes}}
+            </div>
+        </div>
+    </div>
+    <div class="small mb-3" data-region="archive-status" role="status" aria-live="polite"></div>
     {{#quicknoteimports}}
     <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between">
         <span>{{#str}} import:offer, local_sidenotes, {{quicknoteimports}} {{/str}}</span>
         <a href="{{config.wwwroot}}/local/sidenotes/import.php" class="btn btn-outline-primary ml-2">{{#str}} import:title, local_sidenotes {{/str}}</a>
     </div>
     {{/quicknoteimports}}
-    <div class="mb-3">
-        <button type="button" class="btn btn-primary" data-action="add-note"><i class="fa fa-plus mr-1" aria-hidden="true"></i>{{#str}} center:add, local_sidenotes {{/str}}</button>
-        {{#tagsenabled}}<a href="{{config.wwwroot}}/local/sidenotes/tags.php" class="btn btn-secondary ml-2"><i class="fa fa-tags mr-1" aria-hidden="true"></i>{{#str}} tags:manage, local_sidenotes {{/str}}</a>{{/tagsenabled}}
-        <small class="text-muted ml-2">{{#str}} center:addhint, local_sidenotes {{/str}}</small>
-    </div>
+    {{#archive}}<p class="small text-muted mb-3">{{#str}} archive:hint, local_sidenotes {{/str}}</p>{{/archive}}
     <datalist id="sidenotes-private-tags">{{#usertags}}<option value="{{name}}"></option>{{/usertags}}</datalist>
     <template data-region="new-note-template">{{#draftnote}}{{> local_sidenotes/center_card }}{{/draftnote}}</template>
     <div class="local-sidenotes-center__controls mb-4">
-        <form method="GET" action="{{config.wwwroot}}/local/sidenotes/view.php" class="local-sidenotes-center__filters">
+        <form method="GET" action="{{config.wwwroot}}/local/sidenotes/view.php" class="local-plugin-search-bar local-sidenotes-center__filters" role="search">
+            {{#archive}}<input type="hidden" name="archive" value="1">{{/archive}}
             <div class="local-sidenotes-center__filter-row">
                 <div class="local-sidenotes-center__filter-group">
-                    <label for="coursefilter" class="font-weight-bold mb-0">{{filterbycourse}}</label>
+                    <label for="coursefilter" class="local-sidenotes-center__filter-label">{{filterbycourse}}</label>
                     <select name="coursefilter" id="coursefilter" class="custom-select form-select">
                         <option value="0">{{allcourses}}</option>
                         <option value="-1" {{#unboundselected}}selected{{/unboundselected}}>{{#str}} note:unbound, local_sidenotes {{/str}}</option>
@@ -81,47 +97,39 @@
                             <option value="{{id}}" {{#selected}}selected{{/selected}}>{{fullname}}</option>
                         {{/courses}}
                     </select>
+                    <div class="local-plugin-search-bar-chips" data-region="course-chips"></div>
                 </div>
                 {{#tagsenabled}}
                 <div class="local-sidenotes-center__filter-group">
-                    <label for="tagfilter" class="font-weight-bold mb-0">{{filterbytag}}</label>
-                    <select name="tagfilter" id="tagfilter" class="custom-select form-select">
-                        <option value="0">{{alltags}}</option>
-                        {{#usertags}}
-                            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
-                        {{/usertags}}
-                    </select>
+                    <span id="tagfilter-label" class="local-sidenotes-center__filter-label">{{filterbytag}}</span>
+                    <details id="tagfilter" class="local-plugin-search-bar-tags">
+                        <summary class="form-control" aria-labelledby="tagfilter-label tagfilter-count"><span id="tagfilter-count" data-alltags="{{alltags}}" data-selected="{{#str}} tags:filtercount, local_sidenotes {{/str}}">{{alltags}}</span></summary>
+                        <div class="local-plugin-search-bar-tag-options">
+                            {{#usertags}}<label><input type="checkbox" name="tags[]" value="{{id}}" {{#selected}}checked{{/selected}} data-name="{{name}}" data-background="{{background}}" data-foreground="{{foreground}}"><span>{{name}}</span></label>{{/usertags}}
+                            {{#unknowntags}}<input type="hidden" name="tags[]" value="{{id}}" data-name="{{name}}">{{/unknowntags}}
+                        </div>
+                    </details>
+                    <div class="local-plugin-search-bar-chips local-sidenotes-center__filter-chips" data-region="filter-chips" aria-label="{{#str}} tags:selectedfilters, local_sidenotes {{/str}}">
+                        {{#selectedtags}}<a class="badge badge-light" href="{{removeurl}}" data-filter-tag="{{id}}" data-action="remove-filter-tag" style="--search-bar-chip-bg: {{background}}; --search-bar-chip-fg: {{foreground}};" aria-label="{{#str}} tags:removefilter, local_sidenotes, {{name}} {{/str}}"><span>{{name}}</span><span aria-hidden="true">×</span></a>{{/selectedtags}}
+                    </div>
                 </div>
                 {{/tagsenabled}}
                 <div class="local-sidenotes-center__search-group">
+                    <div class="local-sidenotes-center__filter-label" aria-hidden="true">&nbsp;</div>
                     <div class="input-group">
                         <label class="sr-only" for="searchterm">{{searchnotes}}</label>
                         <div class="local-sidenotes-center__search-wrapper">
-                            <input type="text" name="searchterm" id="searchterm" class="form-control local-sidenotes-center__search-input" placeholder="{{searchnotes}}" value="{{searchterm}}">
+                            <input type="text" name="searchterm" id="searchterm" class="form-control local-sidenotes-center__search-input" placeholder="{{searchnotes}}" value="{{searchterm}}" autocomplete="off">
                             <button type="button" class="btn btn-sm btn-link local-sidenotes-center__search-clear" id="clearsearch" title="{{#str}} search:clear, local_sidenotes {{/str}}" aria-label="{{#str}} search:clear, local_sidenotes {{/str}}" {{^searchterm}}hidden{{/searchterm}}>
                                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                             </button>
                         </div>
-                        <div class="input-group-append">
-                            <button class="btn btn-primary local-sidenotes-center__search-submit" type="submit" title="{{search}}" aria-label="{{search}}">
-                                <i class="fa fa-search" aria-hidden="true"></i>
-                            </button>
-                        </div>
                     </div>
+                    <div class="local-plugin-search-bar-chips" data-region="search-chips"></div>
                 </div>
             </div>
         </form>
 
-        <div class="local-sidenotes-center__exports" data-region="sidenotes-exports" {{^hasnotes}}hidden{{/hasnotes}}>
-            {{#hasnotes}}
-            <a href="{{mdurl}}" class="local-sidenotes-center__export" title="{{exportmd}}" aria-label="{{exportmd}}">
-                <i class="fa fa-file-text-o" aria-hidden="true"></i>
-            </a>
-            <a href="{{pdfurl}}" class="local-sidenotes-center__export" title="{{exportpdf}}" aria-label="{{exportpdf}}">
-                <i class="fa fa-file-pdf-o" aria-hidden="true"></i>
-            </a>
-            {{/hasnotes}}
-        </div>
     </div>
 
     <div class="row" data-region="sidenotes-results">

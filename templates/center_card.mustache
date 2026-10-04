@@ -4,10 +4,13 @@
     @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 }}
 <div class="col-12 col-md-6 col-xl-4 mb-4" data-region="sidenotes-card-column">
-    <article class="card h-100 shadow-sm" data-noteid="{{id}}" data-canedit="{{#canedit}}1{{/canedit}}">
+    <article class="card h-100 shadow-sm" data-noteid="{{id}}" data-canedit="{{#canedit}}1{{/canedit}}" data-archived="{{#archived}}1{{/archived}}{{^archived}}0{{/archived}}">
         <div class="card-header local-sidenotes-center__card-header">
             <span class="local-sidenotes-center__title" title="{{coursefullname}}">{{coursefullname}}</span>
-            <span class="badge badge-primary bg-primary text-bg-primary" data-region="global-badge" {{^isglobal}}hidden{{/isglobal}}>{{#str}} note:globalbadge, local_sidenotes {{/str}}</span>
+            <div class="local-sidenotes-center__header-actions">
+                <span class="badge badge-primary bg-primary text-bg-primary" data-region="global-badge" {{^isglobal}}hidden{{/isglobal}}>{{#str}} note:globalbadge, local_sidenotes {{/str}}</span>
+                <input type="checkbox" class="form-check-input local-sidenotes-center__complete" data-action="toggle-archive" {{^canarchive}}hidden disabled{{/canarchive}} {{#archived}}checked{{/archived}} title="{{#archived}}{{#str}} archive:restore, local_sidenotes {{/str}}{{/archived}}{{^archived}}{{#str}} archive:complete, local_sidenotes {{/str}}{{/archived}}" aria-label="{{#archived}}{{#str}} archive:restore, local_sidenotes {{/str}}{{/archived}}{{^archived}}{{#str}} archive:complete, local_sidenotes {{/str}}{{/archived}}" data-toggle="tooltip" data-placement="top" data-bs-toggle="tooltip" data-bs-placement="top">
+            </div>
         </div>
         <div class="local-sidenotes-center__tagstrip">
             <div class="local-sidenotes-center__tags" data-region="note-tags" aria-label="{{#str}} tags, local_sidenotes {{/str}}">
@@ -25,7 +28,8 @@
         </div>
         <div class="card-body">
             {{#notequote}}<blockquote class="blockquote border-left border-primary pl-3 mb-3 local-sidenotes-center__quote">
-                <p class="mb-1 font-italic text-muted local-sidenotes-center__quote-text">{{notequote}}</p>
+                <p class="mb-1 font-italic text-muted local-sidenotes-center__quote-text" id="sidenotes-quote-{{id}}">{{notequote}}</p>
+                <button type="button" class="local-sidenotes-center__quote-toggle" data-action="toggle-quote" aria-controls="sidenotes-quote-{{id}}" aria-expanded="false" data-more="{{#str}} quote:more, local_sidenotes {{/str}}" data-less="{{#str}} quote:less, local_sidenotes {{/str}}" hidden>{{#str}} quote:more, local_sidenotes {{/str}}</button>
             </blockquote>{{/notequote}}
             <div class="card-text local-sidenotes-center__content" data-region="note-content">{{{contenthtml}}}</div>
             {{#canedit}}
@@ -52,14 +56,14 @@
             </div>
             {{/canedit}}
             <div class="small mt-2" data-region="note-status" role="status" aria-live="polite"></div>
-            {{^canedit}}<small class="text-muted">{{#str}} note:readonly, local_sidenotes {{/str}}</small>{{/canedit}}
+            {{^canedit}}{{^archived}}<small class="text-muted">{{#str}} note:readonly, local_sidenotes {{/str}}</small>{{/archived}}{{/canedit}}
         </div>
         <div class="card-footer local-sidenotes-center__card-footer text-muted small">
-            <span><i class="fa fa-clock-o mr-1" aria-hidden="true"></i><span data-region="note-date">{{timeupdated}}</span></span>
+            <span><i class="fa {{#archived}}fa-archive{{/archived}}{{^archived}}fa-clock-o{{/archived}} mr-1" aria-hidden="true"></i><span data-region="note-date">{{timeupdated}}</span></span>
             <div class="local-sidenotes-center__actionbar">
                 {{#canedit}}<button type="button" class="local-sidenotes-center__card-action" data-action="edit-text" title="{{#str}} note:edit, local_sidenotes {{/str}}" aria-label="{{#str}} note:edit, local_sidenotes {{/str}}"><i class="fa fa-pencil" aria-hidden="true"></i></button>{{/canedit}}
                 {{#actionurl}}<a href="{{actionurl}}" target="_blank" rel="noopener" class="local-sidenotes-center__card-action" data-toggle="tooltip" data-placement="top" data-bs-toggle="tooltip" data-bs-placement="top" title="{{actiontooltip}}" aria-label="{{#str}} note:viewintext, local_sidenotes {{/str}}"><i class="fa fa-external-link" aria-hidden="true"></i></a>{{/actionurl}}
-                <button type="button" class="local-sidenotes-center__card-action" data-action="delete-note" title="{{#str}} note:delete, local_sidenotes {{/str}}" aria-label="{{#str}} note:delete, local_sidenotes {{/str}}"><i class="fa fa-trash" aria-hidden="true"></i></button>
+                <button type="button" class="local-sidenotes-center__card-action" data-action="delete-note" title="{{#str}} archive:delete, local_sidenotes {{/str}}" aria-label="{{#str}} archive:delete, local_sidenotes {{/str}}"><i class="fa fa-trash" aria-hidden="true"></i></button>
             </div>
         </div>
     </article>

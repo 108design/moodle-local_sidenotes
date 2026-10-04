@@ -28,6 +28,9 @@ if (!$tagfilter) {
     $tagfilter = optional_param('tagid', 0, PARAM_INT);
 }
 $searchterm = optional_param('searchterm', '', PARAM_TEXT);
+$archive = optional_param('archive', false, PARAM_BOOL);
+$selectedtagids = \local_sidenotes\local\note_filters::normalise_tags(array_merge(
+    optional_param_array('tags', [], PARAM_INT), $tagfilter ? [$tagfilter] : []));
 $export = optional_param('export', '', PARAM_ALPHA);
 $page = optional_param('page', 0, PARAM_INT);
 $deleteid = optional_param('deleteid', 0, PARAM_INT);
@@ -41,9 +44,10 @@ $urlparams = [];
 if ($coursefilter) {
     $urlparams['coursefilter'] = $coursefilter;
 }
-if ($tagfilter) {
-    $urlparams['tagfilter'] = $tagfilter;
+if ($selectedtagids) {
+    $urlparams['tags'] = $selectedtagids;
 }
+if ($archive) {$urlparams['archive'] = 1;}
 if ($searchterm !== '') {
     $urlparams['searchterm'] = $searchterm;
 }
@@ -51,6 +55,9 @@ if ($page) {
     $urlparams['page'] = $page;
 }
 $url = new moodle_url('/local/sidenotes/view.php', $urlparams);
+if ($export === '') {
+    \local_sidenotes\local\overview_state::remember((bool) $archive, $urlparams);
+}
 
 if ($deleteid) {
     require_sesskey();
@@ -106,16 +113,34 @@ if (\local_sidenotes\local\tag_manager::is_enabled()) {
         $usertags[] = [
             'id' => (int) $tag->id,
             'name' => format_string($tag->rawname ?: $tag->name, true, ['context' => $context]),
-            'selected' => (int) $tag->id === $tagfilter,
-        ];
+            'selected' => in_array((int) $tag->id, $selectedtagids, true),
+        ] + \local_sidenotes\local\tag_manager::colours((int) $tag->id, $tag->rawname ?: $tag->name, (int) $USER->id);
     }
 }
 
-$hasnotestosearch = $DB->record_exists('local_sidenotes_notes', ['userid' => $USER->id]);
+$archivestatus = \local_sidenotes\local\archive_manager::status((int) $USER->id);
+$navigationparams = $urlparams;
+unset($navigationparams['page'], $navigationparams['archive']);
+$navigation = \local_sidenotes\local\overview_state::navigation((bool) $archive);
+$selectedtags = [];
+foreach ($selectedtagids as $tagid) {
+    $tag = null;
+    foreach ($usertags as $candidate) {if ($candidate['id'] === $tagid) {$tag = $candidate; break;}}
+    // An obsolete/foreign filter never discloses another owner's tag name or causes a broader query.
+    $tag = $tag ?: ['id' => $tagid, 'name' => get_string('tags', 'local_sidenotes'),
+        'background' => '#e9ecef', 'foreground' => '#000000'];
+    $removeparams = $navigationparams;
+    if ($archive) {$removeparams['archive'] = 1;}
+    $removeparams['tags'] = array_values(array_diff($selectedtagids, [$tagid]));
+    if (!$removeparams['tags']) {unset($removeparams['tags']);}
+    $tag['removeurl'] = (new moodle_url('/local/sidenotes/view.php', $removeparams))->out(false);
+    $selectedtags[] = $tag;
+}
+$hasnotestosearch = ($archive ? $archivestatus['archivecount'] : $archivestatus['activecount']) > 0;
 $sqlfrom = "FROM {local_sidenotes_notes} qn
        LEFT JOIN {course} c ON c.id = qn.courseid
-           WHERE qn.userid = :userid";
-$params = ['userid' => $USER->id];
+           WHERE qn.userid = :userid AND qn.archived = :archived";
+$params = ['userid' => $USER->id, 'archived' => (int) $archive];
 
 if ($coursefilter > 0) {
     $sqlfrom .= " AND qn.courseid = :courseid";
@@ -126,20 +151,9 @@ if ($coursefilter === -1) {
     $params['unboundhash'] = \local_sidenotes\local\access_policy::unbound_hash();
 }
 
-if ($tagfilter > 0) {
-    $sqlfrom .= " AND EXISTS (
-        SELECT 1 FROM {tag_instance} tif
-         WHERE tif.itemid = qn.id AND tif.tagid = :tagfilter
-           AND tif.component = :tagfiltercomponent AND tif.itemtype = :tagfilteritemtype
-           AND tif.tiuserid = :tagfilteruserid
-    )";
-    $params += [
-        'tagfilter' => $tagfilter,
-        'tagfiltercomponent' => $tagcomponent,
-        'tagfilteritemtype' => $tagitemtype,
-        'tagfilteruserid' => $USER->id,
-    ];
-}
+[$tagsql, $tagparams] = \local_sidenotes\local\note_filters::tag_conditions($selectedtagids, (int) $USER->id);
+$sqlfrom .= $tagsql;
+$params += $tagparams;
 
 if ($searchterm !== '') {
     $escapedsearch = '%' . $DB->sql_like_escape($searchterm) . '%';
@@ -173,10 +187,10 @@ if ($searchterm !== '') {
 
 $totalcount = $DB->count_records_sql("SELECT COUNT(qn.id) " . $sqlfrom, $params);
 $sql = "SELECT qn.id, qn.userid, qn.content, qn.contentformat, qn.url, qn.quote, qn.quoteurl,
-               qn.timemodified, qn.pagehash, qn.pagetitle, qn.isglobal, qn.courseid,
+               qn.timemodified, qn.pagehash, qn.pagetitle, qn.isglobal, qn.courseid, qn.archived, qn.timearchived,
                c.fullname AS coursefullname
           " . $sqlfrom . "
-      ORDER BY qn.timemodified DESC, qn.id DESC";
+      ORDER BY " . ($archive ? 'qn.timearchived' : 'qn.timemodified') . " DESC, qn.id DESC";
 
 if ($export === 'pdf' || $export === 'md' || $perpage === 0) {
     $noterecords = $DB->get_records_sql($sql, $params);
@@ -357,13 +371,17 @@ foreach ($noterecords as $record) {
         'content' => (string) $record->content,
         'contentformat' => (int) $record->contentformat,
         'canedit' => \local_sidenotes\local\access_policy::can_edit($record),
+        'canarchive' => true,
+        'archived' => !empty($record->archived),
+        'archivelabel' => get_string($archive ? 'archive:restore' : 'archive:complete', 'local_sidenotes'),
         'tagsenabled' => \local_sidenotes\local\tag_manager::is_enabled(),
         'coursefullname' => $cardlabel,
         'isglobal' => !empty($record->isglobal),
         'globalbadge' => get_string('note:globalbadge', 'local_sidenotes'),
         'contenthtml' => \local_sidenotes\local\note_formatter::format((string) $record->content,
             (int) $record->contentformat, $context, \local_sidenotes\local\access_policy::can_edit($record)),
-        'timeupdated' => userdate($record->timemodified, get_string('strftimedatetimeshort', 'langconfig')),
+        'timeupdated' => userdate($archive ? $record->timearchived : $record->timemodified,
+            get_string('strftimedatetimeshort', 'langconfig')),
         'actionurl' => $actionurl,
         'actiontooltip' => $actionurl ? \local_sidenotes\local\page_identity::canonicalise($actionurl) : null,
         'notequote' => !empty($record->quote) ? $record->quote : null,
@@ -385,13 +403,20 @@ unset($exportparams['page']);
 $mdurl = new moodle_url('/local/sidenotes/view.php', $exportparams + ['export' => 'md']);
 $pdfurl = new moodle_url('/local/sidenotes/view.php', $exportparams + ['export' => 'pdf']);
 $templatecontext = [
+    'archive' => $archive,
+    'activecount' => $archivestatus['activecount'],
+    'archivecount' => $archivestatus['archivecount'],
+    'canemptyarchive' => $archivestatus['archivecount'] > 0,
+    'selectedtags' => $selectedtags,
+    'unknowntags' => array_values(array_filter($selectedtags, static fn(array $tag): bool =>
+        !in_array($tag['id'], array_column($usertags, 'id'), true))),
     'quicknoteimports' => \local_sidenotes\local\quicknote_importer::pending((int) $USER->id),
     'pagingbar' => $pagingbarhtml,
     'filterbycourse' => get_string('filterbycourse', 'local_sidenotes'),
     'filterbytag' => get_string('filterbytag', 'local_sidenotes'),
     'allcourses' => get_string('allcourses', 'local_sidenotes'),
     'alltags' => get_string('alltags', 'local_sidenotes'),
-    'nonotesfound' => get_string('note:empty', 'local_sidenotes'),
+    'nonotesfound' => get_string($archive ? 'archive:empty' : 'note:empty', 'local_sidenotes'),
     'noresultstext' => get_string('search:noresultstext', 'local_sidenotes'),
     'searchnotes' => get_string('search:placeholder', 'local_sidenotes'),
     'search' => get_string('search', 'local_sidenotes'),
@@ -418,6 +443,7 @@ $templatecontext = [
     'draftnote' => ['id' => 0, 'canedit' => true, 'content' => '', 'coursefullname' => get_string('note:unbound', 'local_sidenotes'),
         'tagsenabled' => \local_sidenotes\local\tag_manager::is_enabled()],
 ];
+$templatecontext += $navigation;
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_sidenotes/view', $templatecontext);

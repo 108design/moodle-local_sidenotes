@@ -53,6 +53,8 @@ class provider implements
             'pagehash' => 'privacy:metadata:local_sidenotes_notes:pagehash',
             'pagetitle' => 'privacy:metadata:local_sidenotes_notes:pagetitle',
             'isglobal' => 'privacy:metadata:local_sidenotes_notes:isglobal',
+            'archived' => 'privacy:metadata:local_sidenotes_notes:archived',
+            'timearchived' => 'privacy:metadata:local_sidenotes_notes:timearchived',
             'content' => 'privacy:metadata:local_sidenotes_notes:content',
             'contentformat' => 'privacy:metadata:local_sidenotes_notes:contentformat',
             'quote' => 'privacy:metadata:local_sidenotes_notes:quote',
@@ -151,6 +153,8 @@ class provider implements
                 'url' => $note->url,
                 'pagetitle' => $note->pagetitle,
                 'isglobal' => transform::yesno($note->isglobal),
+                'archived' => transform::yesno($note->archived),
+                'timearchived' => $note->timearchived ? transform::datetime($note->timearchived) : '',
                 'timecreated' => transform::datetime($note->timecreated),
                 'timemodified' => transform::datetime($note->timemodified),
             ];

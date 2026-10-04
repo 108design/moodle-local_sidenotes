@@ -1,0 +1,15 @@
+{{! @template local_sidenotes/navigation
+    @copyright 2026 Andreas Giesen
+    @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<nav class="nav nav-tabs local-sidenotes-center__views mb-3" aria-label="{{#str}} archive:views, local_sidenotes {{/str}}">
+    <a class="nav-link {{#activeview}}active{{/activeview}}" href="{{activeurl}}" {{#activeview}}aria-current="page"{{/activeview}} data-region="active-view">
+        <i class="fa fa-sticky-note-o mr-1" aria-hidden="true"></i>{{#str}} archive:active, local_sidenotes {{/str}} <span class="local-sidenotes-center__count" data-region="active-count">{{activecount}}</span>
+    </a>
+    <a class="nav-link {{#archiveview}}active{{/archiveview}}" href="{{archiveurl}}" {{#archiveview}}aria-current="page"{{/archiveview}} data-region="archive-view">
+        <i class="fa fa-archive mr-1" aria-hidden="true"></i>{{#str}} archive:title, local_sidenotes {{/str}} <span class="local-sidenotes-center__count" data-region="archive-count">{{archivecount}}</span>
+    </a>
+    {{#tagsenabled}}<a class="nav-link {{#tagsview}}active{{/tagsview}}" href="{{tagsurl}}" {{#tagsview}}aria-current="page"{{/tagsview}}>
+        <i class="fa fa-tags mr-1" aria-hidden="true"></i>{{#str}} tags:manage, local_sidenotes {{/str}}
+    </a>{{/tagsenabled}}
+</nav>

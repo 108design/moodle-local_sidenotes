@@ -9,8 +9,6 @@
 namespace local_sidenotes\external;
 
 use context_system;
-use local_sidenotes\local\screenshot_manager;
-use local_sidenotes\local\tag_manager;
 
 /**
  * Delete one owned private note and its screenshots.
@@ -24,31 +22,22 @@ class delete_note extends \core_external\external_api {
     public static function execute_parameters(): \core_external\external_function_parameters {
         return new \core_external\external_function_parameters([
             'noteid' => new \core_external\external_value(PARAM_INT, 'Note id to delete.'),
+            'expectedarchived' => new \core_external\external_value(PARAM_INT, 'Expected archive state, -1 for legacy clients.', VALUE_DEFAULT, -1),
         ]);
     }
 
-    public static function execute(int $noteid): array {
-        global $DB, $USER;
-        $params = self::validate_parameters(self::execute_parameters(), ['noteid' => $noteid]);
+    public static function execute(int $noteid, int $expectedarchived = -1): array {
+        global $USER;
+        $params = self::validate_parameters(self::execute_parameters(), compact('noteid', 'expectedarchived'));
+        if (!in_array($params['expectedarchived'], [-1, 0, 1], true)) {throw new \invalid_parameter_exception('Invalid archive state.');}
 
         require_login();
         $context = context_system::instance();
         self::validate_context($context);
         \local_sidenotes\local\access_policy::require_overview();
 
-        $lock = \local_sidenotes\local\access_policy::note_lock($noteid);
-        try {
-        $note = $DB->get_record('local_sidenotes_notes', [
-            'id' => $params['noteid'],
-            'userid' => $USER->id,
-        ], '*', MUST_EXIST);
-        screenshot_manager::delete_for_note((int) $note->id);
-        tag_manager::remove_for_note((int) $note->id, (int) $USER->id);
-        $DB->delete_records('local_sidenotes_notes', ['id' => $note->id]);
-        return ['noteid' => (int) $note->id, 'deleted' => true];
-        } finally {
-            $lock->release();
-        }
+        \local_sidenotes\local\archive_manager::delete_owned($params['noteid'], (int) $USER->id, $params['expectedarchived']);
+        return ['noteid' => $params['noteid'], 'deleted' => true];
     }
 
     public static function execute_returns(): \core_external\external_single_structure {

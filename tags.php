@@ -15,5 +15,6 @@ $PAGE->set_heading(get_string('tags:manage', 'local_sidenotes'));
 $PAGE->set_pagelayout('standard');
 $tags = \local_sidenotes\local\tag_manager::owned((int) $USER->id);
 echo $OUTPUT->header();
-echo $OUTPUT->render_from_template('local_sidenotes/tag_manager', ['tags' => $tags]);
+echo $OUTPUT->render_from_template('local_sidenotes/tag_manager', ['tags' => $tags]
+    + \local_sidenotes\local\overview_state::navigation(false, true));
 echo $OUTPUT->footer();

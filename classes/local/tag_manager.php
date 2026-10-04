@@ -182,7 +182,7 @@ final class tag_manager {
 
     private static function notes_for_tag(int $tagid, int $userid): array {
         global $DB;
-        return $DB->get_records_sql('SELECT qn.id,qn.userid,qn.courseid,qn.url,qn.pagehash FROM {local_sidenotes_notes} qn
+        return $DB->get_records_sql('SELECT qn.id,qn.userid,qn.courseid,qn.url,qn.pagehash,qn.archived FROM {local_sidenotes_notes} qn
             JOIN {tag_instance} ti ON ti.itemid=qn.id
             WHERE ti.tagid=:tagid AND ti.component=:component AND ti.itemtype=:itemtype
                 AND ti.tiuserid=:taguserid AND qn.userid=:noteuserid ORDER BY qn.id',
@@ -216,6 +216,7 @@ final class tag_manager {
             $newid = $tagid;
             if ($rename || $operation === 'delete') {
                 foreach ($notes as $note) {
+                    $note = $DB->get_record('local_sidenotes_notes', ['id' => $note->id, 'userid' => $userid], '*', MUST_EXIST);
                     access_policy::require_edit($note);
                         // Re-read under the note lock to preserve changes made since the manager was opened.
                         $tags = self::get_for_note((int) $note->id, $userid);

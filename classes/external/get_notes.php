@@ -52,6 +52,7 @@ class get_notes extends \core_external\external_api {
             $select = 'userid = :userid AND (pagehash = :pagehash OR isglobal = 1)';
         }
 
+        $select .= ' AND archived = 0';
         $records = $DB->get_records_select(
             'local_sidenotes_notes', $select, $queryparams, 'isglobal DESC, timemodified DESC, id DESC'
         );

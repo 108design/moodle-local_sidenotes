@@ -338,6 +338,18 @@ define([
         }
         var panel = state.root.querySelector(SELECTORS.panel);
         if (panel && panel.getAttribute('aria-hidden') === 'true') {return;}
+        state.root.querySelectorAll(SELECTORS.quotewrapper).forEach(function(wrapper) {
+            var text = wrapper.querySelector(SELECTORS.quote), button = wrapper.querySelector('[data-action="toggle-quote"]');
+            if (!text || !button || !text.offsetWidth) {return;}
+            var style = window.getComputedStyle(text);
+            var padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+            button.hidden = text.scrollHeight <= parseFloat(style.lineHeight) * 3 + padding + 1;
+            wrapper.classList.toggle('local-sidenotes-center__quote--collapsible', !button.hidden);
+            if (button.hidden) {
+                wrapper.classList.remove('local-sidenotes-center__quote--expanded');
+                button.setAttribute('aria-expanded', 'false'); button.textContent = button.dataset.more;
+            }
+        });
         state.root.querySelectorAll(SELECTORS.textarea).forEach(function(textarea) {
             // Closed global groups and filtered notes do not need a rich editor until they become visible.
             if (!textarea.offsetWidth) {return;}
@@ -1014,6 +1026,38 @@ define([
     };
 
     var bindEvents = function() {
+        document.addEventListener('local_sidenotes:archivechanged', function(event) {
+            var change = event.detail || {};
+            if (!change.noteid) {return;}
+            var note = state.notes.find(function(item) {return Number(item.id) === Number(change.noteid);});
+            if (change.archived) {
+                if (!note) {return;}
+                window.clearTimeout(state.timers[note.clientid]); delete state.timers[note.clientid];
+                var element = getNoteElementByKey(note.clientid);
+                if (note.saving || note.tagpending || note.content !== note.savedcontent) {
+                    // Never discard a separately edited local draft when the overview archives its record.
+                    note.archived = true;
+                    Str.get_string('archive:draftblocked', 'local_sidenotes').then(function(message) {
+                        if (element && element.isConnected) {setNoteStatus(element, message, note.timemodified);}
+                    }).catch(Notification.exception);
+                    return;
+                }
+                state.notes = state.notes.filter(function(item) {return item !== note;});
+                if (element) {element.remove();}
+                updateSearchVisibility(); applyFilter();
+            } else if (note) {
+                note.archived = false;
+            } else {
+                Promise.resolve(Ajax.call([{methodname: 'local_sidenotes_get_notes',
+                    args: {courseid: state.courseid, pageurl: state.pageurl}}])[0]).then(function(notes) {
+                    var restored = notes.find(function(item) {return Number(item.id) === Number(change.noteid);});
+                    if (!restored || state.notes.some(function(item) {return Number(item.id) === Number(restored.id);})) {return;}
+                    restored = normaliseNote(restored); state.notes.unshift(restored);
+                    var group = getList().querySelector(restored.isglobal ? '[data-region="global-list"]' : '[data-region="page-group"]');
+                    if (!group) {renderNotes();} else {group.prepend(createNoteElement(restored)); applyFilter(); scheduleAutogrowTextareas();}
+                }).catch(Notification.exception);
+            }
+        });
         state.highlightbutton.addEventListener('mousedown', function(e) {
             e.preventDefault();
         });
@@ -1260,6 +1304,14 @@ define([
             }
 
             var quoteLink = e.target.closest(SELECTORS.quotelink);
+            var quoteToggle = e.target.closest('[data-action="toggle-quote"]');
+            if (quoteToggle) {
+                var expanded = quoteToggle.getAttribute('aria-expanded') !== 'true';
+                quoteToggle.setAttribute('aria-expanded', String(expanded));
+                quoteToggle.closest(SELECTORS.quotewrapper).classList.toggle('local-sidenotes-center__quote--expanded', expanded);
+                quoteToggle.textContent = expanded ? quoteToggle.dataset.less : quoteToggle.dataset.more;
+                return;
+            }
             if (quoteLink) {
                 handleQuoteClick(e, quoteLink);
                 return;

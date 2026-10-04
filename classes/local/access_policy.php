@@ -106,6 +106,9 @@ class access_policy {
     }
 
     public static function can_edit(\stdClass $note): bool {
+        if (!empty($note->archived)) {
+            return false;
+        }
         try {
             return self::sitewide() || (self::overview_allowed()
                 && (self::unbound($note) || self::page_allowed((int) $note->courseid, (string) $note->url)));

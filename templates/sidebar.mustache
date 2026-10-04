@@ -151,7 +151,8 @@
                 </div>
 
                 <div class="local-sidenotes__quote-wrapper" data-region="note-quote-wrapper" hidden>
-                    <blockquote class="local-sidenotes__quote" data-region="note-quote"></blockquote>
+                    <blockquote class="local-sidenotes__quote local-sidenotes-center__quote-text" data-region="note-quote"></blockquote>
+                    <button type="button" class="local-sidenotes-center__quote-toggle" data-action="toggle-quote" aria-expanded="false" data-more="{{#str}} quote:more, local_sidenotes {{/str}}" data-less="{{#str}} quote:less, local_sidenotes {{/str}}" hidden>{{#str}} quote:more, local_sidenotes {{/str}}</button>
                     <a
                         class="local-sidenotes__quote-link"
                         data-region="note-quote-link"

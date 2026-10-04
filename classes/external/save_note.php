@@ -114,6 +114,8 @@ class save_note extends \core_external\external_api {
         try {
         if ($id) {
             $existing = $DB->get_record('local_sidenotes_notes', ['id' => $id, 'userid' => $USER->id], '*', MUST_EXIST);
+            // Recheck under the same lock used by archive/restore.
+            access_policy::require_edit($existing);
         }
 
         $content = core_text::substr($params['content'], 0, 20000);
@@ -186,6 +188,8 @@ class save_note extends \core_external\external_api {
             'url' => new \core_external\external_value(PARAM_RAW, 'Source page URL.'),
             'pagetitle' => new \core_external\external_value(PARAM_TEXT, 'Source page title.'),
             'isglobal' => new \core_external\external_value(PARAM_BOOL, 'Whether the note is global.'),
+            'archived' => new \core_external\external_value(PARAM_BOOL, 'Whether the note is archived.'),
+            'timearchived' => new \core_external\external_value(PARAM_INT, 'Archive timestamp or zero.'),
             'unbound' => new \core_external\external_value(PARAM_BOOL, 'Whether the note has no source page.'),
             'canedit' => new \core_external\external_value(PARAM_BOOL, 'Whether the owner may edit the note now.'),
             'tagsenabled' => new \core_external\external_value(PARAM_BOOL, 'Whether the tag area is enabled.'),
@@ -221,6 +225,8 @@ class save_note extends \core_external\external_api {
             'url' => (string) ($note->url ?? ''),
             'pagetitle' => (string) ($note->pagetitle ?? ''),
             'isglobal' => !empty($note->isglobal),
+            'archived' => !empty($note->archived),
+            'timearchived' => (int) ($note->timearchived ?? 0),
             'unbound' => access_policy::unbound($note),
             'canedit' => access_policy::can_edit($note),
             'tagsenabled' => tag_manager::is_enabled(),

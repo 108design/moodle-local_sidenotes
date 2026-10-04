@@ -43,6 +43,11 @@ class edit_note extends \core_external\external_api {
             throw new \moodle_exception('error:busy', 'local_sidenotes');
         }
         try {
+            if ($operation !== 'create') {
+                $note = $DB->get_record('local_sidenotes_notes', ['id' => $params['noteid'], 'userid' => $USER->id],
+                    '*', MUST_EXIST);
+                access_policy::require_edit($note);
+            }
             $transaction = $DB->start_delegated_transaction();
             if ($operation === 'create') {
                 $note = (object) ['userid' => $USER->id, 'courseid' => 0, 'url' => '', 'quote' => '', 'quoteurl' => '',
@@ -51,9 +56,6 @@ class edit_note extends \core_external\external_api {
                     'timecreated' => time(), 'timemodified' => time()];
                 $note->id = $DB->insert_record('local_sidenotes_notes', $note);
             } else {
-                $note = $DB->get_record('local_sidenotes_notes', ['id' => $params['noteid'], 'userid' => $USER->id],
-                    '*', MUST_EXIST);
-                access_policy::require_edit($note);
                 // Only the changed field is written, never stale page/source/content snapshots for a tag update.
                 $update = (object) ['id' => $note->id, 'timemodified' => time()];
                 if ($operation === 'content' || $operation === 'task') {

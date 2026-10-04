@@ -1,4 +1,20 @@
-# SideNotes
+# Side Notes
+
+## 1.6.0 (2026-10-04)
+
+- Notes, Archive and Manage tags share native tabs; note/archive criteria are remembered independently per session.
+- Compact labels sit above the course/tag menus; multiple tags use checkbox selection with immediate AND filtering.
+- Search and filters have removable chips beneath their own field, without a redundant search button.
+- New note and export actions share a right-aligned row above the filters.
+- Long quotes start at three lines with accessible More/Less actions in the overview and drawer; saved text is unchanged.
+
+## 1.5.0 (2026-10-04)
+
+- Complete/archive notes through an icon-only header checkbox and native tooltip; restore in a private archive.
+- Permanently delete individual archived notes or empty a confirmed exact archive snapshot, preserving active notes.
+- Combine private tag filters with coloured, removable chips beneath search; all selected tags must match.
+- Apply course/tag filters immediately and text search after a short typing pause, with stale-response and IME protection.
+- Keep header titles single-line with ellipsis and preserve note source/text/media/tags across archive/restore.
 
 ## 1.4.0 (2026-10-03)
 

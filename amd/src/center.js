@@ -16,6 +16,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
         var clear = document.getElementById('clearsearch');
         var results = center.querySelector('[data-region="sidenotes-results"]');
         var states = new WeakMap(), activeRequest = null, searchTimer = null, mutation = 0, strings = {};
+        var composing = false, clearingArchive = false;
         var stringsReady = Promise.resolve(Str.get_strings([
             {key: 'confirm', component: 'core'}, {key: 'delete', component: 'core'},
             {key: 'cancel', component: 'core'}, {key: 'note:saving', component: 'local_sidenotes'},
@@ -23,10 +24,16 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
             {key: 'center:discard', component: 'local_sidenotes'}, {key: 'screenshot:deleteconfirm', component: 'local_sidenotes'},
             {key: 'note:delete_confirm', component: 'local_sidenotes'}, {key: 'screenshot:uploading', component: 'local_sidenotes'},
             {key: 'screenshot:delete', component: 'local_sidenotes'}, {key: 'tags:remove', component: 'local_sidenotes', param: ''},
-            {key: 'center:pendingtext', component: 'local_sidenotes'}
+            {key: 'center:pendingtext', component: 'local_sidenotes'},
+            {key: 'archive:deleteconfirm', component: 'local_sidenotes'},
+            {key: 'archive:archived', component: 'local_sidenotes'},
+            {key: 'archive:restored', component: 'local_sidenotes'},
+            {key: 'archive:cleared', component: 'local_sidenotes'},
+            {key: 'search:removefilter', component: 'local_sidenotes', param: '__TAG__'}
         ])).then(function(values) {
             ['confirm', 'delete', 'cancel', 'saving', 'saved', 'error', 'discard', 'deleteimage',
-                'deletenote', 'uploading', 'imagelabel', 'removetag', 'pendingtext']
+                'deletenote', 'uploading', 'imagelabel', 'removetag', 'pendingtext',
+                'deletepermanent', 'archived', 'restored', 'cleared', 'removefilter']
                 .forEach(function(key, i) {strings[key] = values[i];});
         });
         var region = function(card, name) {return card.querySelector('[data-region="' + name + '"]');};
@@ -61,6 +68,28 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
             });
         };
         var beginMutation = function() {mutation++; if (activeRequest) {activeRequest.abort();}};
+        var archiveStatus = function(message, error) {
+            var node = center.querySelector('[data-region="archive-status"]');
+            if (node) {node.textContent = message; node.classList.toggle('text-danger', !!error);}
+        };
+        var syncCounts = function(response) {
+            [['active-count', 'activecount'], ['archive-count', 'archivecount']].forEach(function(pair) {
+                var node = center.querySelector('[data-region="' + pair[0] + '"]');
+                if (node) {node.textContent = String(response[pair[1]]);}
+            });
+            var clearArchive = center.querySelector('[data-action="empty-archive"]');
+            if (clearArchive) {clearArchive.disabled = clearingArchive || !response.archivecount;}
+        };
+        var announceArchive = function(response, message) {
+            syncCounts(response); archiveStatus(strings[message], false);
+            document.dispatchEvent(new CustomEvent('local_sidenotes:archivechanged', {detail: response}));
+        };
+        var removeCard = function(card) {
+            card.parentElement.remove();
+            var next = results.querySelector('[data-action="toggle-archive"]')
+                || center.querySelector('[data-region="active-view"]');
+            if (next) {next.focus({preventScroll: true});}
+        };
         var run = function(card, action, message) {
             if (stateFor(card).pending) {return Promise.resolve();}
             beginMutation(); busy(card, true);
@@ -95,6 +124,12 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
             // Create a container only: media/tag actions do not implicitly commit a text draft.
             return call('edit_note', {noteid: 0, operation: 'create'}).then(function(note) {
                 card.dataset.noteid = String(note.id);
+                var complete = card.querySelector('[data-action="toggle-archive"]');
+                if (complete) {
+                    complete.hidden = false;
+                    complete.dataset.sidenotesDisabled = 'false';
+                    FilterEvents.notifyFilterContentUpdated([card]);
+                }
                 card.querySelectorAll('[id], label[for]').forEach(function(node) {
                     ['id', 'for'].forEach(function(attr) {
                         if (node.hasAttribute(attr)) {node.setAttribute(attr, node.getAttribute(attr).replace(/-0$/, '-' + note.id));}
@@ -125,8 +160,15 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
                     suggestions.append(new Option(tag.name, tag.name));
                 }
                 var filter = document.getElementById('tagfilter');
-                if (filter && !Array.from(filter.options).some(function(option) {return option.value === String(tag.id);})) {
-                    filter.append(new Option(tag.name, String(tag.id)));
+                if (filter && !Array.from(filter.querySelectorAll('input')).some(function(option) {
+                    return option.value === String(tag.id);
+                })) {
+                    var option = document.createElement('input'); option.type = 'checkbox'; option.name = 'tags[]';
+                    option.value = String(tag.id); option.dataset.name = tag.name;
+                    option.dataset.background = tag.background; option.dataset.foreground = tag.foreground;
+                    var label = document.createElement('label'), caption = document.createElement('span');
+                    caption.textContent = tag.name; label.append(option, caption);
+                    filter.querySelector('.local-plugin-search-bar-tag-options').append(label);
                 }
             });
         };
@@ -192,7 +234,46 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
         center.addEventListener('click', function(event) {
             var button = event.target.closest('[data-action]'); if (!button || button.disabled) {return;}
             var card = button.closest('[data-noteid]'), action = button.dataset.action;
-            if (action === 'add-note') {
+            if (action === 'remove-filter-tag' && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+                event.preventDefault(); beginMutation();
+                var value = button.dataset.filterTag;
+                form.querySelectorAll('[name="tags[]"]').forEach(function(input) {
+                    if (input.value === value) {
+                        if (input.type === 'hidden') {input.remove();} else {input.checked = false;}
+                    }
+                });
+                document.querySelector('#tagfilter summary').focus();
+                submitSearch(searchUrl());
+            } else if (action === 'remove-filter-course' || action === 'remove-filter-search') {
+                event.preventDefault(); beginMutation(); window.clearTimeout(searchTimer);
+                var field = action === 'remove-filter-course' ? document.getElementById('coursefilter') : search;
+                field.value = field === search ? '' : '0'; field.focus();
+                submitSearch(searchUrl());
+            } else if (action === 'toggle-quote') {
+                var expanded = button.getAttribute('aria-expanded') !== 'true';
+                button.setAttribute('aria-expanded', String(expanded));
+                button.closest('blockquote').classList.toggle('local-sidenotes-center__quote--expanded', expanded);
+                button.textContent = expanded ? button.dataset.less : button.dataset.more;
+            } else if (action === 'empty-archive') {
+                if (clearingArchive) {return;}
+                clearingArchive = true; button.disabled = true; beginMutation();
+                var preview;
+                stringsReady.then(function() {return call('manage_archive', {operation: 'preview'});})
+                    .then(function(response) {
+                        preview = response;
+                        if (!preview.archivecount) {return false;}
+                        return Str.get_string('archive:clearconfirm', 'local_sidenotes', preview.archivecount)
+                            .then(function(message) {return new Promise(function(resolve) {
+                                Notification.confirm(strings.confirm, message, strings.delete, strings.cancel,
+                                    function() {resolve(true);}, function() {resolve(false);});
+                            });});
+                    }).then(function(yes) {
+                        if (!yes) {return;}
+                        return call('manage_archive', {operation: 'empty', revision: preview.revision})
+                            .then(function(response) {announceArchive(response, 'cleared');});
+                    }).catch(function(error) {archiveStatus(error.message, true);})
+                    .finally(function() {clearingArchive = false; button.disabled = false; beginMutation(); submitSearch(searchUrl());});
+            } else if (action === 'add-note') {
                 var existing = results.querySelector('[data-noteid="0"]'); if (existing) {openEditor(existing); return;}
                 beginMutation();
                 results.prepend(document.importNode(center.querySelector('[data-region="new-note-template"]').content, true));
@@ -222,13 +303,17 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
                     });}
                 });
             } else if (action === 'delete-note') {
-                confirm('deletenote').then(function(yes) {
+                confirm('deletepermanent').then(function(yes) {
+                    var deleted = false;
                     if (yes) {run(card, function() {
-                        if (!Number(card.dataset.noteid)) {card.parentElement.remove(); return Promise.resolve();}
-                        return call('delete_note', {noteid: Number(card.dataset.noteid)}).then(function() {
-                            card.parentElement.remove(); center.querySelector('[data-action="add-note"]').focus();
+                        if (!Number(card.dataset.noteid)) {card.parentElement.remove(); deleted = true; return Promise.resolve();}
+                        return call('delete_note', {noteid: Number(card.dataset.noteid), expectedarchived: Number(card.dataset.archived || 0)}).then(function() {
+                            removeCard(card);
+                            deleted = true;
+                            document.dispatchEvent(new CustomEvent('local_sidenotes:archivechanged',
+                                {detail: {noteid: Number(card.dataset.noteid), archived: true, removed: true}}));
                         });
-                    });}
+                    }).then(function() {if (deleted) {submitSearch(searchUrl());}});}
                 });
             }
         });
@@ -241,6 +326,24 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
             if (event.target.matches('[data-region="note-text"]')) {grow(event.target);}
         });
         center.addEventListener('change', function(event) {
+            if (event.target.matches('[data-action="toggle-archive"]')) {
+                var archiveInput = event.target, archiveCard = archiveInput.closest('[data-noteid]');
+                var requested = archiveInput.checked, archived = false;
+                run(archiveCard, function() {
+                    var text = region(archiveCard, 'note-text'), state = stateFor(archiveCard);
+                    // Completing an actively edited note commits its text first; failure preserves the draft/card.
+                    var save = requested && state.editing && text && text.value !== state.baseline
+                        ? call('edit_note', {noteid: Number(archiveCard.dataset.noteid), operation: 'content',
+                            content: text.value, expectedcontent: state.baseline}).then(function(note) {state.baseline = note.content;})
+                        : Promise.resolve();
+                    return save.then(function() {return call('manage_archive', {
+                        operation: requested ? 'archive' : 'restore', noteid: Number(archiveCard.dataset.noteid)});
+                    }).then(function(response) {
+                        archived = true; removeCard(archiveCard); announceArchive(response, requested ? 'archived' : 'restored');
+                    }).catch(function(error) {archiveInput.checked = !requested; throw error;});
+                }).then(function() {if (archived) {submitSearch(searchUrl());}});
+                return;
+            }
             if (event.target.matches('input[data-taskline]')) {
                 var checkbox = event.target, taskCard = checkbox.closest('[data-noteid]'), checked = checkbox.checked;
                 run(taskCard, function() {
@@ -307,6 +410,10 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
                         if (duplicate) {duplicate.parentElement.remove();}
                     });
                     var focused = document.activeElement;
+                    var focusCard = focused && focused.closest('[data-noteid]');
+                    var focusNoteid = focusCard ? Number(focusCard.dataset.noteid) : null;
+                    var focusAction = focused && focused.dataset.action;
+                    var focusRegion = focused && focused.dataset.region;
                     var selection = focused && typeof focused.selectionStart === 'number'
                         ? [focused.selectionStart, focused.selectionEnd] : null;
                     var wrapper = focused && focused.closest('[data-sidenotes-editor]');
@@ -317,17 +424,34 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
                     columns.forEach(function(column) {column.remove();});
                     var incoming = Array.from(nextResults.children);
                     results.replaceChildren.apply(results, columns.concat(incoming));
+                    updateQuotes();
                     // Native Moodle/Bootstrap initialisation also applies to newly loaded search cards.
                     FilterEvents.notifyFilterContentUpdated(incoming);
-                    if (focused && focused.isConnected) {
-                        focused.focus({preventScroll: true}); if (selection) {focused.setSelectionRange(selection[0], selection[1]);}
-                        if (richSelection) {rich.editor.chain().setTextSelection(richSelection).focus().run();}
-                    }
-                    ['sidenotes-pagination', 'sidenotes-exports'].forEach(function(name) {
+                    ['sidenotes-pagination', 'sidenotes-exports', 'archive-navigation'].forEach(function(name) {
                         var current = center.querySelector('[data-region="' + name + '"]');
                         var updated = next.querySelector('[data-region="' + name + '"]');
-                        if (updated) {current.innerHTML = updated.innerHTML; current.hidden = updated.hidden;}
+                        if (updated && current) {current.innerHTML = updated.innerHTML; current.hidden = updated.hidden;}
                     });
+                    var emptyArchive = center.querySelector('[data-action="empty-archive"]');
+                    var nextEmpty = next.querySelector('[data-action="empty-archive"]');
+                    if (emptyArchive && nextEmpty) {emptyArchive.disabled = nextEmpty.disabled;}
+                    var focusTarget = focused && focused.isConnected ? focused : null;
+                    if (!focusTarget && focusAction) {
+                        var scope = focusNoteid !== null ? results.querySelector('[data-noteid="' + focusNoteid + '"]') : center;
+                        if (scope) {focusTarget = Array.from(scope.querySelectorAll('[data-action]')).find(function(control) {
+                            return control.dataset.action === focusAction;
+                        });}
+                    }
+                    if (!focusTarget && focusRegion) {
+                        focusTarget = Array.from(center.querySelectorAll('[data-region]')).find(function(node) {
+                            return node.dataset.region === focusRegion;
+                        });
+                    }
+                    if (focusTarget) {
+                        focusTarget.focus({preventScroll: true});
+                        if (selection && focusTarget === focused) {focusTarget.setSelectionRange(selection[0], selection[1]);}
+                        if (richSelection) {rich.editor.chain().setTextSelection(richSelection).focus().run();}
+                    }
                     window.history.replaceState({}, '', url);
                 }).catch(function(error) {
                     // Never navigate on a fetch error: that would discard the local draft.
@@ -339,22 +463,98 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
         var searchUrl = function() {
             var url = new URL(form.action, window.location.href);
             new FormData(form).forEach(function(value, name) {
-                if (String(value).trim() && String(value) !== '0') {url.searchParams.set(name, String(value).trim());}
-            }); return url.toString();
+                if (String(value).trim() && String(value) !== '0') {url.searchParams.append(name, String(value).trim());}
+            });
+            updateFilterChips(url);
+            return url.toString();
         };
-        search.addEventListener('input', function() {
+        var updateFilterChips = function(url) {
+            var chip = function(container, label, action, removed, input) {
+                var link = document.createElement('a'); link.className = 'badge badge-light';
+                link.href = removed.toString(); link.dataset.action = action;
+                var caption = document.createElement('span'); caption.className = 'local-plugin-search-bar-chip-label';
+                caption.textContent = label;
+                var cross = document.createElement('span'); cross.className = 'local-plugin-search-bar-chip-remove';
+                cross.textContent = '×'; cross.setAttribute('aria-hidden', 'true');
+                if (input) {
+                    link.dataset.filterTag = input.value;
+                    link.style.setProperty('--search-bar-chip-bg', input.dataset.background || '#e9ecef');
+                    link.style.setProperty('--search-bar-chip-fg', input.dataset.foreground || '#000000');
+                }
+                stringsReady.then(function() {link.setAttribute('aria-label', strings.removefilter.replace('__TAG__', label));});
+                link.append(caption, cross); container.append(link);
+            };
+            var tagChips = form.querySelector('[data-region="filter-chips"]');
+            if (tagChips) {
+                tagChips.replaceChildren();
+                var selected = Array.from(form.querySelectorAll('[name="tags[]"]')).filter(function(input) {
+                    return input.checked || input.type === 'hidden';
+                });
+                selected.forEach(function(input) {
+                    var removed = new URL(url); removed.searchParams.delete('tags[]');
+                    selected.filter(function(other) {return other !== input;}).forEach(function(other) {
+                        removed.searchParams.append('tags[]', other.value);
+                    });
+                    chip(tagChips, input.dataset.name, 'remove-filter-tag', removed, input);
+                });
+                var count = document.getElementById('tagfilter-count');
+                count.textContent = selected.length ? count.dataset.selected.replace('{$a}', String(selected.length)) : count.dataset.alltags;
+            }
+            var course = document.getElementById('coursefilter'), courseChips = form.querySelector('[data-region="course-chips"]');
+            courseChips.replaceChildren();
+            if (course.value !== '0') {
+                var removedCourse = new URL(url); removedCourse.searchParams.delete('coursefilter');
+                chip(courseChips, course.selectedOptions[0].textContent, 'remove-filter-course', removedCourse);
+            }
+            var textChips = form.querySelector('[data-region="search-chips"]'); textChips.replaceChildren();
+            if (search.value.trim()) {
+                var removedSearch = new URL(url); removedSearch.searchParams.delete('searchterm');
+                chip(textChips, search.value.trim(), 'remove-filter-search', removedSearch);
+            }
+            clear.hidden = !search.value.trim();
+        };
+        var scheduleSearch = function() {
+            beginMutation();
             clear.hidden = !search.value.trim(); window.clearTimeout(searchTimer);
-            searchTimer = window.setTimeout(function() {submitSearch(searchUrl());}, 400);
-        });
+            searchUrl();
+            if (!composing) {searchTimer = window.setTimeout(function() {submitSearch(searchUrl());}, 300);}
+        };
+        search.addEventListener('input', scheduleSearch);
+        search.addEventListener('compositionstart', function() {composing = true; beginMutation(); window.clearTimeout(searchTimer);});
+        search.addEventListener('compositionend', function() {composing = false; scheduleSearch();});
         clear.addEventListener('click', function() {
-            window.clearTimeout(searchTimer); search.value = ''; clear.hidden = true; submitSearch(searchUrl()); search.focus();
+            beginMutation(); window.clearTimeout(searchTimer); search.value = ''; clear.hidden = true; submitSearch(searchUrl()); search.focus();
         });
         form.addEventListener('submit', function(event) {
-            event.preventDefault(); window.clearTimeout(searchTimer); submitSearch(searchUrl());
+            event.preventDefault(); if (composing) {return;} window.clearTimeout(searchTimer); submitSearch(searchUrl());
         });
-        form.querySelectorAll('select').forEach(function(select) {
-            select.addEventListener('change', function() {window.clearTimeout(searchTimer); submitSearch(searchUrl());});
+        form.addEventListener('change', function(event) {
+            if (!event.target.matches('select, input[type="checkbox"][name="tags[]"]')) {return;}
+            beginMutation(); window.clearTimeout(searchTimer); submitSearch(searchUrl());
         });
+        var tagMenu = document.getElementById('tagfilter');
+        document.addEventListener('click', function(event) {
+            if (tagMenu && !tagMenu.contains(event.target)) {tagMenu.open = false;}
+        });
+        if (tagMenu) {tagMenu.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {tagMenu.open = false; tagMenu.querySelector('summary').focus();}
+        });}
+        var updateQuotes = function() {
+            center.querySelectorAll('.local-sidenotes-center__quote').forEach(function(quote) {
+                var text = quote.querySelector('.local-sidenotes-center__quote-text');
+                var button = quote.querySelector('[data-action="toggle-quote"]');
+                if (!text || !button || !text.offsetWidth) {return;}
+                var line = parseFloat(window.getComputedStyle(text).lineHeight);
+                button.hidden = text.scrollHeight <= line * 3 + 1;
+                quote.classList.toggle('local-sidenotes-center__quote--collapsible', !button.hidden);
+                if (button.hidden) {
+                    quote.classList.remove('local-sidenotes-center__quote--expanded');
+                    button.setAttribute('aria-expanded', 'false'); button.textContent = button.dataset.more;
+                }
+            });
+        };
+        searchUrl(); updateQuotes();
+        if (document.fonts) {document.fonts.ready.then(updateQuotes);}
         center.addEventListener('click', function(event) {
             var link = event.target.closest('[data-region="sidenotes-pagination"] a');
             if (link && !event.ctrlKey && !event.metaKey && !event.shiftKey) {event.preventDefault(); submitSearch(link.href);}
@@ -365,6 +565,8 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents) {
                 return state.pending || (state.editing && region(card, 'note-text').value !== state.baseline);
             }); if (unsaved) {event.preventDefault(); event.returnValue = '';}
         });
-        window.addEventListener('resize', function() {results.querySelectorAll('[data-region="note-text"]').forEach(grow);});
+        window.addEventListener('resize', function() {
+            results.querySelectorAll('[data-region="note-text"]').forEach(grow); updateQuotes();
+        });
     }};
 });

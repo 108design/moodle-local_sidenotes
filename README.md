@@ -11,6 +11,8 @@ administrator mode for notes elsewhere on the site.
 - Page notes, notes shown throughout a course, and personal notes kept in the overview.
 - A visual Markdown editor with headings, bold, italic, lists and clickable checklists.
 - Private coloured tags for organising and finding notes.
+- Complete notes with a header checkbox; restore them from a personal archive or permanently delete them.
+- Combine multiple tag filters: selected tags appear as chips and all must match.
 - Screenshots pasted into notes, with controls to remove them again.
 - Markdown and PDF downloads.
 
@@ -20,7 +22,7 @@ does not make other users' notes visible to administrators.
 ## Installation
 
 Requires Moodle 4.2 or later and its corresponding PHP and database requirements.
-The current release is **1.4.1**. Check the notes interface with your site's theme
+The current release is **1.6.0**. Check the notes interface with your site's theme
 before enabling it for learners.
 
 1. Install the plugin as `local/sidenotes` below Moodle's plugin directory.
@@ -36,6 +38,15 @@ Paste a screenshot into the note to attach it.
 Use the notes overview to search, filter by course or tag, edit notes, and export
 them. The **Show on every page** option makes a course note available throughout
 that course; its source link still takes you back to the original page.
+
+Check the box in a note's header to mark it complete and move it to **Archive**.
+Archived notes no longer appear in the drawer or active results; their text, source,
+tags and images are preserved. Uncheck the same box in the archive to restore a note.
+The archive has the same live search and course/tag filters, with its own remembered criteria.
+Select multiple tags with the checkboxes; notes must match every selected tag. Removable chips
+appear beneath their corresponding field. Long quotes initially show three lines; More/Less
+expands or collapses them without changing the saved quote. **Empty archive** permanently
+deletes all your archived notes and their images after confirmation, regardless of the current filters.
 
 ## Student mode and optional administrator mode
 

@@ -26,6 +26,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    'local_sidenotes_manage_archive' => [
+        'classname' => 'local_sidenotes\\external\\manage_archive', 'methodname' => 'execute',
+        'description' => 'Archive/restore owned notes or empty a confirmed private archive snapshot.',
+        'type' => 'write', 'ajax' => true, 'loginrequired' => true,
+    ],
     'local_sidenotes_manage_tags' => [
         'classname' => 'local_sidenotes\\external\\manage_tags', 'methodname' => 'execute',
         'description' => 'Manage the current owner private tag instances and colour preferences.',
@@ -85,6 +90,7 @@ $functions = [
 $services = [
     'Local sidenotes AJAX services' => [
         'functions' => [
+            'local_sidenotes_manage_archive',
             'local_sidenotes_manage_tags',
             'local_sidenotes_edit_note',
             'local_sidenotes_save_note',
