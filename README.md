@@ -5,6 +5,78 @@ add your own thoughts, organise notes with coloured tags, and return to the orig
 page when you need it. Side Notes supports learners' course notes and an optional
 administrator mode for notes elsewhere on the site.
 
+## Screenshots
+
+<details>
+<summary>View screenshots (12)</summary>
+
+Click a preview to open the full-size screenshot.
+
+<table>
+<tr>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-sidebar.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-sidebar.jpg" width="240" height="160" alt="Private notes alongside Moodle content"></a><br>
+<sub>Private notes alongside Moodle content</sub>
+</td>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-center.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-center.jpg" width="300" height="113" alt="Searchable notes overview"></a><br>
+<sub>Searchable notes overview</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-sidebar-new.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-sidebar-new.jpg" width="162" height="160" alt="Create a note in the drawer"></a><br>
+<sub>Create a note in the drawer</sub>
+</td>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-new-overview.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-new-overview.jpg" width="300" height="144" alt="Create a note in the overview"></a><br>
+<sub>Create a note in the overview</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-add-quote.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-add-quote.jpg" width="208" height="160" alt="Save a quotation from selected text"></a><br>
+<sub>Save a quotation from selected text</sub>
+</td>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-mdpg.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-mdpg.jpg" width="93" height="160" alt="Markdown formatting and checklists"></a><br>
+<sub>Markdown formatting and checklists</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-tag-filter.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-tag-filter.jpg" width="254" height="160" alt="Combine private tag filters"></a><br>
+<sub>Combine private tag filters</sub>
+</td>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-manage-tags.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-manage-tags.jpg" width="300" height="127" alt="Manage private tags and colours"></a><br>
+<sub>Manage private tags and colours</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-archive.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-archive.jpg" width="199" height="160" alt="Complete and restore archived notes"></a><br>
+<sub>Complete and restore archived notes</sub>
+</td>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-quote-collapsed.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-quote-collapsed.jpg" width="142" height="160" alt="Compact previews of long quotations"></a><br>
+<sub>Compact previews of long quotations</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-quote-expanded.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-quote-expanded.jpg" width="146" height="160" alt="Expand a quotation to read it in full"></a><br>
+<sub>Expand a quotation to read it in full</sub>
+</td>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-settings.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/screenshots/side-notes-settings.jpg" width="300" height="140" alt="Configure course use and optional administrator mode"></a><br>
+<sub>Configure course use and optional administrator mode</sub>
+</td>
+</tr>
+</table>
+
+</details>
+
 ## Features
 
 - A notes drawer alongside course pages and a searchable notes overview.
