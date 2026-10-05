@@ -161,6 +161,8 @@ Original authorship and copyright notices are retained.
 
 ## License
 
+**Available free of charge under the terms of the applicable license.**
+
 GNU General Public License version 3 or later. See [LICENSE.md](LICENSE.md) for the full terms.
 Bundled dependencies retain the licences listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
