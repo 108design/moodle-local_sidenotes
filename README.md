@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/branding/logo.svg" alt="Side Notes logo" width="443" height="443">
+  <img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/branding/logo.svg" alt="Side Notes logo" width="125" height="125">
 </p>
 
 # Side Notes for Moodle
