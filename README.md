@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/108design/moodle-local_sidenotes/main/docs/branding/logo.svg" alt="Side Notes logo" width="443" height="443">
+</p>
+
 # Side Notes for Moodle
 
 Keep private notes alongside Moodle course content. Save a quotation while reading,
