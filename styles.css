@@ -50,15 +50,15 @@
 }
 
 .local-sidenotes__toggle {
-    position: fixed;
-    top: 50%;
+    position: absolute;
+    top: 0;
     right: 0;
     bottom: auto;
-    z-index: 1020;
+    z-index: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 3.5rem;
+    width: var(--local-sidenotes-grip-size, 3.5rem);
     height: auto;
     aspect-ratio: 1;
     border: 0;
@@ -67,7 +67,7 @@
     color: #fff;
     font-size: 1.25rem;
     box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.2);
-    transform: translate(50%, -50%);
+    transform: translateX(50%);
     overflow: hidden;
     transition: transform .18s ease, filter .18s ease;
 }
@@ -100,7 +100,7 @@
 .local-sidenotes__toggle:focus-visible {
     filter: brightness(0.95);
     color: #fff;
-    transform: translate(25%, -50%);
+    transform: translateX(25%);
 }
 
 .local-sidenotes__toggle:focus-visible {
@@ -1102,4 +1102,76 @@
 @container (min-width: 42rem) {
     .local-sidenotes-center__filter-row {grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr);}
     .local-sidenotes-center__filter-row:not(:has(#tagfilter)) {grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);}
+}
+
+/* Right-edge overview shortcut above the primary notes grip. */
+.local-sidenotes__edge-actions {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    width: var(--local-sidenotes-grip-size, 3.5rem);
+    height: var(--local-sidenotes-grip-size, 3.5rem);
+    transform: translateY(-50%);
+    z-index: 1046;
+    pointer-events: none;
+}
+.local-sidenotes.is-open .local-sidenotes__edge-actions { z-index: 1046; }
+.local-sidenotes__toggle { pointer-events: auto; }
+.local-sidenotes__overview {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + .5rem);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: auto;
+    aspect-ratio: 1;
+    border-radius: 50% 0 0 50%;
+    background: var(--bs-primary, var(--primary));
+    color: #fff;
+    font-size: 1rem;
+    box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .15);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(50%);
+    transition: transform .18s ease, opacity .18s ease;
+}
+.local-sidenotes__edge-actions:hover .local-sidenotes__overview,
+.local-sidenotes__edge-actions:focus-within .local-sidenotes__overview,
+.local-sidenotes.is-open .local-sidenotes__overview {
+    opacity: 1;
+    pointer-events: auto;
+}
+.local-sidenotes__overview > i { opacity: .5; transition: opacity .18s ease; }
+.local-sidenotes__overview:is(:hover, :focus-visible) {
+    color: #fff;
+    filter: brightness(.95);
+    transform: translateX(25%);
+}
+.local-sidenotes__overview:is(:hover, :focus-visible) > i { opacity: 1; }
+.local-sidenotes__overview:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+@media (prefers-reduced-motion: reduce) {
+    .local-sidenotes__overview, .local-sidenotes__overview > i { transition: none; }
+}
+
+/* Keep the hover path connected between the two controls. */
+.local-sidenotes__edge-actions::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    width: 2.5rem;
+    height: .5rem;
+    pointer-events: auto;
+}
+
+/* Closed panel: move both controls together and retain the connected hover path. */
+.local-sidenotes:not(.is-open) .local-sidenotes__edge-actions:is(:hover, :focus-within)
+    :is(.local-sidenotes__toggle, .local-sidenotes__overview) {
+    transform: translateX(25%);
+}
+.local-sidenotes:not(.is-open) .local-sidenotes__edge-actions:is(:hover, :focus-within)
+    :is(.local-sidenotes__toggle-icon--edit, .local-sidenotes__overview > i) {
+    opacity: 1;
 }

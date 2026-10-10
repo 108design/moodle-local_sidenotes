@@ -59,6 +59,7 @@
     data-previewlabel="{{previewlabel}}"
     data-tagsenabled="{{tagsenabled}}"
 >
+    <div class="local-sidenotes__edge-actions">
     <button
         type="button"
         class="local-sidenotes__toggle"
@@ -75,6 +76,12 @@
             {{#pix}} e/cancel, core {{/pix}}
         </span>
     </button>
+    <a href="{{config.wwwroot}}/local/sidenotes/view.php" class="local-sidenotes__overview"
+        target="_blank" rel="noopener" title="{{#str}} overviewshortcut, local_sidenotes {{/str}}"
+        aria-label="{{#str}} overviewshortcut, local_sidenotes {{/str}}">
+        <i class="fa-solid fa-folder" aria-hidden="true"></i>
+    </a>
+    </div>
 
     <aside
         id="local-sidenotes-panel"
@@ -183,10 +190,5 @@
             </article>
         </template>
 
-        <div class="local-sidenotes__footer mt-3 pt-3 border-top text-center">
-            <a href="{{config.wwwroot}}/local/sidenotes/view.php" class="btn btn-link">
-                {{#str}} viewnotescenter, local_sidenotes {{/str}}
-            </a>
-        </div>
     </aside>
 </div>

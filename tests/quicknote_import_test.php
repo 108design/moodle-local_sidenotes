@@ -50,7 +50,7 @@ final class quicknote_import_test extends \advanced_testcase {
     }
 
     public function test_product_name_is_never_translated(): void {
-        $this->assertSame('SideNotes', get_string_manager()->get_string('pluginname', 'local_sidenotes', null, 'en'));
-        $this->assertSame('SideNotes', get_string_manager()->get_string('pluginname', 'local_sidenotes', null, 'de'));
+        $this->assertSame('Side Notes', get_string_manager()->get_string('pluginname', 'local_sidenotes', null, 'en'));
+        $this->assertSame('Side Notes', get_string_manager()->get_string('pluginname', 'local_sidenotes', null, 'de'));
     }
 }
