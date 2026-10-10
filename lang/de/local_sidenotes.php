@@ -171,4 +171,4 @@ $string['image:error'] = 'Das Bild konnte nicht geladen werden.';
 $string['image:gallery'] = 'Screenshots der Notiz';
 $string['image:thumbnail'] = 'Bild {$a} anzeigen';
 
-$string['overviewshortcut'] = 'Notizübersicht öffnen (neuer Tab)';
+$string['overviewshortcut'] = 'Notizübersicht öffnen';

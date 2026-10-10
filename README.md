@@ -98,7 +98,7 @@ does not make other users' notes visible to administrators.
 ## Installation
 
 Requires Moodle 4.2 or later and its corresponding PHP and database requirements.
-The current release is **1.13.0**. Check the notes interface with your site's theme
+The current release is **1.13.1**. Check the notes interface with your site's theme
 before enabling it for learners.
 
 1. Install the plugin as `local/sidenotes` below Moodle's plugin directory.
@@ -108,7 +108,7 @@ before enabling it for learners.
 ## Using Side Notes
 
 Use the right-edge tab to open or close the notes panel while viewing a course page.
-The adjacent folder tab opens your notes overview in a new browser tab. The panel
+The adjacent folder tab opens your notes overview in the same browser tab. The panel
 always opens on the right; there is no left-side placement setting. Select a passage to save it as
 a quotation, or create a note and enter your own text. Changes are saved as you edit.
 Paste a screenshot into the note to attach it.

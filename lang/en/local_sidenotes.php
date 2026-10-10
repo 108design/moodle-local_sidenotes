@@ -181,4 +181,4 @@ $string['image:error'] = 'The image could not be loaded.';
 $string['image:gallery'] = 'Note screenshots';
 $string['image:thumbnail'] = 'Show image {$a}';
 
-$string['overviewshortcut'] = 'Open notes overview (new tab)';
+$string['overviewshortcut'] = 'Open notes overview';
