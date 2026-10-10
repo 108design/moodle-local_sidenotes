@@ -34,18 +34,6 @@ if ($hassiteconfig) {
             get_string('settings:' . $name . '_desc', 'local_sidenotes'), $default));
     }
 
-    // Adds position option.
-    $settings->add(new admin_setting_configselect(
-        'local_sidenotes/position',
-        get_string('position', 'local_sidenotes'),
-        get_string('position_desc', 'local_sidenotes'),
-        'right',
-        [
-            'right' => get_string('position_right', 'local_sidenotes'),
-            'left'  => get_string('position_left', 'local_sidenotes'),
-        ]
-    ));
-
     // Adds notes per page option.
     $settings->add(new admin_setting_configselect(
         'local_sidenotes/perpage',

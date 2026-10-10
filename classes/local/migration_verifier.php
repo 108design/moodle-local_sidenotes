@@ -64,7 +64,7 @@ final class migration_verifier {
             }
             $counts['screenshots'] += count($oldfiles);
         }
-        foreach (['courseenabled', 'coursedefault', 'sitewideenabled', 'position', 'perpage'] as $key) {
+        foreach (['courseenabled', 'coursedefault', 'sitewideenabled', 'perpage'] as $key) {
             $value = get_config('local_quicknote', $key);
             if ($value !== false && $value !== get_config('local_sidenotes', $key)) {
                 throw new \coding_exception('Migration setting mismatch: ' . $key);

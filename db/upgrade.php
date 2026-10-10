@@ -25,5 +25,10 @@ function xmldb_local_sidenotes_upgrade(int $oldversion): bool {
         // UI/session-state changes only. Stored notes and archive membership stay untouched.
         upgrade_plugin_savepoint(true, 2026100402, 'local', 'sidenotes');
     }
+    if ($oldversion < 2026101000) {
+        // The panel now always opens on the right, clear only the retired placement option.
+        unset_config('position', 'local_sidenotes');
+        upgrade_plugin_savepoint(true, 2026101000, 'local', 'sidenotes');
+    }
     return true;
 }

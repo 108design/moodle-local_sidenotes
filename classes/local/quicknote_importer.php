@@ -58,7 +58,7 @@ final class quicknote_importer {
                 foreach (['notes', 'skipped', 'screenshots', 'tags'] as $key) {$result[$key] += $copied[$key];}
                 $result['users']++;
             }
-            foreach (['courseenabled', 'coursedefault', 'sitewideenabled', 'position', 'perpage'] as $key) {
+            foreach (['courseenabled', 'coursedefault', 'sitewideenabled', 'perpage'] as $key) {
                 $value = get_config('local_quicknote', $key);
                 if ($value !== false) {set_config($key, $value, 'local_sidenotes');}
             }

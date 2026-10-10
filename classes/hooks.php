@@ -94,17 +94,10 @@ class hooks {
             'pagetitle' => $pagetitle,
         ]]);
 
-        $position = get_config('local_sidenotes', 'position');
-        if (empty($position)) {
-            $position = 'right';
-        }
-        $positionclass = 'local-sidenotes--' . $position;
-
         $html = $OUTPUT->render_from_template('local_sidenotes/sidebar', [
             'courseid' => $courseid,
             'pageurl' => $pageurl,
             'pagetitle' => $pagetitle,
-            'positionclass' => $positionclass,
             'hasquote' => false,
             'quotetext' => '',
             'title' => get_string('sidebar:title', 'local_sidenotes'),
