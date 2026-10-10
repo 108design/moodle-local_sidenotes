@@ -96,11 +96,6 @@
     opacity: .5;
 }
 
-.local-sidenotes.is-open .local-sidenotes__toggle {
-    visibility: hidden;
-    pointer-events: none;
-}
-
 .local-sidenotes__toggle:hover,
 .local-sidenotes__toggle:focus-visible {
     filter: brightness(0.95);
@@ -115,6 +110,19 @@
 
 .local-sidenotes__toggle:hover .local-sidenotes__toggle-icon--edit,
 .local-sidenotes__toggle:focus-visible .local-sidenotes__toggle-icon--edit {
+    opacity: 1;
+}
+
+.local-sidenotes.is-open .local-sidenotes__toggle .local-sidenotes__toggle-icon--edit {
+    opacity: 0;
+}
+
+.local-sidenotes.is-open .local-sidenotes__toggle-icon--close {
+    opacity: .5;
+}
+
+.local-sidenotes.is-open .local-sidenotes__toggle:hover .local-sidenotes__toggle-icon--close,
+.local-sidenotes.is-open .local-sidenotes__toggle:focus-visible .local-sidenotes__toggle-icon--close {
     opacity: 1;
 }
 
