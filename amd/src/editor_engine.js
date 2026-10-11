@@ -28211,6 +28211,33 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 
   // plugins/local/sidenotes/editor/entry.js
   var Tasks = TaskItem.extend({
+    addNodeView() {
+      const parent = this.parent();
+      return (props) => {
+        const nodeView = parent(props);
+        const label = nodeView.dom.querySelector("label");
+        const checkbox = label.querySelector('input[type="checkbox"]');
+        label.addEventListener("click", (event) => {
+          if (event.target !== checkbox) {
+            return;
+          }
+          event.stopPropagation();
+          const { editor, getPos } = props;
+          const position = typeof getPos === "function" ? getPos() : void 0;
+          if (editor.isEditable && typeof position === "number") {
+            const node = editor.state.doc.nodeAt(position);
+            if ((node == null ? void 0 : node.type.name) === this.name) {
+              editor.view.dispatch(editor.state.tr.setNodeAttribute(position, "checked", !node.attrs.checked));
+            }
+          }
+          checkbox.checked = nodeView.dom.dataset.checked === "true";
+        }, true);
+        label.addEventListener("change", (event) => {
+          event.stopPropagation();
+        }, true);
+        return nodeView;
+      };
+    },
     addInputRules() {
       return [new InputRule({
         find: /^\s*(?:-\s)?\[( |x|X)\]\s$/,
