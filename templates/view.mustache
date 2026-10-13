@@ -55,11 +55,14 @@
     }
 }}
 
-<div class="local-sidenotes-center" data-archive="{{#archive}}1{{/archive}}{{^archive}}0{{/archive}}">
+<div class="local-sidenotes-center" data-archive="{{#archive}}1{{/archive}}{{^archive}}0{{/archive}}" data-bulkmax="{{bulkmax}}" data-totalcount="{{totalcount}}" data-sesskey="{{sesskey}}">
     <div class="local-sidenotes-center__managerbar" data-region="archive-navigation">
         {{> local_sidenotes/navigation }}
     </div>
     <div class="local-sidenotes-center__top-actions mb-3">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="selection-mode" aria-pressed="false">
+            <i class="fa fa-check-square-o mr-1" aria-hidden="true"></i>{{#str}} bulk:select, local_sidenotes {{/str}}
+        </button>
         {{#archive}}<button type="button" class="btn btn-outline-danger btn-sm" data-action="empty-archive" {{^canemptyarchive}}disabled{{/canemptyarchive}}>
             <i class="fa fa-trash mr-1" aria-hidden="true"></i>{{#str}} archive:clear, local_sidenotes {{/str}}
         </button>{{/archive}}
@@ -73,6 +76,38 @@
                 {{/hasnotes}}
             </div>
         </div>
+    </div>
+    <div class="local-sidenotes-center__bulkbar mb-3" data-region="bulkbar" hidden>
+        <div class="local-sidenotes-center__bulk-selection">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-action="select-visible"><i class="fa fa-check-square-o mr-1" aria-hidden="true"></i>{{#str}} bulk:visible, local_sidenotes {{/str}}</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-action="select-filtered" data-template="{{#str}} bulk:filtered, local_sidenotes, __COUNT__ {{/str}}"><i class="fa fa-check-square mr-1" aria-hidden="true"></i><span data-region="select-filtered-label">{{#str}} bulk:filtered, local_sidenotes, {{totalcount}} {{/str}}</span></button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-action="clear-selection"><i class="fa fa-times mr-1" aria-hidden="true"></i>{{#str}} bulk:clear, local_sidenotes {{/str}}</button>
+        </div>
+        <div class="local-sidenotes-center__bulk-actions">
+            <span class="small local-sidenotes-center__selection-count" data-region="selection-count" role="status" aria-live="polite" data-template="{{#str}} bulk:count, local_sidenotes, __COUNT__ {{/str}}"></span>
+            <label class="sr-only" for="sidenotes-bulk-action">{{#str}} bulk:action, local_sidenotes {{/str}}</label>
+            <select class="custom-select form-select form-control-sm" id="sidenotes-bulk-action" data-region="bulk-action">
+                <option value="">{{#str}} bulk:action, local_sidenotes {{/str}}</option>
+                {{#archive}}
+                <option value="restore">{{#str}} archive:restore, local_sidenotes {{/str}}</option>
+                <option value="delete">{{#str}} archive:delete, local_sidenotes {{/str}}</option>
+                {{/archive}}
+                {{^archive}}
+                <option value="archive">{{#str}} archive:complete, local_sidenotes {{/str}}</option>
+                {{#tagsenabled}}
+                <option value="addtags">{{#str}} bulk:addtags, local_sidenotes {{/str}}</option>
+                <option value="removetags">{{#str}} bulk:removetags, local_sidenotes {{/str}}</option>
+                {{/tagsenabled}}
+                <option value="globalon">{{#str}} bulk:globalon, local_sidenotes {{/str}}</option>
+                <option value="globaloff">{{#str}} bulk:globaloff, local_sidenotes {{/str}}</option>
+                {{/archive}}
+                <option value="exportmd">{{exportmd}}</option><option value="exportpdf">{{exportpdf}}</option>
+            </select>
+            <label class="sr-only" for="sidenotes-bulk-tag">{{#str}} tags, local_sidenotes {{/str}}</label>
+            <input type="text" id="sidenotes-bulk-tag" class="form-control form-control-sm" data-region="bulk-tag" list="sidenotes-private-tags" maxlength="100" hidden placeholder="{{#str}} bulk:tag, local_sidenotes {{/str}}">
+            <button type="button" class="btn btn-primary btn-sm" data-action="apply-bulk" disabled><i class="fa fa-check mr-1" aria-hidden="true"></i>{{#str}} bulk:apply, local_sidenotes {{/str}}</button>
+        </div>
+        <small class="text-muted">{{#str}} bulk:hint, local_sidenotes {{/str}}</small>
     </div>
     <div class="small mb-3" data-region="archive-status" role="status" aria-live="polite"></div>
     {{#quicknoteimports}}

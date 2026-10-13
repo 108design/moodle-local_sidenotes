@@ -6,10 +6,15 @@
 <div class="col-12 col-md-6 col-xl-4 mb-4" data-region="sidenotes-card-column">
     <article class="card h-100 shadow-sm" data-noteid="{{id}}" data-canedit="{{#canedit}}1{{/canedit}}" data-archived="{{#archived}}1{{/archived}}{{^archived}}0{{/archived}}">
         <div class="card-header local-sidenotes-center__card-header">
+            <input type="checkbox" class="local-sidenotes-center__select" data-action="select-note" hidden
+                aria-label="{{#str}} bulk:selectnote, local_sidenotes, {{coursefullname}} {{/str}}">
             <span class="local-sidenotes-center__title" title="{{coursefullname}}">{{coursefullname}}</span>
             <div class="local-sidenotes-center__header-actions">
                 <span class="badge badge-primary bg-primary text-bg-primary" data-region="global-badge" {{^isglobal}}hidden{{/isglobal}}>{{#str}} note:globalbadge, local_sidenotes {{/str}}</span>
-                <input type="checkbox" class="form-check-input local-sidenotes-center__complete" data-action="toggle-archive" {{^canarchive}}hidden disabled{{/canarchive}} {{#archived}}checked{{/archived}} title="{{#archived}}{{#str}} archive:restore, local_sidenotes {{/str}}{{/archived}}{{^archived}}{{#str}} archive:complete, local_sidenotes {{/str}}{{/archived}}" aria-label="{{#archived}}{{#str}} archive:restore, local_sidenotes {{/str}}{{/archived}}{{^archived}}{{#str}} archive:complete, local_sidenotes {{/str}}{{/archived}}" data-toggle="tooltip" data-placement="top" data-bs-toggle="tooltip" data-bs-placement="top">
+                <label class="local-sidenotes-center__complete" {{^canarchive}}hidden{{/canarchive}} title="{{#archived}}{{#str}} archive:restore, local_sidenotes {{/str}}{{/archived}}{{^archived}}{{#str}} archive:complete, local_sidenotes {{/str}}{{/archived}}" data-toggle="tooltip" data-placement="top" data-bs-toggle="tooltip" data-bs-placement="top">
+                    <input type="checkbox" class="local-sidenotes-center__complete-input" data-action="toggle-archive" {{^canarchive}}hidden disabled{{/canarchive}} {{#archived}}checked{{/archived}} aria-label="{{#archived}}{{#str}} archive:restore, local_sidenotes {{/str}}{{/archived}}{{^archived}}{{#str}} archive:complete, local_sidenotes {{/str}}{{/archived}}">
+                    <i class="fa fa-check" aria-hidden="true"></i>
+                </label>
             </div>
         </div>
         <div class="local-sidenotes-center__tagstrip">

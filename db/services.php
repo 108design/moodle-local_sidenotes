@@ -26,6 +26,16 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    'local_sidenotes_manage_bulk' => [
+        'classname' => 'local_sidenotes\\external\\manage_bulk', 'methodname' => 'execute',
+        'description' => 'Select and apply guarded owner-private batch operations.',
+        'type' => 'write', 'ajax' => true, 'loginrequired' => true,
+    ],
+    'local_sidenotes_set_shortcut' => [
+        'classname' => 'local_sidenotes\\external\\set_shortcut', 'methodname' => 'execute',
+        'description' => 'Set the current owner personal keyboard shortcut preference.',
+        'type' => 'write', 'ajax' => true, 'loginrequired' => true,
+    ],
     'local_sidenotes_manage_archive' => [
         'classname' => 'local_sidenotes\\external\\manage_archive', 'methodname' => 'execute',
         'description' => 'Archive/restore owned notes or empty a confirmed private archive snapshot.',
@@ -90,6 +100,8 @@ $functions = [
 $services = [
     'Local sidenotes AJAX services' => [
         'functions' => [
+            'local_sidenotes_manage_bulk',
+            'local_sidenotes_set_shortcut',
             'local_sidenotes_manage_archive',
             'local_sidenotes_manage_tags',
             'local_sidenotes_edit_note',

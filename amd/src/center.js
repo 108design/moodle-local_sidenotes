@@ -19,6 +19,13 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
         var results = center.querySelector('[data-region="sidenotes-results"]');
         var states = new WeakMap(), activeRequest = null, searchTimer = null, mutation = 0, strings = {};
         var composing = false, clearingArchive = false;
+        // Multi-selection / Shift-click concepts: QuickNote 0.12/0.13, Matheus Mathias.
+        // Independently implemented around Side Notes' existing draft/archive policy.
+        var selected = new Set(), selecting = false, bulkPending = false, selectionAnchor = null, selectionEpoch = 0;
+        var bulkbar = center.querySelector('[data-region="bulkbar"]');
+        var bulkAction = center.querySelector('[data-region="bulk-action"]');
+        var bulkTag = center.querySelector('[data-region="bulk-tag"]');
+        var bulkMax = Number(center.dataset.bulkmax || 500);
         var stringsReady = Promise.resolve(Str.get_strings([
             {key: 'confirm', component: 'core'}, {key: 'delete', component: 'core'},
             {key: 'cancel', component: 'core'}, {key: 'note:saving', component: 'local_sidenotes'},
@@ -87,7 +94,9 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
             document.dispatchEvent(new CustomEvent('local_sidenotes:archivechanged', {detail: response}));
         };
         var removeCard = function(card) {
+            selected.delete(Number(card.dataset.noteid));
             card.parentElement.remove();
+            selectionStatus();
             var next = results.querySelector('[data-action="toggle-archive"]')
                 || center.querySelector('[data-region="active-view"]');
             if (next) {next.focus({preventScroll: true});}
@@ -129,6 +138,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
                 var complete = card.querySelector('[data-action="toggle-archive"]');
                 if (complete) {
                     complete.hidden = false;
+                    complete.closest('.local-sidenotes-center__complete').hidden = false;
                     complete.dataset.sidenotesDisabled = 'false';
                     FilterEvents.notifyFilterContentUpdated([card]);
                 }
@@ -137,7 +147,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
                         if (node.hasAttribute(attr)) {node.setAttribute(attr, node.getAttribute(attr).replace(/-0$/, '-' + note.id));}
                     });
                 });
-                updateDate(card, note); return note.id;
+                updateDate(card, note); selectionStatus(); return note.id;
             });
         };
         var tagNames = function(card) {
@@ -234,11 +244,150 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
                 reader.onerror = reject; reader.readAsDataURL(file);
             });
         };
+        var selectionStatus = function() {
+            bulkbar.hidden = !selecting;
+            var mode = center.querySelector('[data-action="selection-mode"]');
+            mode.setAttribute('aria-pressed', String(selecting)); mode.classList.toggle('active', selecting);
+            var count = center.querySelector('[data-region="selection-count"]');
+            count.textContent = count.dataset.template.replace('__COUNT__', String(selected.size));
+            var allFiltered = center.querySelector('[data-action="select-filtered"]');
+            allFiltered.querySelector('[data-region="select-filtered-label"]').textContent =
+                allFiltered.dataset.template.replace('__COUNT__', String(center.dataset.totalcount || 0));
+            results.querySelectorAll('[data-action="select-note"]').forEach(function(input) {
+                var card = input.closest('[data-noteid]'), id = Number(card.dataset.noteid);
+                input.hidden = !selecting || !id; input.checked = selected.has(id); input.disabled = bulkPending || !id;
+                card.classList.toggle('is-selected', input.checked);
+            });
+            bulkTag.hidden = !['addtags', 'removetags'].includes(bulkAction.value);
+            center.querySelector('[data-action="apply-bulk"]').disabled = bulkPending || !selected.size || !bulkAction.value
+                || (!bulkTag.hidden && !bulkTag.value.trim());
+            bulkbar.querySelectorAll('button:not([data-action="apply-bulk"]), select, input').forEach(function(node) {
+                node.disabled = bulkPending;
+            });
+            mode.disabled = bulkPending;
+        };
+        var clearSelection = function() {selectionEpoch++; selected.clear(); selectionAnchor = null; selectionStatus();};
+        var selectionLimit = function() {return Str.get_string('bulk:limit', 'local_sidenotes').then(function(message) {
+            archiveStatus(message, true);
+        });};
+        var exportSelected = function(type) {
+            var exportForm = document.createElement('form'); exportForm.method = 'POST'; exportForm.action = form.action;
+            exportForm.target = '_blank';
+            var append = function(name, value) {var input = document.createElement('input'); input.type = 'hidden';
+                input.name = name; input.value = String(value); exportForm.append(input);};
+            append('sesskey', center.dataset.sesskey); append('export', type); append('archive', center.dataset.archive || 0);
+            selected.forEach(function(id) {append('noteids[]', id);});
+            document.body.append(exportForm); exportForm.submit(); exportForm.remove();
+        };
+        var applyBulk = function() {
+            if (bulkPending || !selected.size || !bulkAction.value) {return;}
+            var action = bulkAction.value;
+            var ids = Array.from(selected), cards = Array.from(results.querySelectorAll('[data-noteid]'))
+                .filter(function(card) {return selected.has(Number(card.dataset.noteid));});
+            if (action === 'exportmd' || action === 'exportpdf') {
+                if (cards.some(function(card) {var state = stateFor(card), text = region(card, 'note-text');
+                    return state.pending || (state.editing && text && text.value !== state.baseline);
+                })) {Str.get_string('bulk:exportsaved', 'local_sidenotes').then(function(message) {archiveStatus(message, true);});}
+                else {exportSelected(action.slice(6));}
+                return;
+            }
+            if (cards.some(function(card) {return stateFor(card).pending;})) {return;}
+            var args = {ids: ids, archive: center.dataset.archive === '1', action: action,
+                tags: bulkTag.hidden ? [] : [bulkTag.value.trim()]};
+            bulkPending = true; beginMutation(); selectionStatus();
+            var editorStates = [];
+            cards.forEach(function(card) {
+                busy(card, true);
+                var rich = Editor.get(region(card, 'note-text'));
+                if (rich && rich.editor) {editorStates.push([rich.editor, rich.editor.isEditable]); rich.editor.setEditable(false);}
+            });
+            var preview;
+            var saveDrafts = cards.reduce(function(chain, card) {
+                return chain.then(function() {
+                    var state = stateFor(card), text = region(card, 'note-text');
+                    if (!state.editing || !text || text.value === state.baseline) {return;}
+                    var submitted = text.value;
+                    return call('edit_note', {noteid: Number(card.dataset.noteid), operation: 'content',
+                        content: submitted, expectedcontent: state.baseline}).then(function(note) {
+                            state.baseline = note.content; region(card, 'note-content').innerHTML = note.contenthtml;
+                            updateDate(card, note);
+                            if (text.value !== submitted) {throw new Error(strings.pendingtext);}
+                        });
+                });
+            }, stringsReady);
+            saveDrafts.then(function() {return call('manage_bulk', Object.assign({operation: 'preview'}, args));})
+                .then(function(response) {
+                    preview = response;
+                    return Str.get_string(action === 'delete' ? 'bulk:deleteconfirm' : 'bulk:confirm', 'local_sidenotes', response.count);
+                }).then(function(message) {
+                    return new Promise(function(resolve) {Notification.confirm(strings.confirm, message,
+                        action === 'delete' ? strings.delete : strings.confirm, strings.cancel,
+                        function() {resolve(true);}, function() {resolve(false);});});
+                }).then(function(yes) {
+                    if (!yes) {return;}
+                    return call('manage_bulk', Object.assign({operation: 'apply', revision: preview.revision}, args))
+                        .then(function(response) {
+                            syncCounts(response);
+                            if (['archive', 'restore', 'delete'].includes(action)) {
+                                cards.forEach(function(card) {card.parentElement.remove();});
+                                response.ids.forEach(function(id) {document.dispatchEvent(new CustomEvent('local_sidenotes:archivechanged',
+                                    {detail: {noteid: id, archived: action !== 'restore', removed: action === 'delete'}}));});
+                            } else {
+                                // Saved editors can close; no text is discarded by the subsequent results refresh.
+                                cards.forEach(function(card) {if (stateFor(card).editing) {closeEditor(card);}});
+                                document.dispatchEvent(new CustomEvent('local_sidenotes:notesupdated', {detail: {ids: response.ids}}));
+                            }
+                            clearSelection(); bulkTag.value = '';
+                            return Str.get_string('bulk:done', 'local_sidenotes', response.count)
+                                .then(function(message) {archiveStatus(message, false);});
+                        });
+                }).catch(function(error) {archiveStatus(error.message || strings.error, true);})
+                .finally(function() {
+                    editorStates.forEach(function(pair) {if (!pair[0].isDestroyed) {pair[0].setEditable(pair[1]);}});
+                    cards.forEach(function(card) {busy(card, false);});
+                    bulkPending = false; selectionStatus(); beginMutation(); submitSearch(searchUrl());
+                });
+        };
+        // Native click/Space selection, with Shift-click applying one visible range.
+        center.addEventListener('click', function(event) {
+            var input = event.target.closest('[data-action="select-note"]');
+            if (!input || bulkPending) {return;}
+            var inputs = Array.from(results.querySelectorAll('[data-action="select-note"]')).filter(function(node) {return !node.hidden;});
+            var id = Number(input.closest('[data-noteid]').dataset.noteid), range = [input];
+            var start = inputs.findIndex(function(node) {return Number(node.closest('[data-noteid]').dataset.noteid) === selectionAnchor;});
+            if (event.shiftKey && start >= 0) {var end = inputs.indexOf(input); range = inputs.slice(Math.min(start, end), Math.max(start, end) + 1);}
+            var proposed = new Set(selected);
+            range.forEach(function(node) {var noteid = Number(node.closest('[data-noteid]').dataset.noteid);
+                if (input.checked) {proposed.add(noteid);} else {proposed.delete(noteid);}});
+            if (proposed.size > bulkMax) {selectionLimit(); selectionStatus(); return;}
+            selected = proposed; selectionAnchor = id; selectionStatus();
+        });
+        bulkAction.addEventListener('change', selectionStatus); bulkTag.addEventListener('input', selectionStatus);
         center.addEventListener('click', function(event) {
             var button = event.target.closest('[data-action]'); if (!button || button.disabled) {return;}
             var card = button.closest('[data-noteid]'), action = button.dataset.action;
+            if (action === 'selection-mode') {selecting = !selecting; clearSelection(); return;}
+            if (action === 'clear-selection') {clearSelection(); return;}
+            if (action === 'select-visible') {
+                var visible = Array.from(results.querySelectorAll('[data-noteid]')).map(function(node) {return Number(node.dataset.noteid);}).filter(Boolean);
+                var all = new Set(Array.from(selected).concat(visible));
+                if (all.size > bulkMax) {selectionLimit();} else {selected = all; selectionStatus();} return;
+            }
+            if (action === 'select-filtered') {
+                var filtered = new URL(searchUrl()), epoch = selectionEpoch; bulkPending = true; selectionStatus();
+                call('manage_bulk', {operation: 'select', archive: center.dataset.archive === '1',
+                    coursefilter: Number(filtered.searchParams.get('coursefilter') || 0), searchterm: search.value.trim(),
+                    tagids: filtered.searchParams.getAll('tags[]').map(Number)})
+                    .then(function(response) {if (epoch === selectionEpoch) {selected = new Set(response.ids);}})
+                    .catch(function(error) {archiveStatus(error.message, true);})
+                    .finally(function() {bulkPending = false; selectionStatus();
+                        if (epoch !== selectionEpoch) {submitSearch(searchUrl());}
+                    }); return;
+            }
+            if (action === 'apply-bulk') {applyBulk(); return;}
+            if (bulkPending) {return;}
             if (action === 'remove-filter-tag' && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
-                event.preventDefault(); beginMutation();
+                event.preventDefault(); clearSelection(); beginMutation();
                 var value = button.dataset.filterTag;
                 form.querySelectorAll('[name="tags[]"]').forEach(function(input) {
                     if (input.value === value) {
@@ -248,7 +397,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
                 document.querySelector('#tagfilter summary').focus();
                 submitSearch(searchUrl());
             } else if (action === 'remove-filter-course' || action === 'remove-filter-search') {
-                event.preventDefault(); beginMutation(); window.clearTimeout(searchTimer);
+                event.preventDefault(); clearSelection(); beginMutation(); window.clearTimeout(searchTimer);
                 var field = action === 'remove-filter-course' ? document.getElementById('coursefilter') : search;
                 field.value = field === search ? '' : '0'; field.focus();
                 submitSearch(searchUrl());
@@ -273,7 +422,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
                     }).then(function(yes) {
                         if (!yes) {return;}
                         return call('manage_archive', {operation: 'empty', revision: preview.revision})
-                            .then(function(response) {announceArchive(response, 'cleared');});
+                            .then(function(response) {clearSelection(); announceArchive(response, 'cleared');});
                     }).catch(function(error) {archiveStatus(error.message, true);})
                     .finally(function() {clearingArchive = false; button.disabled = false; beginMutation(); submitSearch(searchUrl());});
             } else if (action === 'add-note') {
@@ -393,6 +542,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
 
         // Keep active editors and pending requests intact when live search replaces the other cards.
         var submitSearch = function(url) {
+            if (bulkPending) {return;}
             if (activeRequest) {activeRequest.abort();}
             var request = new AbortController(); activeRequest = request; var generation = mutation;
             center.setAttribute('aria-busy', 'true');
@@ -405,6 +555,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
                     var next = new DOMParser().parseFromString(html, 'text/html');
                     var nextResults = next.querySelector('[data-region="sidenotes-results"]');
                     if (!nextResults) {throw new Error('Side Notes search returned an invalid response.');}
+                    center.dataset.totalcount = next.querySelector('.local-sidenotes-center').dataset.totalcount || '0';
                     var pinned = Array.from(results.querySelectorAll('[data-noteid]')).filter(function(card) {
                         return stateFor(card).editing || stateFor(card).pending;
                     });
@@ -427,6 +578,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
                     columns.forEach(function(column) {column.remove();});
                     var incoming = Array.from(nextResults.children);
                     results.replaceChildren.apply(results, columns.concat(incoming));
+                    selectionStatus();
                     updateQuotes();
                     // Native Moodle/Bootstrap initialisation also applies to newly loaded search cards.
                     FilterEvents.notifyFilterContentUpdated(incoming);
@@ -517,15 +669,17 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
             clear.hidden = !search.value.trim();
         };
         var scheduleSearch = function() {
+            clearSelection();
             beginMutation();
             clear.hidden = !search.value.trim(); window.clearTimeout(searchTimer);
             searchUrl();
             if (!composing) {searchTimer = window.setTimeout(function() {submitSearch(searchUrl());}, 300);}
         };
         search.addEventListener('input', scheduleSearch);
-        search.addEventListener('compositionstart', function() {composing = true; beginMutation(); window.clearTimeout(searchTimer);});
+        search.addEventListener('compositionstart', function() {clearSelection(); composing = true; beginMutation(); window.clearTimeout(searchTimer);});
         search.addEventListener('compositionend', function() {composing = false; scheduleSearch();});
         clear.addEventListener('click', function() {
+            clearSelection();
             beginMutation(); window.clearTimeout(searchTimer); search.value = ''; clear.hidden = true; submitSearch(searchUrl()); search.focus();
         });
         form.addEventListener('submit', function(event) {
@@ -533,7 +687,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
         });
         form.addEventListener('change', function(event) {
             if (!event.target.matches('select, input[type="checkbox"][name="tags[]"]')) {return;}
-            beginMutation(); window.clearTimeout(searchTimer); submitSearch(searchUrl());
+            clearSelection(); beginMutation(); window.clearTimeout(searchTimer); submitSearch(searchUrl());
         });
         var tagMenu = document.getElementById('tagfilter');
         document.addEventListener('click', function(event) {
@@ -556,7 +710,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
                 }
             });
         };
-        searchUrl(); updateQuotes();
+        searchUrl(); updateQuotes(); selectionStatus();
         if (document.fonts) {document.fonts.ready.then(updateQuotes);}
         center.addEventListener('click', function(event) {
             var link = event.target.closest('[data-region="sidenotes-pagination"] a');

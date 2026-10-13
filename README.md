@@ -156,6 +156,31 @@ importing its existing notes.
 
 ## Maintainer and origin
 
+### Features adapted from newer QuickNote releases
+
+The new-note edge shortcut and Alt+Q keyboard shortcut follow the **QuickNote 0.13.0**
+Speed Dial and shortcut concepts by **Matheus Mathias**. Deferred sidebar loading follows
+**QuickNote 0.12.0**. Multiple selection, selection across pages, selected exports and
+Shift-click ranges follow **QuickNote 0.12.0 / 0.13.0**.
+
+These features are independently adapted to Side Notes, not a wholesale upstream merge.
+Side Notes adds its own guarded archive/restore, private tag and global-scope batch actions,
+with existing owner permissions and draft protection retained.
+See [QuickNote 0.12.0](https://github.com/Matheu46/moodle-local_quicknote/releases/tag/v0.12.0)
+and [QuickNote 0.13.0](https://github.com/Matheu46/moodle-local_quicknote/releases/tag/v0.13.0).
+
+Use the small **+** edge tab to create a page note; the folder tab below the main tab opens
+the overview. Alt+Q (also Alt+Shift+Q) creates a note when focus is outside an editor/form.
+The checkbox in the sidebar disables this shortcut for your account.
+
+In the overview, **Select notes** enables separate selection checkboxes on the left of
+card headers. The completion checkbox on the right keeps its existing meaning.
+Select visible cards or explicitly select all filtered results (up to 500 notes).
+Changing filters clears selection; paging retains it. Choose an action and apply it.
+Active notes support archive, tag add/remove, global visibility and selected PDF/Markdown
+exports. Archived notes support restore, selected exports and confirmed permanent deletion.
+Unsaved text in selected editors is saved before a batch change; other drafts are retained.
+
 Side Notes is an independently maintained derivative of
 [QuickNote by Matheus Mathias](https://github.com/Matheu46/moodle-local_quicknote).
 Maintained by Andreas Giesen <andreas@108design.com> (108design).

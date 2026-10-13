@@ -11,7 +11,7 @@ namespace local_sidenotes\local;
  */
 final class archive_manager {
     /** Serialize archive membership changes and deletion for one owner. */
-    private static function owner_lock(int $userid): \core\lock\lock {
+    public static function owner_lock(int $userid): \core\lock\lock {
         $lock = \core\lock\lock_config::get_lock_factory('local_sidenotes')->get_lock('archive-owner-' . $userid, 10);
         if (!$lock) {throw new \moodle_exception('error:busy', 'local_sidenotes');}
         return $lock;

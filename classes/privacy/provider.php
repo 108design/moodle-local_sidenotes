@@ -69,6 +69,7 @@ class provider implements
         $collection->add_subsystem_link('core_files', [], 'privacy:metadata:files');
         $collection->add_subsystem_link('core_tag', [], 'privacy:metadata:tags');
         $collection->add_user_preference('local_sidenotes_tagcolour_*', 'privacy:metadata:tagcolours');
+        $collection->add_user_preference('local_sidenotes_shortcut', 'privacy:metadata:shortcut');
 
         return $collection;
     }
@@ -98,7 +99,7 @@ class provider implements
         $contextlist->add_from_sql($sql, $params);
         $contextlist->add_from_sql(str_replace('{local_sidenotes_notes}', '{local_sidenotes_import}', $sql), $params);
         foreach (get_user_preferences(null, null, $userid) as $name => $value) {
-            if (strpos($name, \local_sidenotes\local\tag_manager::COLOUR_PREFIX) === 0) {
+            if ($name === 'local_sidenotes_shortcut' || strpos($name, \local_sidenotes\local\tag_manager::COLOUR_PREFIX) === 0) {
                 $contextlist->add_system_context();
                 break;
             }
@@ -199,9 +200,13 @@ class provider implements
             $DB->delete_records('local_sidenotes_import', ['courseid' => $context->instanceid]);
         } else if ($context->id == context_system::instance()->id) {
             self::delete_dependencies_for_select('courseid = :courseid', ['courseid' => 0]);
-            $users = $DB->get_fieldset_select('user_preferences', 'DISTINCT userid', $DB->sql_like('name', ':prefprefix'),
+            $users = $DB->get_fieldset_select('user_preferences', 'DISTINCT userid', $DB->sql_like('name', ':prefprefix')
+                . " OR name = 'local_sidenotes_shortcut'",
                 ['prefprefix' => $DB->sql_like_escape(\local_sidenotes\local\tag_manager::COLOUR_PREFIX) . '%']);
-            foreach ($users as $userid) {\local_sidenotes\local\tag_manager::clear_colours((int) $userid);}
+            foreach ($users as $userid) {
+                \local_sidenotes\local\tag_manager::clear_colours((int) $userid);
+                unset_user_preference('local_sidenotes_shortcut', (int) $userid);
+            }
             $DB->delete_records('local_sidenotes_notes', ['courseid' => 0]);
             $DB->delete_records('local_sidenotes_import', ['courseid' => 0]);
         }
@@ -243,6 +248,7 @@ class provider implements
 
         if ($deletesystem) {
             \local_sidenotes\local\tag_manager::clear_colours((int) $userid);
+            unset_user_preference('local_sidenotes_shortcut', (int) $userid);
             self::delete_dependencies_for_select(
                 'userid = :userid AND courseid = :courseid',
                 ['userid' => $userid, 'courseid' => 0]
@@ -275,7 +281,7 @@ class provider implements
             $userlist->add_from_sql('userid', $sql, []);
             $userlist->add_from_sql('userid', str_replace('{local_sidenotes_notes}', '{local_sidenotes_import}', $sql), []);
             $userlist->add_from_sql('userid', 'SELECT userid FROM {user_preferences} WHERE '
-                . $DB->sql_like('name', ':prefprefix'),
+                . $DB->sql_like('name', ':prefprefix') . " OR name = 'local_sidenotes_shortcut'",
                 ['prefprefix' => $DB->sql_like_escape(\local_sidenotes\local\tag_manager::COLOUR_PREFIX) . '%']);
         }
     }
@@ -304,7 +310,10 @@ class provider implements
             $DB->delete_records_select('local_sidenotes_notes', $select, $params);
         } else if ($context->id == context_system::instance()->id) {
             $params = ['courseid' => 0] + $userparams;
-            foreach ($userids as $userid) {\local_sidenotes\local\tag_manager::clear_colours((int) $userid);}
+            foreach ($userids as $userid) {
+                \local_sidenotes\local\tag_manager::clear_colours((int) $userid);
+                unset_user_preference('local_sidenotes_shortcut', (int) $userid);
+            }
             $select = "courseid = :courseid AND userid $usersql";
             self::delete_dependencies_for_select($select, $params);
             $DB->delete_records_select('local_sidenotes_notes', $select, $params);
@@ -317,6 +326,10 @@ class provider implements
     /** Export this owner's private category-colour preferences. */
     public static function export_user_preferences(int $userid): void {
         foreach (get_user_preferences(null, null, $userid) as $name => $value) {
+            if ($name === 'local_sidenotes_shortcut') {
+                writer::export_user_preference('local_sidenotes', $name, $value,
+                    get_string('privacy:metadata:shortcut', 'local_sidenotes'));
+            }
             if (strpos($name, \local_sidenotes\local\tag_manager::COLOUR_PREFIX) === 0) {
                 writer::export_user_preference('local_sidenotes', $name, $value,
                     get_string('privacy:metadata:tagcolours', 'local_sidenotes'));

@@ -58,8 +58,16 @@
     data-removetaglabel="{{#str}} tags:remove, local_sidenotes, __TAG__ {{/str}}"
     data-previewlabel="{{previewlabel}}"
     data-tagsenabled="{{tagsenabled}}"
+    data-loadingtext="{{#str}} sidebar:loading, local_sidenotes {{/str}}"
+    data-loaderror="{{#str}} sidebar:loaderror, local_sidenotes {{/str}}"
+    data-shortcutenabled="{{#shortcutenabled}}1{{/shortcutenabled}}{{^shortcutenabled}}0{{/shortcutenabled}}"
 >
     <div class="local-sidenotes__edge-actions">
+    {{! QuickNote 0.13 Speed Dial concept (Matheus Mathias), adapted to the Side Notes edge grip. }}
+    <button type="button" class="local-sidenotes__new" data-action="add" aria-controls="local-sidenotes-panel"
+        aria-keyshortcuts="Alt+Q" title="{{addlabel}} · Alt+Q" aria-label="{{addlabel}}">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+    </button>
     <button
         type="button"
         class="local-sidenotes__toggle"
@@ -103,10 +111,6 @@
         </div>
 
         <div class="local-sidenotes__toolbar">
-            <button type="button" class="btn btn-primary" data-action="add">
-                <i class="fa fa-plus" aria-hidden="true"></i> {{addlabel}}
-            </button>
-
         <div class="local-sidenotes__search position-relative">
             <label class="sr-only" for="local-sidenotes-search">{{#str}} search:placeholder, local_sidenotes {{/str}}</label>
             <input
@@ -190,5 +194,9 @@
             </article>
         </template>
 
+        <label class="local-sidenotes__shortcut small text-muted">
+            <input type="checkbox" data-action="shortcut-enabled" {{#shortcutenabled}}checked{{/shortcutenabled}}>
+            {{#str}} shortcut:enabled, local_sidenotes {{/str}}
+        </label>
     </aside>
 </div>

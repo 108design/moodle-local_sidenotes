@@ -92,6 +92,7 @@ class hooks {
             'courseid' => $courseid,
             'pageurl' => $pageurl,
             'pagetitle' => $pagetitle,
+            'shortcutenabled' => (bool) get_user_preferences('local_sidenotes_shortcut', 1),
         ]]);
 
         $html = $OUTPUT->render_from_template('local_sidenotes/sidebar', [
@@ -124,6 +125,7 @@ class hooks {
             'tagplaceholder' => get_string('tags:placeholder', 'local_sidenotes'),
             'previewlabel' => get_string('markdown:preview', 'local_sidenotes'),
             'tagsenabled' => \local_sidenotes\local\tag_manager::is_enabled() ? '1' : '0',
+            'shortcutenabled' => (bool) get_user_preferences('local_sidenotes_shortcut', 1),
         ]);
 
         return $html;

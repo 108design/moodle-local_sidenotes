@@ -32,6 +32,14 @@ $archive = optional_param('archive', false, PARAM_BOOL);
 $selectedtagids = \local_sidenotes\local\note_filters::normalise_tags(array_merge(
     optional_param_array('tags', [], PARAM_INT), $tagfilter ? [$tagfilter] : []));
 $export = optional_param('export', '', PARAM_ALPHA);
+$exportids = optional_param_array('noteids', [], PARAM_INT);
+if ($exportids) {
+    require_sesskey();
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !in_array($export, ['pdf', 'md'], true)) {
+        throw new invalid_parameter_exception('Selected export requires POST.');
+    }
+    \local_sidenotes\local\bulk_manager::records($exportids, (int) $USER->id, (bool) $archive);
+}
 $page = optional_param('page', 0, PARAM_INT);
 $deleteid = optional_param('deleteid', 0, PARAM_INT);
 $perpage = get_config('local_sidenotes', 'perpage');
@@ -137,52 +145,11 @@ foreach ($selectedtagids as $tagid) {
     $selectedtags[] = $tag;
 }
 $hasnotestosearch = ($archive ? $archivestatus['archivecount'] : $archivestatus['activecount']) > 0;
-$sqlfrom = "FROM {local_sidenotes_notes} qn
-       LEFT JOIN {course} c ON c.id = qn.courseid
-           WHERE qn.userid = :userid AND qn.archived = :archived";
-$params = ['userid' => $USER->id, 'archived' => (int) $archive];
-
-if ($coursefilter > 0) {
-    $sqlfrom .= " AND qn.courseid = :courseid";
-    $params['courseid'] = $coursefilter;
-}
-if ($coursefilter === -1) {
-    $sqlfrom .= ' AND qn.pagehash = :unboundhash';
-    $params['unboundhash'] = \local_sidenotes\local\access_policy::unbound_hash();
-}
-
-[$tagsql, $tagparams] = \local_sidenotes\local\note_filters::tag_conditions($selectedtagids, (int) $USER->id);
-$sqlfrom .= $tagsql;
-$params += $tagparams;
-
-if ($searchterm !== '') {
-    $escapedsearch = '%' . $DB->sql_like_escape($searchterm) . '%';
-    $contentlike = $DB->sql_like('qn.content', ':searchcontent', false, false);
-    $quotelike = $DB->sql_like('qn.quote', ':searchquote', false, false);
-    $pagetitlelike = $DB->sql_like('qn.pagetitle', ':searchpagetitle', false, false);
-    $courselike = $DB->sql_like('c.fullname', ':searchcourse', false, false);
-    $taglike = $DB->sql_like('ts.name', ':searchtagname', false, false);
-    $tagrawlike = $DB->sql_like('ts.rawname', ':searchtagrawname', false, false);
-    $sqlfrom .= " AND (
-        {$contentlike} OR {$quotelike} OR {$pagetitlelike} OR {$courselike}
-        OR EXISTS (
-            SELECT 1 FROM {tag_instance} tis JOIN {tag} ts ON ts.id = tis.tagid
-             WHERE tis.itemid = qn.id AND tis.component = :searchtagcomponent
-               AND tis.itemtype = :searchtagitemtype AND tis.tiuserid = :searchtaguserid
-               AND ({$taglike} OR {$tagrawlike})
-        )
-    )";
-    $params += [
-        'searchcontent' => $escapedsearch,
-        'searchquote' => $escapedsearch,
-        'searchpagetitle' => $escapedsearch,
-        'searchcourse' => $escapedsearch,
-        'searchtagname' => $escapedsearch,
-        'searchtagrawname' => $escapedsearch,
-        'searchtagcomponent' => $tagcomponent,
-        'searchtagitemtype' => $tagitemtype,
-        'searchtaguserid' => $USER->id,
-    ];
+[$sqlfrom, $params] = \local_sidenotes\local\note_filters::query((int) $USER->id, (bool) $archive,
+    $exportids ? 0 : $coursefilter, $exportids ? [] : $selectedtagids, $exportids ? '' : $searchterm);
+if ($exportids) {
+    [$insql, $inparams] = $DB->get_in_or_equal(\local_sidenotes\local\bulk_manager::ids($exportids), SQL_PARAMS_NAMED, 'selected');
+    $sqlfrom .= ' AND qn.id ' . $insql; $params += $inparams;
 }
 
 $totalcount = $DB->count_records_sql("SELECT COUNT(qn.id) " . $sqlfrom, $params);
@@ -436,6 +403,8 @@ $templatecontext = [
     'mdurl' => $mdurl->out(false),
     'pdfurl' => $pdfurl->out(false),
     'sesskey' => sesskey(),
+    'bulkmax' => \local_sidenotes\local\bulk_manager::MAX_NOTES,
+    'totalcount' => $totalcount,
     'deleteconfirm' => get_string('note:delete_confirm', 'local_sidenotes'),
     'unboundselected' => $coursefilter === -1,
     'globallabel' => get_string(\local_sidenotes\local\access_policy::sitewide()

@@ -26,6 +26,32 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['bulk:select'] = 'Select notes';
+$string['bulk:selectnote'] = 'Select note: {$a}';
+$string['bulk:count'] = '{$a} selected';
+$string['bulk:visible'] = 'Select visible';
+$string['bulk:filtered'] = 'Select all filtered results ({$a})';
+$string['bulk:clear'] = 'Clear selection';
+$string['bulk:action'] = 'Choose action';
+$string['bulk:apply'] = 'Apply';
+$string['bulk:addtags'] = 'Add tag';
+$string['bulk:removetags'] = 'Remove tag';
+$string['bulk:tag'] = 'Tag name';
+$string['bulk:globalon'] = 'Show globally within my scope';
+$string['bulk:globaloff'] = 'Stop showing globally';
+$string['bulk:hint'] = 'Shift-click selects a range. Changing filters clears the selection; paging keeps it.';
+$string['bulk:confirm'] = 'Apply this action to {$a} selected notes? Unsaved text in selected editors is saved first.';
+$string['bulk:deleteconfirm'] = 'Permanently delete {$a} selected archived notes, including their images? This cannot be undone.';
+$string['bulk:done'] = 'Updated {$a} notes.';
+$string['bulk:changed'] = 'The selection has changed. Nothing was changed by this batch; refresh and select again.';
+$string['bulk:limit'] = 'Select at most 500 notes. Narrow the filters for larger collections.';
+$string['bulk:taglimit'] = 'A selected note would exceed 20 tags. No tags were changed.';
+$string['bulk:exportsaved'] = 'Save changes in selected editors before exporting. Exports use the saved notes.';
+$string['sidebar:loading'] = 'Loading notes …';
+$string['sidebar:loaderror'] = 'Could not load notes. Retry';
+$string['shortcut:enabled'] = 'New note with Alt+Q';
+$string['privacy:metadata:shortcut'] = 'Personal preference for the new-note keyboard shortcut.';
+
 $string['allcourses'] = 'All courses';
 $string['allpages'] = 'All pages';
 $string['alltags'] = 'All tags';

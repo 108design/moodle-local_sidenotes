@@ -16,6 +16,32 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['bulk:select'] = 'Notizen auswählen';
+$string['bulk:selectnote'] = 'Notiz auswählen: {$a}';
+$string['bulk:count'] = '{$a} ausgewählt';
+$string['bulk:visible'] = 'Sichtbare auswählen';
+$string['bulk:filtered'] = 'Alle gefilterten Ergebnisse auswählen ({$a})';
+$string['bulk:clear'] = 'Auswahl aufheben';
+$string['bulk:action'] = 'Aktion wählen';
+$string['bulk:apply'] = 'Anwenden';
+$string['bulk:addtags'] = 'Tag hinzufügen';
+$string['bulk:removetags'] = 'Tag entfernen';
+$string['bulk:tag'] = 'Tagname';
+$string['bulk:globalon'] = 'Global in meinem Bereich anzeigen';
+$string['bulk:globaloff'] = 'Nicht mehr global anzeigen';
+$string['bulk:hint'] = 'Shift-Klick wählt einen Bereich. Filteränderungen heben die Auswahl auf; Blättern behält sie.';
+$string['bulk:confirm'] = 'Diese Aktion auf {$a} ausgewählte Notizen anwenden? Ungespeicherter Text in ausgewählten Editoren wird vorher gespeichert.';
+$string['bulk:deleteconfirm'] = '{$a} ausgewählte archivierte Notizen einschließlich ihrer Bilder endgültig löschen? Dies kann nicht rückgängig gemacht werden.';
+$string['bulk:done'] = '{$a} Notizen aktualisiert.';
+$string['bulk:changed'] = 'Die Auswahl hat sich verändert. Diese Sammelaktion hat nichts geändert; bitte neu laden und erneut auswählen.';
+$string['bulk:limit'] = 'Bitte höchstens 500 Notizen auswählen. Für größere Sammlungen die Filter eingrenzen.';
+$string['bulk:taglimit'] = 'Eine ausgewählte Notiz würde mehr als 20 Tags erhalten. Keine Tags wurden geändert.';
+$string['bulk:exportsaved'] = 'Bitte Änderungen in ausgewählten Editoren vor dem Export speichern. Exportiert werden gespeicherte Notizen.';
+$string['sidebar:loading'] = 'Notizen werden geladen …';
+$string['sidebar:loaderror'] = 'Notizen konnten nicht geladen werden. Erneut versuchen';
+$string['shortcut:enabled'] = 'Neue Notiz mit Alt+Q';
+$string['privacy:metadata:shortcut'] = 'Persönliche Einstellung für das Tastenkürzel zum Anlegen einer Notiz.';
+
 $string['allcourses'] = 'Alle Kurse';
 $string['allpages'] = 'Alle Seiten';
 $string['alltags'] = 'Alle Tags';

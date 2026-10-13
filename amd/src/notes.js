@@ -684,7 +684,9 @@ define([
 
     var prependNote = function(note) {
         state.notes.unshift(note);
-        renderNotes();
+        var group = getList().querySelector('[data-region="page-group"]');
+        if (group) {group.prepend(createNoteElement(note)); applyFilter(); scheduleAutogrowTextareas();}
+        else {renderNotes();}
     };
 
     var setOpenState = function(isopen) {
@@ -692,6 +694,7 @@ define([
         var toggle = state.root.querySelector(SELECTORS.toggle);
 
         if (isopen) {
+            loadNotes().catch(function() { /* Inline retry keeps the local draft available. */ });
             state.root.classList.add('is-open');
         } else {
             state.root.classList.remove('is-open');
@@ -871,7 +874,17 @@ define([
         }, SAVE_DELAY);
     };
 
+    // QuickNote 0.12 lazy-loading concept (Matheus Mathias). Side Notes retains mounted
+    // editors and merges into current state rather than replacing drafts/focus on response.
     var loadNotes = function() {
+        if (state.loaded) {return Promise.resolve();}
+        if (state.loading) {return state.loading;}
+        var indicator = document.createElement('p');
+        indicator.className = 'local-sidenotes__loading small text-muted';
+        indicator.dataset.region = 'loading'; indicator.setAttribute('role', 'status');
+        indicator.textContent = state.strings.loadingtext;
+        getList().querySelectorAll('[data-action="retry-load"]').forEach(function(button) {button.remove();});
+        getList().appendChild(indicator);
         var request = Ajax.call([{
             methodname: 'local_sidenotes_get_notes',
             args: {
@@ -880,16 +893,30 @@ define([
             }
         }])[0];
 
-        request.then(function(response) {
-            state.notes = response.map(function(note) {
-                return normaliseNote(note);
-            });
-
-            renderNotes();
+        state.loading = Promise.resolve(request).then(function(response) {
+            var known = new Set(state.notes.filter(function(note) {return note.id;}).map(function(note) {return note.id;}));
+            var fetched = response.filter(function(note) {
+                return !known.has(Number(note.id)) && !state.removedIds.has(Number(note.id));
+            }).map(normaliseNote);
+            state.notes = state.notes.concat(fetched);
+            state.loaded = true;
+            var list = getList(), pageGroup = list.querySelector('[data-region="page-group"]');
+            if (!pageGroup) {renderNotes();}
+            else {
+                var globalList = list.querySelector('[data-region="global-list"]');
+                fetched.forEach(function(note) {(note.isglobal ? globalList : pageGroup).appendChild(createNoteElement(note));});
+                applyFilter(); scheduleAutogrowTextareas();
+            }
             return response;
         }).catch(function(error) {
-            Notification.exception(error);
+            var retry = document.createElement('button'); retry.type = 'button';
+            retry.className = 'btn btn-link btn-sm'; retry.dataset.action = 'retry-load';
+            retry.textContent = state.strings.loaderror; getList().appendChild(retry);
+            throw error;
+        }).finally(function() {
+            indicator.remove(); state.loading = null;
         });
+        return state.loading;
     };
 
     var deleteNote = function(note, noteEl) {
@@ -1028,9 +1055,33 @@ define([
     };
 
     var bindEvents = function() {
+        document.addEventListener('local_sidenotes:notesupdated', function(event) {
+            if (!state.loaded && !state.loading) {return;}
+            var ids = (event.detail || {}).ids || [];
+            Promise.resolve(Ajax.call([{methodname: 'local_sidenotes_get_notes',
+                args: {courseid: state.courseid, pageurl: state.pageurl}}])[0]).then(function(notes) {
+                var incoming = new Map(notes.map(function(note) {return [Number(note.id), note];}));
+                ids.forEach(function(id) {
+                    var note = state.notes.find(function(item) {return Number(item.id) === Number(id);});
+                    var updated = incoming.get(Number(id));
+                    if (note && updated) {
+                        // Category/scope updates never overwrite a separately edited drawer text draft.
+                        note.isglobal = updated.isglobal; note.tags = updated.tags;
+                        var element = getNoteElementByKey(note.clientid);
+                        if (element && !note.tagpending) {renderTagsAndPreview(element, note);}
+                    } else if (note && !updated && !note.saving && !note.tagpending && note.content === note.savedcontent) {
+                        var old = getNoteElementByKey(note.clientid); if (old) {old.remove();}
+                        state.notes = state.notes.filter(function(item) {return item !== note;});
+                    } else if (!note && updated) {prependNote(normaliseNote(updated));}
+                });
+                applyFilter(); scheduleAutogrowTextareas();
+            }).catch(Notification.exception);
+        });
         document.addEventListener('local_sidenotes:archivechanged', function(event) {
             var change = event.detail || {};
             if (!change.noteid) {return;}
+            if (change.archived) {state.removedIds.add(Number(change.noteid));}
+            else {state.removedIds.delete(Number(change.noteid));}
             var note = state.notes.find(function(item) {return Number(item.id) === Number(change.noteid);});
             if (change.archived) {
                 if (!note) {return;}
@@ -1104,6 +1155,13 @@ define([
         };
 
         var handleAddClick = function() {
+            var now = Date.now();
+            if (now - state.lastAdd < 450) {return;}
+            state.lastAdd = now;
+            var search = state.root.querySelector(SELECTORS.search);
+            if (search) {search.value = '';}
+            var clear = state.root.querySelector(SELECTORS.clearsearch); if (clear) {clear.hidden = true;}
+            setOpenState(true);
             var note = createDraftNote();
             prependNote(note);
 
@@ -1113,6 +1171,34 @@ define([
                 Editor.focus(textarea).catch(Notification.exception);
             }
         };
+
+        // Alt+Q / Alt+Shift+Q follows QuickNote 0.13 (Matheus Mathias).
+        // Additional Side Notes guards: IME, repeat, existing handlers and personal opt-out.
+        document.addEventListener('keydown', function(event) {
+            if (!state.shortcutenabled || event.defaultPrevented || event.repeat || event.isComposing
+                    || !event.altKey || event.ctrlKey || event.metaKey || event.key.toLowerCase() !== 'q') {return;}
+            var target = event.target;
+            if (target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]')) {return;}
+            event.preventDefault(); handleAddClick();
+        });
+        state.root.addEventListener('click', function(event) {
+            if (event.target.closest('[data-action="retry-load"]')) {
+                loadNotes().catch(Notification.exception);
+            }
+        });
+        var preference = state.root.querySelector('[data-action="shortcut-enabled"]');
+        if (preference) {preference.addEventListener('change', function() {
+            var value = preference.checked; preference.disabled = true;
+            Promise.resolve(Ajax.call([{methodname: 'local_sidenotes_set_shortcut', args: {enabled: value}}])[0])
+                .then(function(enabled) {
+                    state.shortcutenabled = enabled;
+                    var add = state.root.querySelector(SELECTORS.add);
+                    if (enabled) {add.setAttribute('aria-keyshortcuts', 'Alt+Q');}
+                    else {add.removeAttribute('aria-keyshortcuts');}
+                    add.title = add.getAttribute('aria-label') + (enabled ? ' · Alt+Q' : '');
+                }).catch(function(error) {preference.checked = !value; Notification.exception(error);})
+                .finally(function() {preference.disabled = false;});
+        });}
 
         var handleCopyClick = function(e, copyBtn) {
             e.preventDefault();
@@ -1464,6 +1550,11 @@ define([
                 tagsenabled: rootEl.getAttribute('data-tagsenabled') === '1',
                 notes: [],
                 globalOpen: false,
+                loaded: false,
+                removedIds: new Set(),
+                loading: null,
+                lastAdd: 0,
+                shortcutenabled: rootEl.getAttribute('data-shortcutenabled') !== '0',
                 timers: {},
                 strings: {
                     placeholder: rootEl.getAttribute('data-placeholder'),
@@ -1481,7 +1572,8 @@ define([
                     globalcount: rootEl.getAttribute('data-globalcount'),
                     pageempty: rootEl.getAttribute('data-pageempty'),
                     uploadingtext: rootEl.getAttribute('data-uploadingtext'),
-                    deleteimagelabel: rootEl.getAttribute('data-deleteimagelabel')
+                    deleteimagelabel: rootEl.getAttribute('data-deleteimagelabel'),
+                    loadingtext: rootEl.getAttribute('data-loadingtext'), loaderror: rootEl.getAttribute('data-loaderror')
                 }
             };
 
@@ -1490,7 +1582,10 @@ define([
 
             Gallery.init(rootEl);
             bindEvents();
-            loadNotes();
+            if (!state.shortcutenabled) {
+                var add = rootEl.querySelector(SELECTORS.add); add.removeAttribute('aria-keyshortcuts');
+                add.title = add.getAttribute('aria-label');
+            }
             if (consumeOpenDrawerLink()) {
                 setOpenState(true);
             }
