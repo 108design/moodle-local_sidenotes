@@ -91,3 +91,17 @@ function local_sidenotes_pluginfile($course, $cm, $context, $filearea, $args, $f
 
     send_stored_file($file, DAYSECS, 0, $forcedownload, $options);
 }
+
+/** Product identity fallback for supported Moodle versions before output hooks. */
+function local_sidenotes_before_standard_html_head(): string {
+    global $PAGE;
+    if (class_exists(\core\hook\output\before_standard_head_html_generation::class)) {
+        return '';
+    }
+    return \local_sidenotes\local\admin_branding::html($PAGE->get_renderer('core'));
+}
+
+/** Contextual help for the explicitly registered administration pages only. */
+function local_sidenotes_render_navbar_output(\renderer_base $renderer): string {
+    return \local_sidenotes\local\admin_help::navbar($renderer);
+}

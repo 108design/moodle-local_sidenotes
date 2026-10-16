@@ -32,3 +32,22 @@ $callbacks = [
         'callback' => 'local_sidenotes\hooks::before_standard_top_of_body_html_generation',
     ],
 ];
+
+// Decorative product identity is restricted to the native administration surfaces.
+$callbacks[] = [
+    'hook' => \core\hook\output\before_standard_head_html_generation::class,
+    'callback' => [\local_sidenotes\local\admin_branding::class, 'head'],
+];
+$callbacks[] = [
+    'hook' => \core\hook\output\before_http_headers::class,
+    'callback' => [\local_sidenotes\local\admin_branding::class, 'prepare'],
+];
+
+$callbacks[] = [
+    'hook' => \core\hook\output\before_http_headers::class,
+    'callback' => [\local_sidenotes\local\admin_help::class, 'prepare'],
+];
+$callbacks[] = [
+    'hook' => \core\hook\output\before_standard_footer_html_generation::class,
+    'callback' => [\local_sidenotes\local\admin_help::class, 'footer'],
+];

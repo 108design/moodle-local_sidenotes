@@ -208,3 +208,12 @@ $string['image:gallery'] = 'Note screenshots';
 $string['image:thumbnail'] = 'Show image {$a}';
 
 $string['overviewshortcut'] = 'Open notes overview';
+
+// Contextual administration help.
+$string['adminhelp'] = 'Administration help';
+$string['adminhelpmore'] = 'More in the help panel';
+$string['adminhelptopics'] = 'Help Topics';
+$string['adminhelp_overview'] = 'Making notes available';
+$string['adminhelp_overview_article'] = '<p>Choose whether personal notes are available in courses and elsewhere on the site. The course default controls the initial setting; changing it does not replace existing notes.</p><p>Enabling availability does not grant additional permissions. Personal notes remain associated with their respective users.</p>';
+$string['adminhelp_lists'] = 'Lists and page size';
+$string['adminhelp_lists_article'] = '<p>The number per page controls the display of longer note lists. Choose a limited number when many notes exist; displaying all entries can produce a large page.</p><p>This setting does not delete or archive notes.</p>';

@@ -198,3 +198,12 @@ $string['image:gallery'] = 'Screenshots der Notiz';
 $string['image:thumbnail'] = 'Bild {$a} anzeigen';
 
 $string['overviewshortcut'] = 'Notizübersicht öffnen';
+
+// Contextual administration help.
+$string['adminhelp'] = 'Hilfe zur Verwaltung';
+$string['adminhelpmore'] = 'Mehr dazu im Hilfepanel';
+$string['adminhelptopics'] = 'Hilfethemen';
+$string['adminhelp_overview'] = 'Notizen bereitstellen';
+$string['adminhelp_overview_article'] = '<p>Lege hier fest, ob persönliche Notizen in Kursen und außerhalb von Kursen angeboten werden. Die Kursvorgabe bestimmt die Ausgangseinstellung; eine Änderung ersetzt keine bestehenden Notizen.</p><p>Die Bereitstellung allein verleiht keine zusätzlichen Berechtigungen. Persönliche Notizen bleiben dem jeweiligen Nutzer zugeordnet.</p>';
+$string['adminhelp_lists'] = 'Übersichten und Seitengröße';
+$string['adminhelp_lists_article'] = '<p>Die Anzahl pro Seite beeinflusst die Darstellung längerer Notizlisten. Wähle eine begrenzte Anzahl, wenn viele Notizen vorhanden sind; die Auswahl für alle Einträge kann umfangreich werden.</p><p>Diese Einstellung löscht oder archiviert keine Notizen.</p>';
