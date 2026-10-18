@@ -57,6 +57,15 @@ class hooks {
             return '';
         }
 
+        if (moodle_needs_upgrading()) {
+            return '';
+        }
+
+        $excludedlayouts = ['popup', 'frametop', 'maintenance', 'print'];
+        if (isset($PAGE->pagelayout) && in_array($PAGE->pagelayout, $excludedlayouts)) {
+            return '';
+        }
+
         if (!isloggedin() || isguestuser()) {
             return '';
         }
@@ -71,11 +80,6 @@ class hooks {
             $PAGE->requires->js_call_amd('local_sidenotes/notes', 'initIframe', [[
                 'highlightlabel' => get_string('select:highlightlabel', 'local_sidenotes'),
             ]]);
-            return '';
-        }
-
-        $excludedlayouts = ['popup', 'frametop', 'maintenance', 'print'];
-        if (in_array($PAGE->pagelayout, $excludedlayouts)) {
             return '';
         }
 
@@ -130,5 +134,4 @@ class hooks {
 
         return $html;
     }
-
 }
