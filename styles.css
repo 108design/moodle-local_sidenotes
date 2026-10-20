@@ -264,13 +264,9 @@
 
 .local-sidenotes__quote-link {
     font-size: 0.8rem;
-    color: var(--bs-primary, var(--primary));
+    /* Let the host theme's native anchor rules supply normal/hover/focus colours.
+       Primary branding is not necessarily a readable link colour (Bootstrap 4/5). */
     text-decoration: underline;
-}
-
-.local-sidenotes__quote-link:hover,
-.local-sidenotes__quote-link:focus {
-    filter: brightness(0.75);
 }
 
 .local-sidenotes__note-actions {
