@@ -84,6 +84,7 @@ Click a preview to open the full-size screenshot.
 ## Features
 
 - A notes drawer alongside course pages and a searchable notes overview.
+- A discreet neutral count inside the drawer tab shows saved notes for the current page; global and archived notes do not count. Zero is hidden, and the tooltip gives the exact count above99.
 - Page notes, notes shown throughout a course, and personal notes kept in the overview.
 - A visual Markdown editor with headings, bold, italic, lists and clickable checklists.
 - Private coloured tags for organising and finding notes.

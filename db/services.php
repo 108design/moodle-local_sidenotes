@@ -26,6 +26,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    'local_sidenotes_get_page_count' => [
+        'classname' => 'local_sidenotes\\external\\get_page_count', 'methodname' => 'execute',
+        'description' => 'Count the current owner active non-global notes for one accessible page.',
+        'type' => 'read', 'ajax' => true, 'loginrequired' => true,
+    ],
     'local_sidenotes_manage_bulk' => [
         'classname' => 'local_sidenotes\\external\\manage_bulk', 'methodname' => 'execute',
         'description' => 'Select and apply guarded owner-private batch operations.',
@@ -100,6 +105,7 @@ $functions = [
 $services = [
     'Local sidenotes AJAX services' => [
         'functions' => [
+            'local_sidenotes_get_page_count',
             'local_sidenotes_manage_bulk',
             'local_sidenotes_set_shortcut',
             'local_sidenotes_manage_archive',

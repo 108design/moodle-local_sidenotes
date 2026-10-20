@@ -63,6 +63,34 @@ define([
 
     var state = null;
 
+    var renderPageCount = function(value) {
+        var count = Number.isFinite(Number(value)) ? Math.max(0, Math.floor(Number(value))) : 0;
+        var badge = state.root.querySelector('[data-region="page-note-count"]');
+        var toggle = state.root.querySelector(SELECTORS.toggle);
+        if (!badge || !toggle) {return;}
+        badge.hidden = count === 0;
+        badge.textContent = count > 99 ? '99+' : String(count);
+        var label = state.togglelabel;
+        if (count) {label += ' · ' + state.pagecountlabel.replace('__COUNT__', String(count));}
+        toggle.title = label;
+        toggle.setAttribute('aria-label', label);
+    };
+
+    // Only a count is requested while closed: no note text, files or mounted editors.
+    var refreshPageCount = function() {
+        var revision = ++state.countRevision;
+        window.clearTimeout(state.countTimer);
+        state.countTimer = window.setTimeout(function() {
+            Promise.resolve(Ajax.call([{methodname: 'local_sidenotes_get_page_count',
+                args: {courseid: state.courseid, pageurl: state.pageurl}}])[0]).then(function(count) {
+                if (revision === state.countRevision) {renderPageCount(count);}
+            }).catch(function() {
+                // Optional indicator: hide an uncertain count; opening or the next change retries.
+                if (revision === state.countRevision) {renderPageCount(0);}
+            });
+        }, 100);
+    };
+
     var escapeHtml = function(value) {
         var div = document.createElement('div');
         div.textContent = String(value || '');
@@ -744,6 +772,7 @@ define([
         if (note.tagrequest) {return note.tagrequest.then(function() {return saveNote(note);});}
         if (note.saving) {return note.saving.then(function() {return saveNote(note);});}
         var request;
+        var creating = !note.id;
         var noteEl = getNoteElementByKey(note.clientid);
         var submittedTags = (note.tags || []).map(function(tag) {
             return tag.name || '';
@@ -804,6 +833,7 @@ define([
             note.timecreated = savednote.timecreated;
             note.timemodified = savednote.timemodified;
             note.status = state.strings.savedtext;
+            if (creating) {refreshPageCount();}
 
             if (currentnoteEl) {
                 setNoteStatus(currentnoteEl, note.status, note.timemodified);
@@ -900,6 +930,7 @@ define([
             }).map(normaliseNote);
             state.notes = state.notes.concat(fetched);
             state.loaded = true;
+            refreshPageCount();
             var list = getList(), pageGroup = list.querySelector('[data-region="page-group"]');
             if (!pageGroup) {renderNotes();}
             else {
@@ -951,6 +982,7 @@ define([
             updateSearchVisibility();
 
             // Return focus to a logical element to prevent focus loss
+            refreshPageCount();
             var addBtn = state.root.querySelector(SELECTORS.add);
             if (addBtn) {
                 addBtn.focus();
@@ -1055,7 +1087,11 @@ define([
     };
 
     var bindEvents = function() {
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {refreshPageCount();}
+        });
         document.addEventListener('local_sidenotes:notesupdated', function(event) {
+            refreshPageCount();
             if (!state.loaded && !state.loading) {return;}
             var ids = (event.detail || {}).ids || [];
             Promise.resolve(Ajax.call([{methodname: 'local_sidenotes_get_notes',
@@ -1080,8 +1116,10 @@ define([
         document.addEventListener('local_sidenotes:archivechanged', function(event) {
             var change = event.detail || {};
             if (!change.noteid) {return;}
+            refreshPageCount();
             if (change.archived) {state.removedIds.add(Number(change.noteid));}
             else {state.removedIds.delete(Number(change.noteid));}
+            if (!state.loaded && !state.loading) {return;}
             var note = state.notes.find(function(item) {return Number(item.id) === Number(change.noteid);});
             if (change.archived) {
                 if (!note) {return;}
@@ -1553,6 +1591,10 @@ define([
                 loaded: false,
                 removedIds: new Set(),
                 loading: null,
+                countRevision: 0,
+                countTimer: null,
+                togglelabel: rootEl.querySelector(SELECTORS.toggle).getAttribute('aria-label') || '',
+                pagecountlabel: rootEl.getAttribute('data-pagecountlabel') || '__COUNT__',
                 lastAdd: 0,
                 shortcutenabled: rootEl.getAttribute('data-shortcutenabled') !== '0',
                 timers: {},
@@ -1582,6 +1624,7 @@ define([
 
             Gallery.init(rootEl);
             bindEvents();
+            refreshPageCount();
             if (!state.shortcutenabled) {
                 var add = rootEl.querySelector(SELECTORS.add); add.removeAttribute('aria-keyshortcuts');
                 add.title = add.getAttribute('aria-label');

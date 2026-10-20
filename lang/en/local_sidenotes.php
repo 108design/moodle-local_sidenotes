@@ -49,6 +49,7 @@ $string['bulk:taglimit'] = 'A selected note would exceed 20 tags. No tags were c
 $string['bulk:exportsaved'] = 'Save changes in selected editors before exporting. Exports use the saved notes.';
 $string['sidebar:loading'] = 'Loading notes …';
 $string['sidebar:loaderror'] = 'Could not load notes. Retry';
+$string['sidebar:pagecount'] = 'Notes on this page: {$a}';
 $string['shortcut:enabled'] = 'New note with Alt+Q';
 $string['privacy:metadata:shortcut'] = 'Personal preference for the new-note keyboard shortcut.';
 

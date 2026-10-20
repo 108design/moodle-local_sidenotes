@@ -60,6 +60,7 @@
     data-tagsenabled="{{tagsenabled}}"
     data-loadingtext="{{#str}} sidebar:loading, local_sidenotes {{/str}}"
     data-loaderror="{{#str}} sidebar:loaderror, local_sidenotes {{/str}}"
+    data-pagecountlabel="{{#str}} sidebar:pagecount, local_sidenotes, __COUNT__ {{/str}}"
     data-shortcutenabled="{{#shortcutenabled}}1{{/shortcutenabled}}{{^shortcutenabled}}0{{/shortcutenabled}}"
 >
     <div class="local-sidenotes__edge-actions">
@@ -83,6 +84,7 @@
         <span class="local-sidenotes__toggle-icon local-sidenotes__toggle-icon--close">
             {{#pix}} e/cancel, core {{/pix}}
         </span>
+        <span class="local-sidenotes__page-count" data-region="page-note-count" aria-hidden="true" hidden></span>
     </button>
     <a href="{{config.wwwroot}}/local/sidenotes/view.php" class="local-sidenotes__overview"
         title="{{#str}} overviewshortcut, local_sidenotes {{/str}}"

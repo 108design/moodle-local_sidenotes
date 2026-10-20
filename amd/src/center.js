@@ -513,7 +513,10 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
             var input = event.target, card = input.closest('[data-noteid]'), value = input.checked;
             run(card, function() {
                 return ensureSaved(card).then(function(id) {return call('edit_note', {noteid: id, operation: 'global', isglobal: value});})
-                    .then(function(note) {region(card, 'global-badge').hidden = !note.isglobal; updateDate(card, note);})
+                    .then(function(note) {
+                        region(card, 'global-badge').hidden = !note.isglobal; updateDate(card, note);
+                        document.dispatchEvent(new CustomEvent('local_sidenotes:notesupdated', {detail: {ids: [note.id]}}));
+                    })
                     .catch(function(error) {input.checked = !value; throw error;});
             });
         });

@@ -39,6 +39,7 @@ $string['bulk:taglimit'] = 'Eine ausgewählte Notiz würde mehr als 20 Tags erha
 $string['bulk:exportsaved'] = 'Bitte Änderungen in ausgewählten Editoren vor dem Export speichern. Exportiert werden gespeicherte Notizen.';
 $string['sidebar:loading'] = 'Notizen werden geladen …';
 $string['sidebar:loaderror'] = 'Notizen konnten nicht geladen werden. Erneut versuchen';
+$string['sidebar:pagecount'] = 'Notizen auf dieser Seite: {$a}';
 $string['shortcut:enabled'] = 'Neue Notiz mit Alt+Q';
 $string['privacy:metadata:shortcut'] = 'Persönliche Einstellung für das Tastenkürzel zum Anlegen einer Notiz.';
 
