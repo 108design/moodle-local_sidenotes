@@ -1157,12 +1157,11 @@
     pointer-events: none;
 }
 .local-sidenotes.is-open .local-sidenotes__edge-actions { z-index: 1046; }
-/* Keep the whole open-state hit area inside the viewport. Half-hidden controls can
-   put their centre on the native scrollbar, especially with theme hover overrides.
-   The root ID deliberately protects this geometry without overriding theme colours. */
+/* Preserve the original partial hover reveal even when a theme overrides transforms.
+   Open tabs must return to their half-hidden rest position, never stay fully out. */
 #local-sidenotes-root.is-open > .local-sidenotes__edge-actions >
-    :is(.local-sidenotes__toggle, .local-sidenotes__new, .local-sidenotes__overview) {
-    transform: translateX(0);
+    :is(.local-sidenotes__toggle, .local-sidenotes__new, .local-sidenotes__overview):is(:hover, :focus-visible) {
+    transform: translateX(25%);
 }
 .local-sidenotes__toggle { pointer-events: auto; }
 .local-sidenotes__overview {
