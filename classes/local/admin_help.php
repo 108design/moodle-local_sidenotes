@@ -1,4 +1,26 @@
 <?php
+/**
+ * This file is part of Moodle - https://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * File documentation for classes/local/admin_help.php.
+ *
+ * @package   local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 // Copyright (C) 2026 Andreas Giesen. See LICENSE.
 namespace local_sidenotes\local;
 
@@ -6,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 /** Contextual settings help, following the standalone Frontpage panel contract. */
 final class admin_help {
-    private const TOPICS = ['overview', 'lists'];
+    private const TOPICS = ['overview', 'lists', 'sourcemove'];
     private static bool $prepared = false;
 
     /** Register only the permitted settings page before its header is rendered. */
@@ -65,6 +87,11 @@ final class admin_help {
         if (!self::$prepared) {
             return '';
         }
+        $fieldhelp = '';
+        foreach (['courseenabled' => 'overview', 'coursedefault' => 'overview',
+                'sitewideenabled' => 'overview', 'perpage' => 'lists'] as $field => $topic) {
+            $fieldhelp .= \html_writer::span(self::icon($topic), '', ['data-sidenotes-help-field' => $field]);
+        }
         $title = get_string('adminhelp', 'local_sidenotes');
         $close = \html_writer::tag('button', \html_writer::span('&#215;', '', ['aria-hidden' => 'true']), [
             'type' => 'button', 'class' => 'btn btn-secondary btn-sm local-sidenotes-help-close',
@@ -72,7 +99,11 @@ final class admin_help {
         ]);
         $options = '';
         $articles = '';
-        foreach (self::TOPICS as $topic) {
+        $topics = self::TOPICS;
+        if (str_ends_with($PAGE->url->get_path(), '/local/sidenotes/source_move.php')) {
+            $topics = ['sourcemove', 'overview', 'lists'];
+        }
+        foreach ($topics as $topic) {
             $label = get_string('adminhelp_' . $topic, 'local_sidenotes');
             $options .= \html_writer::tag('option', $label, ['value' => $topic]);
             $articles .= \html_writer::tag('article', \html_writer::tag('h3', $label, ['class' => 'h5', 'tabindex' => '-1'])
@@ -97,7 +128,7 @@ final class admin_help {
             'id' => 'local-sidenotes-context-help-title', 'class' => 'sr-only visually-hidden', 'tabindex' => '-1',
         ]) . \html_writer::div($choice, 'local-sidenotes-help-choices') . $brand . $close,
             ['class' => 'local-sidenotes-help-header local-sidenotes-help-header-branded']);
-        return \html_writer::tag('aside', $header
+        return \html_writer::div($fieldhelp, '', ['hidden' => 'hidden']) . \html_writer::tag('aside', $header
             . \html_writer::div($articles, 'local-sidenotes-help-content', ['tabindex' => '0']), [
                 'id' => 'local-sidenotes-context-help', 'class' => 'local-sidenotes-context-help',
                 'aria-labelledby' => 'local-sidenotes-context-help-title', 'hidden' => 'hidden',

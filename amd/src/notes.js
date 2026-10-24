@@ -1,3 +1,11 @@
+/**
+ * File documentation for amd/src/notes.js.
+ *
+ * @package   local_sidenotes
+ * @copyright 2026 Matheus Mathias
+ * @copyright 2026 Andreas Giesen (downstream changes)
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -26,8 +34,9 @@ define([
     'core/notification',
     'core/str',
     'core/user_date',
-    'local_sidenotes/screenshot_gallery'
-], function(Editor, Ajax, Notification, Str, UserDate, Gallery) {
+    'local_sidenotes/screenshot_gallery',
+    'local_sidenotes/page_identity'
+], function(Editor, Ajax, Notification, Str, UserDate, Gallery, PageIdentity) {
     var SELECTORS = {
         root: '#local-sidenotes-root',
         panel: '[data-region="panel"]',
@@ -1336,7 +1345,7 @@ define([
                 return;
             }
 
-            if (targetUrl && (targetUrl.indexOf(currentUrl) === 0 || targetUrl.indexOf('#') === 0)) {
+            if (targetUrl && (PageIdentity.samePage(targetUrl, currentUrl))) {
                 e.preventDefault();
 
                 var hashIndex = targetUrl.indexOf('#');

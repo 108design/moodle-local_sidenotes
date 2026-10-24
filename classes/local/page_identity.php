@@ -38,7 +38,9 @@ final class page_identity {
 
         $urlparts = parse_url($url);
         $baseparts = parse_url($CFG->wwwroot);
-        if ($urlparts === false || $baseparts === false || empty($urlparts['host']) || empty($baseparts['host'])) {
+        if ($urlparts === false || $baseparts === false || empty($urlparts['host']) || empty($baseparts['host'])
+                || isset($urlparts['user']) || isset($urlparts['pass'])
+                || !in_array(strtolower($urlparts['scheme'] ?? ''), ['http', 'https'], true)) {
             throw new invalid_parameter_exception('A valid Moodle page URL is required.');
         }
 
@@ -49,13 +51,18 @@ final class page_identity {
         }
 
         $path = $urlparts['path'] ?? '/';
+        $basepath = rtrim($baseparts['path'] ?? '', '/');
+        if ($basepath !== '' && $path !== $basepath && !str_starts_with($path, $basepath . '/')) {
+            throw new invalid_parameter_exception('The page must belong to this Moodle installation path.');
+        }
+        $decoded = rawurldecode($path);
+        if (str_contains($decoded, '\\') || preg_match('~(?:^|/)\.{1,2}(?:/|$)~', $decoded)) {
+            throw new invalid_parameter_exception('A canonical Moodle page path is required.');
+        }
         $query = [];
         if (!empty($urlparts['query'])) {
             parse_str($urlparts['query'], $query);
-            foreach (self::VOLATILE_QUERY_KEYS as $key) {
-                unset($query[$key]);
-            }
-            self::sort_recursive($query);
+            $query = self::stable_query($query);
         }
 
         return $path . ($query ? '?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986) : '');
@@ -89,10 +96,7 @@ final class page_identity {
         $query = [];
         if (!empty($parts['query'])) {
             parse_str($parts['query'], $query);
-            foreach (self::VOLATILE_QUERY_KEYS as $key) {
-                unset($query[$key]);
-            }
-            self::sort_recursive($query);
+            $query = self::stable_query($query);
         }
         $canonical = $path . ($query ? '?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986) : '');
         return hash('sha256', $canonical);
@@ -151,6 +155,18 @@ final class page_identity {
             return 80;
         }
         return null;
+    }
+
+    /** Remove transient top-level form/session arguments before hashing a page. */
+    private static function stable_query(array $query): array {
+        foreach (array_keys($query) as $key) {
+            if (in_array((string) $key, self::VOLATILE_QUERY_KEYS, true)
+                    || str_starts_with((string) $key, '_qf__')) {
+                unset($query[$key]);
+            }
+        }
+        self::sort_recursive($query);
+        return $query;
     }
 
     /**

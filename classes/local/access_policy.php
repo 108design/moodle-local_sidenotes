@@ -1,4 +1,26 @@
 <?php
+/**
+ * This file is part of Moodle - https://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * File documentation for classes/local/access_policy.php.
+ *
+ * @package   local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 // This file is part of Moodle - https://moodle.org/
 // GNU GPL v3 or later.
 
@@ -73,6 +95,15 @@ class access_policy {
         return !isset($modules[$cmid]) || (bool) $modules[$cmid];
     }
 
+    /** Stored legacy sources may be unmapped; one such record must not abort a whole drawer/count. */
+    public static function stored_page_allowed(int $courseid, string $url): bool {
+        try {
+            return self::page_allowed($courseid, source_move_manager::resolve_stored_url($url));
+        } catch (\invalid_parameter_exception $exception) {
+            return false;
+        }
+    }
+
     public static function require_page(int $courseid, string $url): void {
         if (!self::page_allowed($courseid, $url)) {
             throw new \moodle_exception('access:denied', 'local_sidenotes');
@@ -111,7 +142,7 @@ class access_policy {
         }
         try {
             return self::sitewide() || (self::overview_allowed()
-                && (self::unbound($note) || self::page_allowed((int) $note->courseid, (string) $note->url)));
+                && (self::unbound($note) || self::stored_page_allowed((int) $note->courseid, (string) $note->url)));
         } catch (\invalid_parameter_exception $exception) {
             return false;
         }

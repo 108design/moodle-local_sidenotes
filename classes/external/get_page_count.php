@@ -1,4 +1,26 @@
 <?php
+/**
+ * This file is part of Moodle - https://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * File documentation for classes/external/get_page_count.php.
+ *
+ * @package   local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 // This file is part of Moodle - https://moodle.org/
 // GNU GPL v3 or later.
 
@@ -27,8 +49,9 @@ class get_page_count extends \core_external\external_api {
         self::validate_context(\context_system::instance());
         access_policy::require_page((int) $params['courseid'], $params['pageurl']);
         // Same canonical identity as the drawer; global/unbound/archive records never contribute.
-        $select = 'userid = :userid AND pagehash = :pagehash AND isglobal = 0 AND archived = 0';
-        $queryparams = ['userid' => $USER->id, 'pagehash' => page_identity::hash($params['pageurl'])];
+        [$hashsql, $hashparams] = $DB->get_in_or_equal(\local_sidenotes\local\source_move_manager::lookup_hashes($params['pageurl']), SQL_PARAMS_NAMED, 'pagehash');
+        $select = 'userid = :userid AND pagehash ' . $hashsql . ' AND isglobal = 0 AND archived = 0';
+        $queryparams = ['userid' => $USER->id] + $hashparams;
         if (access_policy::sitewide()) {
             return $DB->count_records_select('local_sidenotes_notes', $select, $queryparams);
         }
@@ -39,7 +62,7 @@ class get_page_count extends \core_external\external_api {
         foreach ($records as $record) {
             $key = $record->courseid . ':' . $record->url;
             if (!array_key_exists($key, $availability)) {
-                $availability[$key] = access_policy::page_allowed((int) $record->courseid, (string) $record->url);
+                $availability[$key] = access_policy::stored_page_allowed((int) $record->courseid, (string) $record->url);
             }
             if ($availability[$key]) {
                 $count++;

@@ -98,17 +98,21 @@ does not make other users' notes visible to administrators.
 
 ## Installation
 
-Requires Moodle 4.2 or later and its corresponding PHP and database requirements.
-The current release is **1.14.0**. Check the notes interface with your site's theme
-before enabling it for learners.
+Supported Moodle versions: **4.5–5.3**. Use the PHP and database versions required
+by your Moodle branch. This source version is **1.24.0**. Check the notes interface
+with your site's theme before enabling it for learners.
 
 1. Install the plugin as `local/sidenotes` below Moodle's plugin directory.
 2. Complete installation through **Site administration → Notifications**.
 3. Review the Side Notes site settings and the availability settings in your courses.
+4. Keep Moodle cron running. It removes remaining notes, screenshots and tags from
+   deleted courses in background batches. User unenrolment removes that user's
+   course notes immediately.
 
 ## Using Side Notes
 
 Use the right-edge tab to open or close the notes panel while viewing a course page.
+Its badge counts notes available on the current page.
 The adjacent folder tab opens your notes overview in the same browser tab. The panel
 always opens on the right; there is no left-side placement setting. Select a passage to save it as
 a quotation, or create a note and enter your own text. Changes are saved as you edit.
@@ -154,6 +158,27 @@ your Side Notes copies. Site settings and role permissions are configured separa
 
 Side Notes can be installed alongside QuickNote. QuickNote is needed only when
 importing its existing notes.
+
+## After moving Moodle
+
+Administrators with permission to change site configuration can open **Update Source
+Links After a Site Move** under **Local plugins**. Enter the **Previous Moodle Base URL**,
+including its former subdirectory. The destination is the **Current Moodle Base URL**
+configured for this installation.
+
+**Create Preview** checks stored source links, quotation links and page associations
+without changing notes or showing private note text. **Apply Previewed Mapping** confirms
+those addresses and starts the update. Only links within the previous installation are
+matched; links to other sites are retained.
+
+Keep the page visible for automatic progress. You can **Pause**, close the page and
+**Resume** later, or continue manually without JavaScript. **Stop** ends the job and
+retains completed batches. Notes created after the preview are excluded; create another
+preview if needed.
+
+The update preserves quotation fragments, note text, ownership, full titles, archive
+state, tags, attachments and timestamps. Approved old links remain readable while the
+update runs. It does not require manual database edits.
 
 ## Maintainer and origin
 

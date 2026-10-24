@@ -227,7 +227,7 @@ if ($export === 'pdf') {
                 $html .= '<blockquote style="color:#555"><i>' . $quote . '</i></blockquote>';
             }
             if (!empty($record->url)) {
-                $html .= '<p><small><a href="' . s(clean_param($record->url, PARAM_URL)) . '">'
+                $html .= '<p><small><a href="' . s(clean_param(\local_sidenotes\local\source_move_manager::resolve_stored_url((string) $record->url), PARAM_URL)) . '">'
                     . s(get_string('note:viewintext', 'local_sidenotes')) . '</a></small></p>';
             }
             if (trim((string) $record->content) !== '') {
@@ -301,7 +301,7 @@ if ($export === 'md') {
             }
             if (!empty($record->url)) {
                 $md .= '[_' . get_string('note:viewintext', 'local_sidenotes') . '_]('
-                    . clean_param($record->url, PARAM_URL) . ")\n\n";
+                    . clean_param(\local_sidenotes\local\source_move_manager::resolve_stored_url((string) $record->url), PARAM_URL) . ")\n\n";
             }
             $md .= (string) $record->content . "\n\n";
             foreach ($screenshots as $screenshot) {
@@ -319,8 +319,8 @@ if ($export === 'md') {
 $notes = [];
 foreach ($noterecords as $record) {
     $screenshots = \local_sidenotes\local\screenshot_manager::get_for_note((int) $record->id);
-    $sourceurl = clean_param((string) $record->url, PARAM_URL);
-    $quoteurl = clean_param((string) $record->quoteurl, PARAM_URL);
+    $sourceurl = clean_param(\local_sidenotes\local\source_move_manager::resolve_stored_url((string) $record->url), PARAM_URL);
+    $quoteurl = clean_param(\local_sidenotes\local\source_move_manager::resolve_stored_url((string) $record->quoteurl), PARAM_URL);
     $actionurl = $quoteurl ?: $sourceurl;
     try {
         $actionurl = $actionurl ? \local_sidenotes\local\page_identity::with_open_drawer($actionurl) : null;

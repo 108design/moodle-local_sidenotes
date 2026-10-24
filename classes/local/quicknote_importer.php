@@ -1,4 +1,26 @@
 <?php
+/**
+ * This file is part of Moodle - https://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * File documentation for classes/local/quicknote_importer.php.
+ *
+ * @package   local_sidenotes
+ * @copyright 2026 Andreas Giesen <andreas@108design.com>
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 // This file is part of Moodle - https://moodle.org/
 // GNU GPL v3 or later.
 namespace local_sidenotes\local;
@@ -112,7 +134,7 @@ final class quicknote_importer {
             'content' => $source->content, 'contentformat' => $format,
             'quote' => $source->quote, 'quoteurl' => self::remap_source_url($source->quoteurl), 'url' => $url,
             'pagehash' => $unbound ? access_policy::unbound_hash()
-                : ($remapped ? page_identity::legacy_hash($url) : ($source->pagehash ?? page_identity::legacy_hash($url))),
+                : page_identity::legacy_hash($url),
             'pagetitle' => $title, 'isglobal' => (int) ($source->isglobal ?? 0),
             'timecreated' => (int) $source->timecreated, 'timemodified' => (int) $source->timemodified,
         ];
@@ -147,7 +169,11 @@ final class quicknote_importer {
                         $result['skipped']++;
                         continue;
                     }
-                    $note = self::convert($source);
+                    $mappedsource = clone($source);
+                    $mappedsource->url = source_move_manager::resolve_stored_url((string) $source->url);
+                    $mappedsource->quoteurl = $source->quoteurl === null ? null :
+                        source_move_manager::resolve_stored_url((string) $source->quoteurl);
+                    $note = self::convert($mappedsource);
                     $noteid = (int) $DB->insert_record('local_sidenotes_notes', $note);
                     $result['tags'] += self::copy_tags((int) $source->id, $noteid, $userid);
                     $result['screenshots'] += self::copy_files((int) $source->id, $noteid);

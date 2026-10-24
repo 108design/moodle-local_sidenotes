@@ -42,14 +42,16 @@ class get_notes extends \core_external\external_api {
 
         $queryparams = ['userid' => $USER->id];
         if ($params['pageurl'] !== '') {
-            $queryparams['pagehash'] = page_identity::hash($params['pageurl']);
-            $select = 'userid = :userid AND (pagehash = :pagehash OR isglobal = 1)';
+            [$hashsql, $hashparams] = $DB->get_in_or_equal(\local_sidenotes\local\source_move_manager::lookup_hashes($params['pageurl']), SQL_PARAMS_NAMED, 'pagehash');
+            $queryparams += $hashparams;
+            $select = 'userid = :userid AND (pagehash ' . $hashsql . ' OR isglobal = 1)';
         } else if ($params['courseid'] > 0) {
             $queryparams['courseid'] = $params['courseid'];
             $select = 'userid = :userid AND (courseid = :courseid OR isglobal = 1)';
         } else {
-            $queryparams['pagehash'] = page_identity::hash($allowedurl);
-            $select = 'userid = :userid AND (pagehash = :pagehash OR isglobal = 1)';
+            [$hashsql, $hashparams] = $DB->get_in_or_equal(\local_sidenotes\local\source_move_manager::lookup_hashes($allowedurl), SQL_PARAMS_NAMED, 'pagehash');
+            $queryparams += $hashparams;
+            $select = 'userid = :userid AND (pagehash ' . $hashsql . ' OR isglobal = 1)';
         }
 
         $select .= ' AND archived = 0';
@@ -61,7 +63,7 @@ class get_notes extends \core_external\external_api {
         $result = [];
         foreach ($records as $record) {
             if (!access_policy::sitewide() && !access_policy::unbound($record)
-                    && !access_policy::page_allowed((int) $record->courseid, (string) $record->url)) {
+                    && !access_policy::stored_page_allowed((int) $record->courseid, (string) $record->url)) {
                 continue;
             }
             $result[] = save_note::export_note($record, $tags[(int) $record->id] ?? []);

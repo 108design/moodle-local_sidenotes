@@ -49,4 +49,7 @@ if ($hassiteconfig) {
     ));
 
     $ADMIN->add('localplugins', $settings);
+    $ADMIN->add('localplugins', new admin_externalpage('local_sidenotes_sourcemove',
+        get_string('sourcemove', 'local_sidenotes'), new moodle_url('/local/sidenotes/source_move.php'),
+        'moodle/site:config'));
 }

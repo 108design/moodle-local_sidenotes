@@ -149,3 +149,12 @@ body.local-sidenotes-help-legacy-drawers.local-sidenotes-help-open .drawer.drawe
     grid-row: 2;
     align-self: center;
 }
+
+.local-sidenotes-setting-help-control {display:inline-flex;align-items:center;gap:8px;max-width:100%;}
+.local-sidenotes-setting-help-control > span {flex:0 0 auto;}
+.local-sidenotes-setting-help-control .local-sidenotes-context-help-icon {margin:0!important;}
+
+/* Match the narrow admin page padding without moving native label/control content. */
+@media (max-width: 575.98px) {
+    body.local-sidenotes-admin-help-page #adminsettings .row { --bs-gutter-x: 1rem; }
+}

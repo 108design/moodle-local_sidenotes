@@ -32,7 +32,7 @@ namespace local_sidenotes;
  */
 class observers {
     /**
-     * Delete the per-course synthetic config when a course is deleted.
+     * Queue course-note cleanup and remove the small per-course configuration.
      *
      * @param \core\event\course_deleted $event The event triggered.
      */
@@ -40,8 +40,10 @@ class observers {
         global $DB;
         $courseid = $event->objectid;
 
-        // Remove any notes still attached to this course (covers non-enrolled authors).
-        self::delete_notes(['courseid' => $courseid]);
+        // File and tag cleanup can be large; the request only records the bounded background job.
+        $task = new \local_sidenotes\task\delete_course_notes();
+        $task->set_custom_data(['courseid' => (int)$courseid, 'batch' => 0]);
+        \core\task\manager::queue_adhoc_task($task, true);
 
         // Remove the per-course configuration.
         $DB->delete_records('local_sidenotes_course', ['courseid' => $courseid]);

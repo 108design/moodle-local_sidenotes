@@ -1,3 +1,11 @@
+/**
+ * File documentation for amd/src/view.js.
+ *
+ * @package   local_sidenotes
+ * @copyright 2026 Matheus Mathias
+ * @copyright 2026 Andreas Giesen (downstream changes)
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
