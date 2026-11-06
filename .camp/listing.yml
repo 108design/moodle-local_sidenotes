@@ -1,0 +1,19 @@
+name: Side Notes
+summary: 108design's free GPL private Moodle notes combine quotations, tags, screenshots, an archive and
+  exports, with an optional administrator mode.
+category: Course tools
+description: |
+  Keep private notes alongside Moodle course content. Save a quotation, add your thoughts and return to the original page through the note's source link. A notes drawer accompanies course pages, while the searchable overview brings notes together across courses.
+
+  Use the visual Markdown editor, coloured personal tags and pasted screenshots. Page notes, course-wide notes and personal overview notes support different kinds of reference. Complete notes to move them to a private archive; restore them or permanently delete them after confirmation. Export notes as Markdown or PDF.
+
+  Notes, tags and screenshots belong to their author. The optional administrator mode allows authorised users to keep notes outside courses; it is disabled by default and does not expose other users' notes. Learner access remains limited to courses they can access.
+
+  Compatible QuickNote installations can offer an explicit import of a user's own notes. Importing preserves the originals and does not run automatically during installation. QuickNote is needed only for that optional migration.
+
+  Maintained by 108design and available free of charge under the GNU GPL v3 or later. Check the notes interface with your site's theme before enabling it for learners.
+labels:
+- fully-free
+links:
+  docs: https://github.com/108design/moodle-local_sidenotes/blob/main/README.md
+  issues: https://github.com/108design/moodle-local_sidenotes/issues
