@@ -1,28 +1,26 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for tests/archive_manager_test.php.
  *
  * @package   local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-// GNU GPL v3 or later.
 namespace local_sidenotes;
 
 use local_sidenotes\local\archive_manager;
@@ -37,7 +35,9 @@ use local_sidenotes\local\note_filters;
  * @covers \local_sidenotes\local\note_filters
  */
 final class archive_manager_test extends \advanced_testcase {
-    /** Create a plain private record without requiring a page/editor. */
+    /**
+     * Create a plain private record without requiring a page/editor.
+     */
     private function note(int $userid): \stdClass {
         global $DB;
         $note = (object) ['userid' => $userid, 'courseid' => 0, 'content' => 'literal **plain**',
@@ -49,6 +49,9 @@ final class archive_manager_test extends \advanced_testcase {
         return $DB->get_record('local_sidenotes_notes', ['id' => $note->id], '*', MUST_EXIST);
     }
 
+    /**
+     * Archive and restore preserve original fields.
+     */
     public function test_archive_and_restore_preserve_original_fields(): void {
         global $DB;
         $this->resetAfterTest();
@@ -59,12 +62,17 @@ final class archive_manager_test extends \advanced_testcase {
         $this->assertEquals(1, $archived->archived);
         $this->assertGreaterThan(0, $archived->timearchived);
         foreach ((array) $note as $key => $value) {
-            if (!in_array($key, ['archived', 'timearchived'], true)) {$this->assertSame($value, $archived->$key);}
+            if (!in_array($key, ['archived', 'timearchived'], true)) {
+                $this->assertSame($value, $archived->$key);
+            }
         }
         archive_manager::set_state($note->id, $user->id, false);
         $this->assertEquals($note, $DB->get_record('local_sidenotes_notes', ['id' => $note->id]));
     }
 
+    /**
+     * Foreign note cannot be restored.
+     */
     public function test_foreign_note_cannot_be_restored(): void {
         $this->resetAfterTest();
         $one = $this->getDataGenerator()->create_user();
@@ -75,26 +83,38 @@ final class archive_manager_test extends \advanced_testcase {
         archive_manager::set_state($note->id, $two->id, false);
     }
 
+    /**
+     * Changed empty snapshot deletes nothing.
+     */
     public function test_changed_empty_snapshot_deletes_nothing(): void {
         global $DB;
         $this->resetAfterTest();
         $user = $this->getDataGenerator()->create_user();
-        $one = $this->note($user->id); $two = $this->note($user->id);
+        $one = $this->note($user->id);
+        $two = $this->note($user->id);
         archive_manager::set_state($one->id, $user->id, true);
         $revision = archive_manager::status($user->id)['revision'];
         archive_manager::set_state($two->id, $user->id, true);
         try {
             archive_manager::empty_owned($user->id, $revision);
             $this->fail('A changed archive must require a new confirmation.');
-        } catch (\moodle_exception $e) {$this->assertSame('archive:changed', $e->errorcode);}
+        } catch (\moodle_exception $e) {
+            $this->assertSame('archive:changed', $e->errorcode);
+        }
         $this->assertEquals(2, $DB->count_records('local_sidenotes_notes', ['userid' => $user->id]));
     }
 
+    /**
+     * Empty keeps active foreign notes and import receipts.
+     */
     public function test_empty_keeps_active_foreign_notes_and_import_receipts(): void {
         global $DB;
         $this->resetAfterTest();
-        $user = $this->getDataGenerator()->create_user(); $other = $this->getDataGenerator()->create_user();
-        $archived = $this->note($user->id); $active = $this->note($user->id); $foreign = $this->note($other->id);
+        $user = $this->getDataGenerator()->create_user();
+        $other = $this->getDataGenerator()->create_user();
+        $archived = $this->note($user->id);
+        $active = $this->note($user->id);
+        $foreign = $this->note($other->id);
         archive_manager::set_state($archived->id, $user->id, true);
         archive_manager::set_state($foreign->id, $other->id, true);
         $DB->insert_record('local_sidenotes_import', (object) ['userid' => $user->id, 'courseid' => 0,
@@ -106,6 +126,9 @@ final class archive_manager_test extends \advanced_testcase {
         $this->assertTrue($DB->record_exists('local_sidenotes_import', ['noteid' => $archived->id]));
     }
 
+    /**
+     * Tag filter is normalised and bound for every tag.
+     */
     public function test_tag_filter_is_normalised_and_bound_for_every_tag(): void {
         $this->assertSame([3, 7], note_filters::normalise_tags([7, 3, 7, 0, -1]));
         [$sql, $params] = note_filters::tag_conditions([3, 7], 42);

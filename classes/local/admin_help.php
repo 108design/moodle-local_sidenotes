@@ -1,20 +1,20 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for classes/local/admin_help.php.
  *
  * @package   local_sidenotes
@@ -24,19 +24,36 @@
 // Copyright (C) 2026 Andreas Giesen. See LICENSE.
 namespace local_sidenotes\local;
 
+// Keep the explicit direct-access guard for this Moodle-only helper.
+// phpcs:ignore moodle.Files.MoodleInternal.MoodleInternalNotNeeded
 defined('MOODLE_INTERNAL') || die();
 
-/** Contextual settings help, following the standalone Frontpage panel contract. */
+/**
+ * Contextual settings help, following the standalone Frontpage panel contract.
+ */
 final class admin_help {
+    /**
+     * Administration topics supported by the contextual help panel.
+     */
     private const TOPICS = ['overview', 'lists', 'sourcemove'];
+    /**
+     * @var bool Whether permitted page assets have already been registered.
+     */
     private static bool $prepared = false;
 
+    /**
+     * Check for the personal overview and the current user access to it.
+     *
+     * @return bool
+     */
     private static function personal(): bool {
         global $PAGE;
         return str_ends_with($PAGE->url->get_path(), '/local/sidenotes/view.php') && access_policy::overview_allowed();
     }
 
-    /** Register only the permitted settings page before its header is rendered. */
+    /**
+     * Register only the permitted settings page before its header is rendered.
+     */
     public static function prepare(\core\hook\output\before_http_headers $hook): void {
         global $CFG, $PAGE;
         if (self::$prepared || (admin_branding::page_capability() === null && !self::personal())) {
@@ -54,7 +71,9 @@ final class admin_help {
         ]]);
     }
 
-    /** Native popover with concise guidance and a direct link to the extended topic. */
+    /**
+     * Native popover with concise guidance and a direct link to the extended topic.
+     */
     public static function icon(string $key): string {
         global $CFG, $PAGE;
         if (!in_array($key, self::TOPICS, true)) {
@@ -71,7 +90,9 @@ final class admin_help {
         return $renderer->render_from_template('local_sidenotes/settings_help_icon', $data);
     }
 
-    /** Always available in the native Topnav user area on the registered page. */
+    /**
+     * Always available in the native Topnav user area on the registered page.
+     */
     public static function navbar(\renderer_base $renderer): string {
         global $CFG;
         if (!self::$prepared) {
@@ -79,22 +100,28 @@ final class admin_help {
         }
         $label = get_string(self::personal() ? 'noteshelptitle' : 'adminhelp', 'local_sidenotes');
         return \html_writer::tag('button', $renderer->pix_icon(
-            (int)$CFG->version < 2026100500 ? 'i/info' : 'i/circleinfo', ''), [
+            (int)$CFG->version < 2026100500 ? 'i/info' : 'i/circleinfo',
+            ''
+        ), [
                 'type' => 'button', 'class' => 'nav-link icon-no-margin local-sidenotes-help-navbar',
                 'data-sidenotes-help-open' => '', 'aria-label' => $label, 'title' => $label,
                 'aria-controls' => 'local-sidenotes-context-help', 'aria-expanded' => 'false',
             ]);
     }
 
-    /** Same header, topic chooser and article layout as the Frontpage reference. */
+    /**
+     * Same header, topic chooser and article layout as the Frontpage reference.
+     */
     public static function render(): string {
         global $PAGE;
         if (!self::$prepared) {
             return '';
         }
         $fieldhelp = '';
-        foreach (self::personal() ? [] : ['courseenabled' => 'overview', 'coursedefault' => 'overview',
-                'sitewideenabled' => 'overview', 'perpage' => 'lists'] as $field => $topic) {
+        foreach (
+            self::personal() ? [] : ['courseenabled' => 'overview', 'coursedefault' => 'overview',
+                'sitewideenabled' => 'overview', 'perpage' => 'lists'] as $field => $topic
+        ) {
             $fieldhelp .= \html_writer::span(self::icon($topic), '', ['data-sidenotes-help-field' => $field]);
         }
         $title = get_string(self::personal() ? 'noteshelptitle' : 'adminhelp', 'local_sidenotes');
@@ -129,10 +156,13 @@ final class admin_help {
             'class' => 'local-sidenotes-help-brand', 'role' => 'img', 'aria-label' => '108design',
             'title' => '108design', 'tabindex' => '0', 'data-toggle' => 'tooltip', 'data-bs-toggle' => 'tooltip',
         ]);
-        $header = \html_writer::tag('header', \html_writer::tag('h2', $title, [
+        $header = \html_writer::tag(
+            'header',
+            \html_writer::tag('h2', $title, [
             'id' => 'local-sidenotes-context-help-title', 'class' => 'sr-only visually-hidden', 'tabindex' => '-1',
-        ]) . \html_writer::div($choice, 'local-sidenotes-help-choices') . $brand . $close,
-            ['class' => 'local-sidenotes-help-header local-sidenotes-help-header-branded']);
+            ]) . \html_writer::div($choice, 'local-sidenotes-help-choices') . $brand . $close,
+            ['class' => 'local-sidenotes-help-header local-sidenotes-help-header-branded']
+        );
         return \html_writer::div($fieldhelp, '', ['hidden' => 'hidden']) . \html_writer::tag('aside', $header
             . \html_writer::div($articles, 'local-sidenotes-help-content', ['tabindex' => '0']), [
                 'id' => 'local-sidenotes-context-help', 'class' => 'local-sidenotes-context-help',
@@ -141,7 +171,9 @@ final class admin_help {
             ]);
     }
 
-    /** Append the registered panel without changing the page's controls. */
+    /**
+     * Append the registered panel without changing the page's controls.
+     */
     public static function footer(\core\hook\output\before_standard_footer_html_generation $hook): void {
         $hook->add_html(self::render());
     }

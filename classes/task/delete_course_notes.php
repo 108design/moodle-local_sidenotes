@@ -8,14 +8,24 @@
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Side Notes delete course notes.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace local_sidenotes\task;
 
+// Keep the explicit direct-access guard for this Moodle-only helper.
+// phpcs:ignore moodle.Files.MoodleInternal.MoodleInternalNotNeeded
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -26,15 +36,21 @@ defined('MOODLE_INTERNAL') || die();
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class delete_course_notes extends \core\task\adhoc_task {
-    /** Maximum note/file/tag units processed in one task execution. */
+    /**
+     * Maximum note/file/tag units processed in one task execution.
+     */
     public const BATCH_SIZE = 200;
 
-    /** Human-readable task name in native task administration. */
+    /**
+     * Human-readable task name in native task administration.
+     */
     public function get_name(): string {
         return get_string('taskdeletecoursenotes', 'local_sidenotes');
     }
 
-    /** Execute one idempotent batch; Moodle retries failures through its native task queue. */
+    /**
+     * Execute one idempotent batch; Moodle retries failures through its native task queue.
+     */
     public function execute(): void {
         global $DB;
         $data = (array)$this->get_custom_data();
@@ -43,8 +59,14 @@ final class delete_course_notes extends \core\task\adhoc_task {
             return;
         }
 
-        $notes = $DB->get_records('local_sidenotes_notes', ['courseid' => $courseid],
-            'id ASC', 'id, userid', 0, self::BATCH_SIZE);
+        $notes = $DB->get_records(
+            'local_sidenotes_notes',
+            ['courseid' => $courseid],
+            'id ASC',
+            'id, userid',
+            0,
+            self::BATCH_SIZE
+        );
         $transaction = $DB->start_delegated_transaction();
         foreach ($notes as $note) {
             \local_sidenotes\local\screenshot_manager::delete_for_note((int)$note->id);

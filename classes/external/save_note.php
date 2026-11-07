@@ -1,27 +1,26 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * External service for save note.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace local_sidenotes\external;
 
@@ -42,6 +41,11 @@ use local_sidenotes\local\access_policy;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class save_note extends \core_external\external_api {
+    /**
+     * Describe the accepted parameters of this external service.
+     *
+     * @return \core_external\external_function_parameters
+     */
     public static function execute_parameters(): \core_external\external_function_parameters {
         return new \core_external\external_function_parameters([
             'id' => new \core_external\external_value(PARAM_INT, 'Note id, 0 for new.', VALUE_DEFAULT, 0),
@@ -67,6 +71,21 @@ class save_note extends \core_external\external_api {
         ]);
     }
 
+    /**
+     * Create or update a private note after validating its source and owner access.
+     *
+     * @param int $id Record or job identifier.
+     * @param int $courseid Course ID, or zero outside a course.
+     * @param string $content Submitted note content.
+     * @param string $url Source page URL.
+     * @param string $pagetitle Source page title.
+     * @param bool $isglobal Whether to show the note across pages.
+     * @param string $quote Selected quote text.
+     * @param string $quoteurl Source URL of the selected quote.
+     * @param array $tags Tag values for this operation.
+     * @param bool $updatetags Whether to replace the existing note tags.
+     * @return array
+     */
     public static function execute(
         int $id,
         int $courseid,
@@ -129,23 +148,23 @@ class save_note extends \core_external\external_api {
             throw new \moodle_exception('error:busy', 'local_sidenotes');
         }
         try {
-        if ($id) {
-            $existing = $DB->get_record('local_sidenotes_notes', ['id' => $id, 'userid' => $USER->id], '*', MUST_EXIST);
-            // Recheck under the same lock used by archive/restore.
-            access_policy::require_edit($existing);
-        }
-
-        $content = core_text::substr($params['content'], 0, 20000);
-        $contentformat = FORMAT_MARKDOWN;
-        if ($existing) {
-            $contentformat = isset($existing->contentformat) ? (int) $existing->contentformat : FORMAT_PLAIN;
-            if ((string) ($existing->content ?? '') !== $content) {
-                // A legacy plain-text note becomes Markdown only after a real content edit.
-                $contentformat = FORMAT_MARKDOWN;
+            if ($id) {
+                $existing = $DB->get_record('local_sidenotes_notes', ['id' => $id, 'userid' => $USER->id], '*', MUST_EXIST);
+                // Recheck under the same lock used by archive/restore.
+                access_policy::require_edit($existing);
             }
-        }
 
-        $record = (object) [
+            $content = core_text::substr($params['content'], 0, 20000);
+            $contentformat = FORMAT_MARKDOWN;
+            if ($existing) {
+                $contentformat = isset($existing->contentformat) ? (int) $existing->contentformat : FORMAT_PLAIN;
+                if ((string) ($existing->content ?? '') !== $content) {
+                    // A legacy plain-text note becomes Markdown only after a real content edit.
+                    $contentformat = FORMAT_MARKDOWN;
+                }
+            }
+
+            $record = (object) [
             'userid' => $USER->id,
             'courseid' => $params['courseid'],
             'content' => $content,
@@ -157,39 +176,49 @@ class save_note extends \core_external\external_api {
             'pagetitle' => core_text::substr($params['pagetitle'], 0, 255),
             'isglobal' => (int) $params['isglobal'],
             'timemodified' => time(),
-        ];
+            ];
 
-        if ($existing && access_policy::unbound($existing)) {
-            // Turning a global, unbound note off keeps it in the overview, not on the current page.
-            $record->courseid = 0;
-            $record->url = '';
-            $record->pagehash = access_policy::unbound_hash();
-            $record->pagetitle = '';
-        }
+            if ($existing && access_policy::unbound($existing)) {
+                // Turning a global, unbound note off keeps it in the overview, not on the current page.
+                $record->courseid = 0;
+                $record->url = '';
+                $record->pagehash = access_policy::unbound_hash();
+                $record->pagetitle = '';
+            }
 
-        if ($existing) {
-            $record->id = $existing->id;
-            $record->timecreated = $existing->timecreated;
-            $DB->update_record('local_sidenotes_notes', $record);
-        } else {
-            $record->timecreated = $record->timemodified;
-            $record->id = $DB->insert_record('local_sidenotes_notes', $record);
-        }
+            if ($existing) {
+                $record->id = $existing->id;
+                $record->timecreated = $existing->timecreated;
+                $DB->update_record('local_sidenotes_notes', $record);
+            } else {
+                $record->timecreated = $record->timemodified;
+                $record->id = $DB->insert_record('local_sidenotes_notes', $record);
+            }
 
-        if ($params['updatetags']) {
-            tag_manager::set_for_note((int) $record->id, (int) $USER->id, $params['tags']);
-        }
+            if ($params['updatetags']) {
+                tag_manager::set_for_note((int) $record->id, (int) $USER->id, $params['tags']);
+            }
 
-        return self::export_note($DB->get_record('local_sidenotes_notes', ['id' => $record->id], '*', MUST_EXIST));
+            return self::export_note($DB->get_record('local_sidenotes_notes', ['id' => $record->id], '*', MUST_EXIST));
         } finally {
             $lock->release();
         }
     }
 
+    /**
+     * Describe the return value of this external service.
+     *
+     * @return \core_external\external_single_structure
+     */
     public static function execute_returns(): \core_external\external_single_structure {
         return self::note_structure();
     }
 
+    /**
+     * Describe the public response fields of a private note.
+     *
+     * @return \core_external\external_single_structure
+     */
     public static function note_structure(): \core_external\external_single_structure {
         return new \core_external\external_single_structure([
             'id' => new \core_external\external_value(PARAM_INT, 'Note id.'),
@@ -217,6 +246,13 @@ class save_note extends \core_external\external_api {
         ]);
     }
 
+    /**
+     * Prepare the authorised note, private tags and screenshots for an external response.
+     *
+     * @param \stdClass $note Note record.
+     * @param array|null $tags Tag values for this operation.
+     * @return array
+     */
     public static function export_note(\stdClass $note, ?array $tags = null): array {
         $quote = (string) ($note->quote ?? '');
         $content = (string) ($note->content ?? '');
@@ -233,8 +269,12 @@ class save_note extends \core_external\external_api {
             'courseid' => (int) $note->courseid,
             'content' => $content,
             'contentformat' => $contentformat,
-            'contenthtml' => note_formatter::format($content, $contentformat, context_system::instance(),
-                access_policy::can_edit($note)),
+            'contenthtml' => note_formatter::format(
+                $content,
+                $contentformat,
+                context_system::instance(),
+                access_policy::can_edit($note)
+            ),
             'quote' => $quote,
             'hasquote' => trim($quote) !== '',
             'quotetext' => $quote,

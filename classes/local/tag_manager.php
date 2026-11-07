@@ -1,27 +1,26 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Private tag validation and assignments.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace local_sidenotes\local;
 
@@ -37,13 +36,30 @@ use core_tag_tag;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class tag_manager {
+    /**
+     * Component that owns the private note tag area.
+     */
     public const COMPONENT = 'local_sidenotes';
+    /**
+     * Tag item type used by note records.
+     */
     public const ITEMTYPE = 'local_sidenotes_notes';
+    /**
+     * Maximum tag assignments accepted for one note.
+     */
     public const MAX_TAGS = 20;
+    /**
+     * Maximum characters accepted in a tag name.
+     */
     public const MAX_TAG_LENGTH = 100;
+    /**
+     * Prefix of owner-specific tag-colour preferences.
+     */
     public const COLOUR_PREFIX = 'local_sidenotes_tagcolour_';
 
-    /** Stable, restrained category colours; black/white text is chosen by WCAG relative luminance. */
+    /**
+     * Stable, restrained category colours; black/white text is chosen by WCAG relative luminance.
+     */
     public static function colours(int $tagid, string $name, int $userid): array {
         $palette = ['#dbeafe', '#dcfce7', '#fef3c7', '#fce7f3', '#ede9fe', '#cffafe', '#ffedd5', '#e2e8f0',
             '#ccfbf1', '#fae8ff', '#e0e7ff', '#fecdd3'];
@@ -54,6 +70,12 @@ final class tag_manager {
             'automatic' => $automatic, 'customcolour' => (bool) preg_match('/^#[a-f0-9]{6}$/i', $custom)];
     }
 
+    /**
+     * Choose black or white text for the higher contrast against a validated hex colour.
+     *
+     * @param string $hex Validated six-digit hex colour.
+     * @return string
+     */
     public static function contrast(string $hex): string {
         $linear = [];
         foreach ([1, 3, 5] as $offset) {
@@ -64,7 +86,9 @@ final class tag_manager {
         return ($luminance + 0.05) / 0.05 >= 1.05 / ($luminance + 0.05) ? '#000000' : '#ffffff';
     }
 
-    /** Whether the SideNotes tag area is currently enabled. */
+    /**
+     * Whether the SideNotes tag area is currently enabled.
+     */
     public static function is_enabled(): bool {
         return core_tag_area::is_enabled(self::COMPONENT, self::ITEMTYPE) === true;
     }
@@ -101,7 +125,9 @@ final class tag_manager {
         return $result;
     }
 
-    /** Set the current user's tags for one owned note. */
+    /**
+     * Set the current user's tags for one owned note.
+     */
     public static function set_for_note(int $noteid, int $userid, array $tags): void {
         if (!self::is_enabled()) {
             return;
@@ -117,7 +143,9 @@ final class tag_manager {
         );
     }
 
-    /** Remove every user-specific tag instance attached to one note. */
+    /**
+     * Remove every user-specific tag instance attached to one note.
+     */
     public static function remove_for_note(int $noteid, int $userid): void {
         core_tag_tag::remove_all_item_tags(self::COMPONENT, self::ITEMTYPE, $noteid, $userid);
     }
@@ -156,13 +184,17 @@ final class tag_manager {
         return $result;
     }
 
-    /** Return externally safe tag data for one note. */
+    /**
+     * Return externally safe tag data for one note.
+     */
     public static function get_for_note(int $noteid, int $userid): array {
         $items = self::get_for_notes([$noteid], $userid);
         return $items[$noteid] ?? [];
     }
 
-    /** Shared external-service structure for a tag. */
+    /**
+     * Shared external-service structure for a tag.
+     */
     public static function external_structure(): \core_external\external_single_structure {
         return new \core_external\external_single_structure([
             'id' => new \core_external\external_value(PARAM_INT, 'Tag id.'),
@@ -174,10 +206,14 @@ final class tag_manager {
         ]);
     }
 
-    /** Own assigned categories, never Moodle's sitewide tag catalogue. */
+    /**
+     * Own assigned categories, never Moodle's sitewide tag catalogue.
+     */
     public static function owned(int $userid): array {
         global $DB;
-        if (!self::is_enabled()) {return [];}
+        if (!self::is_enabled()) {
+            return [];
+        }
         $records = $DB->get_records_sql('SELECT t.id,t.name,t.rawname,COUNT(DISTINCT qn.id) AS notecount
             FROM {tag} t JOIN {tag_instance} ti ON ti.tagid=t.id
             JOIN {local_sidenotes_notes} qn ON qn.id=ti.itemid
@@ -197,27 +233,43 @@ final class tag_manager {
         return $result;
     }
 
+    /**
+     * Load only notes and tag assignments belonging to the specified owner.
+     *
+     * @param int $tagid Tag ID.
+     * @param int $userid Owner user ID.
+     * @return array
+     */
     private static function notes_for_tag(int $tagid, int $userid): array {
         global $DB;
-        return $DB->get_records_sql('SELECT qn.id,qn.userid,qn.courseid,qn.url,qn.pagehash,qn.archived FROM {local_sidenotes_notes} qn
+        return $DB->get_records_sql(
+            'SELECT qn.id,qn.userid,qn.courseid,qn.url,qn.pagehash,qn.archived FROM {local_sidenotes_notes} qn
             JOIN {tag_instance} ti ON ti.itemid=qn.id
             WHERE ti.tagid=:tagid AND ti.component=:component AND ti.itemtype=:itemtype
                 AND ti.tiuserid=:taguserid AND qn.userid=:noteuserid ORDER BY qn.id',
             ['tagid' => $tagid, 'component' => self::COMPONENT, 'itemtype' => self::ITEMTYPE,
-                'taguserid' => $userid, 'noteuserid' => $userid]);
+            'taguserid' => $userid,
+            'noteuserid' => $userid]
+        );
     }
 
-    /** Rename/remove only this owner's instances. Never mutate/delete a shared core tag definition. */
+    /**
+     * Rename/remove only this owner's instances. Never mutate/delete a shared core tag definition.
+     */
     public static function manage(int $tagid, int $userid, string $operation, string $name, string $colour): void {
         global $DB;
         if ($colour !== '' && !preg_match('/^#[a-f0-9]{6}$/i', $colour)) {
             throw new \invalid_parameter_exception('A six-digit hex background colour is required.');
         }
         $owned = array_column(self::owned($userid), null, 'id');
-        if (!isset($owned[$tagid])) {throw new \invalid_parameter_exception('Private tag not found.');}
+        if (!isset($owned[$tagid])) {
+            throw new \invalid_parameter_exception('Private tag not found.');
+        }
         $old = $owned[$tagid];
         $names = self::normalise([$name]);
-        if ($operation === 'update' && !$names) {throw new \moodle_exception('tags:emptyname', 'local_sidenotes');}
+        if ($operation === 'update' && !$names) {
+            throw new \moodle_exception('tags:emptyname', 'local_sidenotes');
+        }
         $name = $names[0] ?? '';
         $rename = $operation === 'update' && \core_text::strtolower($name) !== \core_text::strtolower($old['name']);
         if (($rename || $operation === 'delete') && !$old['canmanage']) {
@@ -228,7 +280,9 @@ final class tag_manager {
         try {
             $notes = ($rename || $operation === 'delete') ? self::notes_for_tag($tagid, $userid) : [];
             // Lock in deterministic order before opening a DB transaction; never release a row lock mid-batch.
-            foreach ($notes as $note) {$locks[] = access_policy::note_lock((int) $note->id);}
+            foreach ($notes as $note) {
+                $locks[] = access_policy::note_lock((int) $note->id);
+            }
             $transaction = $DB->start_delegated_transaction();
             $newid = $tagid;
             if ($rename || $operation === 'delete') {
@@ -241,11 +295,13 @@ final class tag_manager {
                             ? ($operation === 'delete' ? '' : $name) : $tag['name'], $tags);
                         self::set_for_note((int) $note->id, $userid, $tags);
                         $DB->set_field('local_sidenotes_notes', 'timemodified', time(), ['id' => $note->id, 'userid' => $userid]);
-                        if ($rename) {
-                            foreach (self::get_for_note((int) $note->id, $userid) as $tag) {
-                                if (\core_text::strtolower($tag['name']) === \core_text::strtolower($name)) {$newid = $tag['id'];}
+                    if ($rename) {
+                        foreach (self::get_for_note((int) $note->id, $userid) as $tag) {
+                            if (\core_text::strtolower($tag['name']) === \core_text::strtolower($name)) {
+                                $newid = $tag['id'];
                             }
                         }
+                    }
                 }
                 unset_user_preference(self::COLOUR_PREFIX . $tagid, $userid);
             }
@@ -253,21 +309,35 @@ final class tag_manager {
             $mergepreservescolour = $rename && $newid !== $tagid && isset($owned[$newid])
                 && strtolower($colour) === ($old['customcolour'] ? $old['background'] : '');
             if ($operation === 'update' && !$mergepreservescolour) {
-                if ($colour === '') {unset_user_preference(self::COLOUR_PREFIX . $newid, $userid);}
-                else {set_user_preference(self::COLOUR_PREFIX . $newid, strtolower($colour), $userid);}
+                if ($colour === '') {
+                    unset_user_preference(self::COLOUR_PREFIX . $newid, $userid);
+                } else {
+                    set_user_preference(self::COLOUR_PREFIX . $newid, strtolower($colour), $userid);
+                }
             }
             $transaction->allow_commit();
         } catch (\Throwable $exception) {
-            if ($transaction) {$transaction->rollback($exception);}
+            if ($transaction) {
+                $transaction->rollback($exception);
+            }
             throw $exception;
         } finally {
-            foreach ($locks as $lock) {$lock->release();}
+            foreach ($locks as $lock) {
+                $lock->release();
+            }
         }
     }
 
+    /**
+     * Remove this plugin tag-colour preferences for the specified owner.
+     *
+     * @param int $userid Owner user ID.
+     */
     public static function clear_colours(int $userid): void {
         foreach (get_user_preferences(null, null, $userid) as $name => $value) {
-            if (strpos($name, self::COLOUR_PREFIX) === 0) {unset_user_preference($name, $userid);}
+            if (strpos($name, self::COLOUR_PREFIX) === 0) {
+                unset_user_preference($name, $userid);
+            }
         }
     }
 }

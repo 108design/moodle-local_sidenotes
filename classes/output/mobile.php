@@ -14,6 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+/**
+ * Side Notes mobile.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace local_sidenotes\output;
 
 /**
@@ -35,8 +43,10 @@ class mobile {
         global $OUTPUT;
 
         $courseid = $args['courseid'] ?? 0;
-        \local_sidenotes\local\access_policy::require_page((int) $courseid,
-            (new \moodle_url('/course/view.php', ['id' => $courseid]))->out(false));
+        \local_sidenotes\local\access_policy::require_page(
+            (int) $courseid,
+            (new \moodle_url('/course/view.php', ['id' => $courseid]))->out(false)
+        );
 
         $js = file_get_contents(__DIR__ . '/mobile.js');
         $js = str_replace('%%DELETE_CONFIRM%%', get_string('note:delete_confirm', 'local_sidenotes'), $js);

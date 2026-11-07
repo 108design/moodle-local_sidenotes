@@ -1,25 +1,31 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
 // This file is part of Moodle - https://moodle.org/
-// GNU GPL v3 or later. See LICENSE.
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Incremental host migration for stored source links.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace local_sidenotes\local;
 
+// Keep the explicit direct-access guard for this Moodle-only helper.
+// phpcs:ignore moodle.Files.MoodleInternal.MoodleInternalNotNeeded
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -30,18 +36,34 @@ defined('MOODLE_INTERNAL') || die();
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class source_move_manager {
+    /**
+     * Maximum records processed in a relocation batch.
+     */
     public const BATCH_SIZE = 200;
+    /**
+     * Plugin configuration key for the persisted relocation job.
+     */
     private const JOB = 'sourcemovejob';
+    /**
+     * Plugin configuration key for accepted installation-base mappings.
+     */
     private const MAPS = 'sourcemappings';
+    /**
+     * @var array|null Request-local cache of accepted installation-base mappings.
+     */
     private static ?array $mappingcache = null;
 
-    /** Only system administrators with the native configuration capability can operate a move. */
+    /**
+     * Only system administrators with the native configuration capability can operate a move.
+     */
     private static function require_admin(): void {
         require_login();
         require_capability('moodle/site:config', \context_system::instance());
     }
 
-    /** Read operational state directly, including after another request advanced the job. */
+    /**
+     * Read operational state directly, including after another request advanced the job.
+     */
     private static function read_json(string $key): ?array {
         global $DB;
         $raw = $DB->get_field('config_plugins', 'value', ['plugin' => 'local_sidenotes', 'name' => $key]);
@@ -56,13 +78,21 @@ final class source_move_manager {
         }
     }
 
+    /**
+     * Persist the updated job timestamp and return the saved job state.
+     *
+     * @param array $job Persisted relocation state.
+     * @return array
+     */
     private static function store_job(array $job): array {
         $job['updated'] = time();
         set_config(self::JOB, json_encode($job, JSON_THROW_ON_ERROR), 'local_sidenotes');
         return $job;
     }
 
-    /** Serialise all workflow state; note edits additionally use their existing per-note locks. */
+    /**
+     * Serialise all workflow state; note edits additionally use their existing per-note locks.
+     */
     private static function locked(callable $operation) {
         $lock = \core\lock\lock_config::get_lock_factory('local_sidenotes')->get_lock('source-move', 10);
         if (!$lock) {
@@ -75,12 +105,21 @@ final class source_move_manager {
         }
     }
 
-    /** One site-wide job contains counts and bases only, never note bodies or owner identities. */
+    /**
+     * One site-wide job contains counts and bases only, never note bodies or owner identities.
+     */
     public static function current_job(): ?array {
         self::require_admin();
         return self::read_json(self::JOB);
     }
 
+    /**
+     * Load the matching job and optionally require its target to match this installation.
+     *
+     * @param string $id Record or job identifier.
+     * @param bool $requiretarget Whether to verify the current installation base.
+     * @return array
+     */
     private static function job(string $id, bool $requiretarget = true): array {
         global $CFG;
         $job = self::read_json(self::JOB);
@@ -93,13 +132,15 @@ final class source_move_manager {
         return $job;
     }
 
-    /** Begin a read-only preview bounded by the current highest note id. */
+    /**
+     * Begin a read-only preview bounded by the current highest note id.
+     */
     public static function start_preview(string $oldbase): array {
         global $DB, $CFG;
         self::require_admin();
         $oldbase = source_relocation::normalise_base($oldbase);
         $target = source_relocation::normalise_base($CFG->wwwroot);
-        return self::locked(static function() use ($oldbase, $target, $DB): array {
+        return self::locked(static function () use ($oldbase, $target, $DB): array {
             $previous = self::read_json(self::JOB);
             if ($previous && in_array($previous['status'] ?? '', ['preview', 'apply', 'paused', 'failed'], true)) {
                 throw new \moodle_exception('sourcemovebusy', 'local_sidenotes');
@@ -114,11 +155,13 @@ final class source_move_manager {
         });
     }
 
-    /** Confirm exactly the previewed mapping. Records created after that preview are outside its snapshot. */
+    /**
+     * Confirm exactly the previewed mapping. Records created after that preview are outside its snapshot.
+     */
     public static function approve(string $id): array {
         global $DB;
         self::require_admin();
-        return self::locked(static function() use ($id, $DB): array {
+        return self::locked(static function () use ($id, $DB): array {
             $job = self::job($id);
             if ($job['status'] !== 'ready') {
                 throw new \invalid_parameter_exception('A completed preview is required.');
@@ -140,18 +183,26 @@ final class source_move_manager {
         });
     }
 
-    /** Examine or apply at most one batch, with fresh reads after every batch lock has been acquired. */
+    /**
+     * Examine or apply at most one batch, with fresh reads after every batch lock has been acquired.
+     */
     public static function advance(string $id): array {
         global $DB;
         self::require_admin();
-        return self::locked(static function() use ($id, $DB): array {
+        return self::locked(static function () use ($id, $DB): array {
             $job = self::job($id);
             if (!in_array($job['status'], ['preview', 'apply'], true)) {
                 return $job;
             }
-            $records = $DB->get_records_select('local_sidenotes_notes', 'id > :afterid AND id <= :lastid',
-                ['afterid' => $job['after'], 'lastid' => $job['through']], 'id ASC', 'id, url, quoteurl, pagehash',
-                0, self::BATCH_SIZE);
+            $records = $DB->get_records_select(
+                'local_sidenotes_notes',
+                'id > :afterid AND id <= :lastid',
+                ['afterid' => $job['after'], 'lastid' => $job['through']],
+                'id ASC',
+                'id, url, quoteurl, pagehash',
+                0,
+                self::BATCH_SIZE
+            );
             $locks = [];
             $transaction = null;
             $phase = $job['status'];
@@ -167,8 +218,11 @@ final class source_move_manager {
                     $job['after'] = (int) $record->id;
                     $job['scanned']++;
                     if ($phase === 'apply') {
-                        $record = $DB->get_record('local_sidenotes_notes', ['id' => $record->id],
-                            'id, url, quoteurl, pagehash');
+                        $record = $DB->get_record(
+                            'local_sidenotes_notes',
+                            ['id' => $record->id],
+                            'id, url, quoteurl, pagehash'
+                        );
                         if (!$record) {
                             $job['unaffected']++;
                             continue;
@@ -205,7 +259,7 @@ final class source_move_manager {
                 if ($transaction) {
                     try {
                         $transaction->rollback($exception);
-                    } catch (\Throwable $rolledback) {
+                    } catch (\Throwable $rolledback) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
                         // The original error is reported below; a failed batch never advances its checkpoint.
                     }
                 }
@@ -222,9 +276,15 @@ final class source_move_manager {
         });
     }
 
+    /**
+     * Pause an active preview or apply phase under the administrator job lock.
+     *
+     * @param string $id Record or job identifier.
+     * @return array
+     */
     public static function pause(string $id): array {
         self::require_admin();
-        return self::locked(static function() use ($id): array {
+        return self::locked(static function () use ($id): array {
             $job = self::job($id);
             if (in_array($job['status'], ['preview', 'apply'], true)) {
                 $job['phase'] = $job['status'];
@@ -234,9 +294,15 @@ final class source_move_manager {
         });
     }
 
+    /**
+     * Resume a paused or failed job from its recorded phase.
+     *
+     * @param string $id Record or job identifier.
+     * @return array
+     */
     public static function resume(string $id): array {
         self::require_admin();
-        return self::locked(static function() use ($id): array {
+        return self::locked(static function () use ($id): array {
             $job = self::job($id);
             if (in_array($job['status'], ['paused', 'failed'], true)) {
                 $job['status'] = $job['phase'];
@@ -245,10 +311,12 @@ final class source_move_manager {
         });
     }
 
-    /** Stop further work. Successfully committed batches remain applied. */
+    /**
+     * Stop further work. Successfully committed batches remain applied.
+     */
     public static function stop(string $id): array {
         self::require_admin();
-        return self::locked(static function() use ($id): array {
+        return self::locked(static function () use ($id): array {
             // An abandoned job can also be stopped after a second installation move.
             $job = self::job($id, false);
             $job['status'] = 'stopped';
@@ -256,7 +324,9 @@ final class source_move_manager {
         });
     }
 
-    /** Accepted mappings are for stored sources/imports only, never arbitrary new write inputs. */
+    /**
+     * Accepted mappings are for stored sources/imports only, never arbitrary new write inputs.
+     */
     private static function remember_mapping(string $old, string $target): void {
         $maps = self::read_json(self::MAPS) ?? [];
         foreach ($maps as &$map) {
@@ -272,7 +342,9 @@ final class source_move_manager {
         self::$mappingcache = null;
     }
 
-    /** Cache only immutable accepted mappings for this request, never the advancing job state. */
+    /**
+     * Cache only immutable accepted mappings for this request, never the advancing job state.
+     */
     private static function mappings(): array {
         if (self::$mappingcache === null) {
             self::$mappingcache = self::read_json(self::MAPS) ?? [];
@@ -280,6 +352,12 @@ final class source_move_manager {
         return self::$mappingcache;
     }
 
+    /**
+     * Resolve stored sources through accepted mappings to the current installation.
+     *
+     * @param string $url Source page URL.
+     * @return string
+     */
     public static function resolve_stored_url(string $url): string {
         global $CFG;
         $target = source_relocation::normalise_base($CFG->wwwroot);
@@ -292,14 +370,16 @@ final class source_move_manager {
                 if ($resolved !== null) {
                     return page_identity::sanitise($resolved, true);
                 }
-            } catch (\invalid_parameter_exception $exception) {
+            } catch (\invalid_parameter_exception $exception) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
                 // Invalid operational metadata must not make a user's otherwise valid notes inaccessible.
             }
         }
         return $url;
     }
 
-    /** Keep both old/new indexed identities readable while an approved relocation is being applied. */
+    /**
+     * Keep both old/new indexed identities readable while an approved relocation is being applied.
+     */
     public static function lookup_hashes(string $url): array {
         global $CFG;
         $hashes = [page_identity::hash($url)];
@@ -313,22 +393,31 @@ final class source_move_manager {
                 if ($legacy !== null) {
                     $hashes[] = page_identity::legacy_hash($legacy);
                 }
-            } catch (\invalid_parameter_exception $exception) {
+            } catch (\invalid_parameter_exception $exception) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
                 // See resolve_stored_url: untrusted inputs do not acquire a relaxed validation path.
             }
         }
         return array_values(array_unique($hashes));
     }
 
-    /** One-time upgrade: rekey bound legacy records without touching their URLs or personal data. */
+    /**
+     * One-time upgrade: rekey bound legacy records without touching their URLs or personal data.
+     */
     public static function repair_legacy_hashes(?callable $progress = null): array {
         global $DB;
         $last = (int) $DB->get_field_sql('SELECT MAX(id) FROM {local_sidenotes_notes}');
         $after = 0;
         $result = ['scanned' => 0, 'changed' => 0, 'batches' => 0];
         do {
-            $records = $DB->get_records_select('local_sidenotes_notes', 'id > :afterid AND id <= :lastid',
-                ['afterid' => $after, 'lastid' => $last], 'id ASC', 'id, url, pagehash', 0, self::BATCH_SIZE);
+            $records = $DB->get_records_select(
+                'local_sidenotes_notes',
+                'id > :afterid AND id <= :lastid',
+                ['afterid' => $after, 'lastid' => $last],
+                'id ASC',
+                'id, url, pagehash',
+                0,
+                self::BATCH_SIZE
+            );
             if (!$records) {
                 break;
             }
@@ -338,8 +427,10 @@ final class source_move_manager {
                 $after = (int) $record->id;
                 $result['scanned']++;
                 $parts = parse_url((string) $record->url);
-                if (access_policy::unbound($record) || !$parts || empty($parts['host'])
-                        || !in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)) {
+                if (
+                    access_policy::unbound($record) || !$parts || empty($parts['host'])
+                        || !in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)
+                ) {
                     continue;
                 }
                 $hash = page_identity::legacy_hash((string) $record->url);

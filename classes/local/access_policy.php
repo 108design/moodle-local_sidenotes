@@ -1,37 +1,42 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for classes/local/access_policy.php.
  *
  * @package   local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-// GNU GPL v3 or later.
 
 namespace local_sidenotes\local;
 
-/** Central availability policy, independent of note ownership.
+/**
+ * Central availability policy, independent of note ownership.
  * @package local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class access_policy {
+    /**
+     * Acquire the shared per-note lock or report a busy note.
+     *
+     * @param int $noteid Note ID.
+     * @return \core\lock\lock
+     */
     public static function note_lock(int $noteid): \core\lock\lock {
         $lock = \core\lock\lock_config::get_lock_factory('local_sidenotes')->get_lock('note-' . $noteid, 10);
         if (!$lock) {
@@ -39,12 +44,23 @@ class access_policy {
         }
         return $lock;
     }
+    /**
+     * Check the current user capability and site-wide availability setting.
+     *
+     * @return bool
+     */
     public static function sitewide(): bool {
         $enabled = get_config('local_sidenotes', 'sitewideenabled');
         return ($enabled === false || !empty($enabled))
             && has_capability('local/sidenotes:use', \context_system::instance());
     }
 
+    /**
+     * Check course access and the effective course-level availability setting.
+     *
+     * @param int $courseid Course ID, or zero outside a course.
+     * @return bool
+     */
     public static function course_allowed(int $courseid): bool {
         global $DB;
         if ($courseid <= 0 || $courseid === SITEID || !get_config('local_sidenotes', 'courseenabled')) {
@@ -59,7 +75,9 @@ class access_policy {
             ? (bool) $settings->enabled : (bool) get_config('local_sidenotes', 'coursedefault');
     }
 
-    /** Reject forged course ids and arbitrary non-course URLs in student mode. */
+    /**
+     * Reject forged course ids and arbitrary non-course URLs in student mode.
+     */
     public static function page_allowed(int $courseid, string $url): bool {
         global $DB, $CFG;
         if (self::sitewide()) {
@@ -95,7 +113,9 @@ class access_policy {
         return !isset($modules[$cmid]) || (bool) $modules[$cmid];
     }
 
-    /** Stored legacy sources may be unmapped; one such record must not abort a whole drawer/count. */
+    /**
+     * Stored legacy sources may be unmapped; one such record must not abort a whole drawer/count.
+     */
     public static function stored_page_allowed(int $courseid, string $url): bool {
         try {
             return self::page_allowed($courseid, source_move_manager::resolve_stored_url($url));
@@ -104,12 +124,23 @@ class access_policy {
         }
     }
 
+    /**
+     * Require permission to use notes on the supplied course page.
+     *
+     * @param int $courseid Course ID, or zero outside a course.
+     * @param string $url Source page URL.
+     */
     public static function require_page(int $courseid, string $url): void {
         if (!self::page_allowed($courseid, $url)) {
             throw new \moodle_exception('access:denied', 'local_sidenotes');
         }
     }
 
+    /**
+     * Check whether the current user may open their personal note overview.
+     *
+     * @return bool
+     */
     public static function overview_allowed(): bool {
         global $USER;
         if (!isloggedin() || isguestuser()) {
@@ -130,12 +161,21 @@ class access_policy {
         return false;
     }
 
+    /**
+     * Require access to the personal note overview.
+     */
     public static function require_overview(): void {
         if (!self::overview_allowed()) {
             throw new \moodle_exception('access:denied', 'local_sidenotes');
         }
     }
 
+    /**
+     * Check availability and archive state independently of note ownership.
+     *
+     * @param \stdClass $note Note record.
+     * @return bool
+     */
     public static function can_edit(\stdClass $note): bool {
         if (!empty($note->archived)) {
             return false;
@@ -148,16 +188,32 @@ class access_policy {
         }
     }
 
+    /**
+     * Require an editable note under the current availability policy.
+     *
+     * @param \stdClass $note Note record.
+     */
     public static function require_edit(\stdClass $note): void {
         if (!self::can_edit($note)) {
             throw new \moodle_exception('access:denied', 'local_sidenotes');
         }
     }
 
+    /**
+     * Check whether the note uses the source-independent page identity.
+     *
+     * @param \stdClass $note Note record.
+     * @return bool
+     */
     public static function unbound(\stdClass $note): bool {
         return $note->pagehash === self::unbound_hash();
     }
 
+    /**
+     * Return the reserved identity for a note without a source page.
+     *
+     * @return string
+     */
     public static function unbound_hash(): string {
         // A non-URL identity cannot collide with canonical Moodle page paths.
         return hash('sha256', 'sidenotes:unbound');

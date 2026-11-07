@@ -14,6 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+/**
+ * Side Notes provider.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace local_sidenotes\privacy;
 
 use context;
@@ -65,7 +73,8 @@ class provider implements
         ], 'privacy:metadata:local_sidenotes_notes');
         $collection->add_database_table('local_sidenotes_import', array_fill_keys(
             ['userid', 'courseid', 'sourceid', 'sourcecreated', 'noteid', 'timeimported'],
-            'privacy:metadata:imports'), 'privacy:metadata:imports');
+            'privacy:metadata:imports'
+        ), 'privacy:metadata:imports');
         $collection->add_subsystem_link('core_files', [], 'privacy:metadata:files');
         $collection->add_subsystem_link('core_tag', [], 'privacy:metadata:tags');
         $collection->add_user_preference('local_sidenotes_tagcolour_*', 'privacy:metadata:tagcolours');
@@ -181,7 +190,9 @@ class provider implements
                 writer::with_context($receiptcontext)->export_data(
                     [get_string('pluginname', 'local_sidenotes'), 'QuickNote imports', $receipt->id],
                     (object) ['sourceid' => $receipt->sourceid, 'sourcecreated' => transform::datetime($receipt->sourcecreated),
-                        'noteid' => $receipt->noteid, 'timeimported' => transform::datetime($receipt->timeimported)]);
+                    'noteid' => $receipt->noteid,
+                    'timeimported' => transform::datetime($receipt->timeimported)]
+                );
             }
         }
     }
@@ -200,9 +211,13 @@ class provider implements
             $DB->delete_records('local_sidenotes_import', ['courseid' => $context->instanceid]);
         } else if ($context->id == context_system::instance()->id) {
             self::delete_dependencies_for_select('courseid = :courseid', ['courseid' => 0]);
-            $users = $DB->get_fieldset_select('user_preferences', 'DISTINCT userid', $DB->sql_like('name', ':prefprefix')
+            $users = $DB->get_fieldset_select(
+                'user_preferences',
+                'DISTINCT userid',
+                $DB->sql_like('name', ':prefprefix')
                 . " OR name = 'local_sidenotes_shortcut'",
-                ['prefprefix' => $DB->sql_like_escape(\local_sidenotes\local\tag_manager::COLOUR_PREFIX) . '%']);
+                ['prefprefix' => $DB->sql_like_escape(\local_sidenotes\local\tag_manager::COLOUR_PREFIX) . '%']
+            );
             foreach ($users as $userid) {
                 \local_sidenotes\local\tag_manager::clear_colours((int) $userid);
                 unset_user_preference('local_sidenotes_shortcut', (int) $userid);
@@ -280,9 +295,12 @@ class provider implements
                      WHERE courseid = 0";
             $userlist->add_from_sql('userid', $sql, []);
             $userlist->add_from_sql('userid', str_replace('{local_sidenotes_notes}', '{local_sidenotes_import}', $sql), []);
-            $userlist->add_from_sql('userid', 'SELECT userid FROM {user_preferences} WHERE '
+            $userlist->add_from_sql(
+                'userid',
+                'SELECT userid FROM {user_preferences} WHERE '
                 . $DB->sql_like('name', ':prefprefix') . " OR name = 'local_sidenotes_shortcut'",
-                ['prefprefix' => $DB->sql_like_escape(\local_sidenotes\local\tag_manager::COLOUR_PREFIX) . '%']);
+                ['prefprefix' => $DB->sql_like_escape(\local_sidenotes\local\tag_manager::COLOUR_PREFIX) . '%']
+            );
         }
     }
 
@@ -323,21 +341,33 @@ class provider implements
         }
     }
 
-    /** Export this owner's private category-colour preferences. */
+    /**
+     * Export this owner's private category-colour preferences.
+     */
     public static function export_user_preferences(int $userid): void {
         foreach (get_user_preferences(null, null, $userid) as $name => $value) {
             if ($name === 'local_sidenotes_shortcut') {
-                writer::export_user_preference('local_sidenotes', $name, $value,
-                    get_string('privacy:metadata:shortcut', 'local_sidenotes'));
+                writer::export_user_preference(
+                    'local_sidenotes',
+                    $name,
+                    $value,
+                    get_string('privacy:metadata:shortcut', 'local_sidenotes')
+                );
             }
             if (strpos($name, \local_sidenotes\local\tag_manager::COLOUR_PREFIX) === 0) {
-                writer::export_user_preference('local_sidenotes', $name, $value,
-                    get_string('privacy:metadata:tagcolours', 'local_sidenotes'));
+                writer::export_user_preference(
+                    'local_sidenotes',
+                    $name,
+                    $value,
+                    get_string('privacy:metadata:tagcolours', 'local_sidenotes')
+                );
             }
         }
     }
 
-    /** Delete private tag assignments and screenshot areas for the selected notes. */
+    /**
+     * Delete private tag assignments and screenshot areas for the selected notes.
+     */
     private static function delete_dependencies_for_select(string $select, array $params): void {
         global $DB;
 

@@ -29,9 +29,12 @@ if ($hassiteconfig) {
     $settings = new admin_settingpage('local_sidenotes', get_string('pluginname', 'local_sidenotes'));
 
     foreach (['courseenabled' => 1, 'coursedefault' => 1, 'sitewideenabled' => 0] as $name => $default) {
-        $settings->add(new admin_setting_configcheckbox('local_sidenotes/' . $name,
+        $settings->add(new admin_setting_configcheckbox(
+            'local_sidenotes/' . $name,
             get_string('settings:' . $name, 'local_sidenotes'),
-            get_string('settings:' . $name . '_desc', 'local_sidenotes'), $default));
+            get_string('settings:' . $name . '_desc', 'local_sidenotes'),
+            $default
+        ));
     }
 
     // Adds notes per page option.
@@ -49,7 +52,10 @@ if ($hassiteconfig) {
     ));
 
     $ADMIN->add('localplugins', $settings);
-    $ADMIN->add('localplugins', new admin_externalpage('local_sidenotes_sourcemove',
-        get_string('sourcemove', 'local_sidenotes'), new moodle_url('/local/sidenotes/source_move.php'),
-        'moodle/site:config'));
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_sidenotes_sourcemove',
+        get_string('sourcemove', 'local_sidenotes'),
+        new moodle_url('/local/sidenotes/source_move.php'),
+        'moodle/site:config'
+    ));
 }

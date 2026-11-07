@@ -83,7 +83,9 @@ class observers {
         ]);
     }
 
-    /** Delete matching notes together with their private screenshot areas. */
+    /**
+     * Delete matching notes together with their private screenshot areas.
+     */
     private static function delete_notes(array $conditions): void {
         global $DB;
 

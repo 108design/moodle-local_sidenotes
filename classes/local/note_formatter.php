@@ -1,21 +1,19 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * File documentation for classes/local/note_formatter.php.
  *
@@ -24,20 +22,18 @@
  * @copyright 2026 Andreas Giesen (downstream changes)
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
 
 namespace local_sidenotes\local;
 
 use context;
 
-/** Safe note rendering with the small task-list extension used by SideNotes. */
+/**
+ * Safe note rendering with the small task-list extension used by SideNotes.
+ */
 final class note_formatter {
-    /** Render one note while preserving Moodle's normal text-format boundary. */
+    /**
+     * Render one note while preserving Moodle's normal text-format boundary.
+     */
     public static function format(string $content, int $format, context $context, bool $interactive = false): string {
         if (!in_array($format, [(int) FORMAT_PLAIN, (int) FORMAT_MARKDOWN], true)) {
             $format = FORMAT_PLAIN;
@@ -59,7 +55,7 @@ final class note_formatter {
         $interactive = $interactive && count($markers[0]) === count($lines);
         return preg_replace_callback(
             '~(<li\b)([^>]*)(>\s*(?:<p\b[^>]*>\s*)?)\[( |x|X)\](?:\s|&nbsp;)+~u',
-            static function(array $matches) use ($interactive, $lines, &$index): string {
+            static function (array $matches) use ($interactive, $lines, &$index): string {
                 $attributeshtml = $matches[2];
                 if (preg_match('~\bclass=(["\'])(.*?)\1~iu', $attributeshtml)) {
                     $attributeshtml = preg_replace_callback(
@@ -93,7 +89,9 @@ final class note_formatter {
         );
     }
 
-    /** Candidate task source lines, excluding fenced code. Render-count matching supplies the final safety check. */
+    /**
+     * Candidate task source lines, excluding fenced code. Render-count matching supplies the final safety check.
+     */
     private static function task_lines(string $content): array {
         $tasks = [];
         $fence = null;
@@ -113,11 +111,15 @@ final class note_formatter {
         return $tasks;
     }
 
-    /** Change only a verified rendered task marker, preserving every other byte of the Markdown. */
+    /**
+     * Change only a verified rendered task marker, preserving every other byte of the Markdown.
+     */
     public static function toggle_task(string $content, int $line, bool $checked, context $context): string {
         $html = self::format($content, FORMAT_MARKDOWN, $context, true);
-        if ($line < 0 || !in_array($line, self::task_lines($content), true)
-                || !preg_match('~<input\b[^>]*\bdata-taskline="' . $line . '"(?:\s|/?>)~', $html)) {
+        if (
+            $line < 0 || !in_array($line, self::task_lines($content), true)
+                || !preg_match('~<input\b[^>]*\bdata-taskline="' . $line . '"(?:\s|/?>)~', $html)
+        ) {
             throw new \invalid_parameter_exception('Not an editable Markdown task.');
         }
         $parts = preg_split('/(\r\n|\n|\r)/', $content, -1, PREG_SPLIT_DELIM_CAPTURE);

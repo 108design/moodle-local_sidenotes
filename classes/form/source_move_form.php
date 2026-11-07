@@ -1,20 +1,20 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * Explicit installation-base mapping for stored Side Notes source metadata.
  *
  * @package   local_sidenotes
@@ -24,32 +24,56 @@
 // Copyright (C) 2026 Andreas Giesen. See LICENSE.
 namespace local_sidenotes\form;
 
+// Keep the explicit direct-access guard for this Moodle-only helper.
+// phpcs:ignore moodle.Files.MoodleInternal.MoodleInternalNotNeeded
 defined('MOODLE_INTERNAL') || die();
 
-/** Native administrator form for the explicitly confirmed previous installation base. */
+/**
+ * Native administrator form for the explicitly confirmed previous installation base.
+ */
 final class source_move_form extends \moodleform {
+    /**
+     * Define the source-base input and preview action for an installation move.
+     */
     public function definition(): void {
         global $CFG;
         $form = $this->_form;
         $form->addElement('hidden', 'action', 'preview');
         $form->setType('action', PARAM_ALPHA);
-        $form->addElement('text', 'oldbase', get_string('sourcemoveold', 'local_sidenotes'),
-            ['size' => 60, 'maxlength' => 2048]);
+        $form->addElement(
+            'text',
+            'oldbase',
+            get_string('sourcemoveold', 'local_sidenotes'),
+            ['size' => 60, 'maxlength' => 2048]
+        );
         $form->setType('oldbase', PARAM_RAW_TRIMMED);
         $form->addRule('oldbase', null, 'required', null, 'client');
         $form->addHelpButton('oldbase', 'sourcemoveold', 'local_sidenotes');
         $form->addElement('html', \html_writer::span(
-            \local_sidenotes\local\admin_help::icon('sourcemove'), '',
-            ['data-sidenotes-help-field' => 'oldbase']));
+            \local_sidenotes\local\admin_help::icon('sourcemove'),
+            '',
+            ['data-sidenotes-help-field' => 'oldbase']
+        ));
         $previous = get_config('local_sidenotes', 'sourcebase');
         if ($previous && $previous !== $CFG->wwwroot) {
             $form->setDefault('oldbase', $previous);
         }
-        $form->addElement('static', 'target', get_string('sourcemovetarget', 'local_sidenotes'),
-            \html_writer::span(s($CFG->wwwroot), 'text-break'));
+        $form->addElement(
+            'static',
+            'target',
+            get_string('sourcemovetarget', 'local_sidenotes'),
+            \html_writer::span(s($CFG->wwwroot), 'text-break')
+        );
         $this->add_action_buttons(false, get_string('sourcemovepreview', 'local_sidenotes'));
     }
 
+    /**
+     * Validate the submitted old installation base and return field errors.
+     *
+     * @param array $data Submitted form values or screenshot data.
+     * @param array $files Submitted file values.
+     * @return array
+     */
     public function validation($data, $files): array {
         $errors = parent::validation($data, $files);
         try {

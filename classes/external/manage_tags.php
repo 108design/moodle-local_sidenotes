@@ -1,48 +1,76 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for classes/external/manage_tags.php.
  *
  * @package   local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-// GNU GPL v3 or later.
 namespace local_sidenotes\external;
 use local_sidenotes\local\tag_manager;
 
-/** Owner-scoped tag management, never Moodle's shared tag rename/delete API.
+/**
+ * Owner-scoped tag management, never Moodle's shared tag rename/delete API.
  * @package local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class manage_tags extends \core_external\external_api {
+    /**
+     * Describe the accepted parameters of this external service.
+     *
+     * @return \core_external\external_function_parameters
+     */
     public static function execute_parameters(): \core_external\external_function_parameters {
         return new \core_external\external_function_parameters([
             'operation' => new \core_external\external_value(PARAM_ALPHA, 'list, update or delete'),
             'tagid' => new \core_external\external_value(PARAM_INT, 'Own tag id.', VALUE_DEFAULT, 0),
             'name' => new \core_external\external_value(PARAM_TAG, 'New label.', VALUE_DEFAULT, ''),
-            'colour' => new \core_external\external_value(PARAM_RAW_TRIMMED, 'Background hex, empty for automatic.', VALUE_DEFAULT, ''),
+            'colour' => new \core_external\external_value(
+                PARAM_RAW_TRIMMED,
+                'Background hex, empty for automatic.',
+                VALUE_DEFAULT,
+                ''
+            ),
+
         ]);
     }
+    /**
+     * Apply the requested operation to the current user private tags.
+     *
+     * @param string $operation Requested operation.
+     * @param int $tagid Tag ID.
+     * @param string $name Tag name.
+     * @param string $colour Tag colour.
+     * @return array
+     */
     public static function execute(string $operation, int $tagid = 0, string $name = '', string $colour = ''): array {
         global $USER;
-        $params = self::validate_parameters(self::execute_parameters(), compact('operation', 'tagid', 'name', 'colour'));
+        $params = self::validate_parameters(
+            self::execute_parameters(
+            ),
+            compact(
+                'operation',
+                'tagid',
+                'name',
+                'colour'
+            )
+        );
         require_login();
         self::validate_context(\context_system::instance());
         \local_sidenotes\local\access_policy::require_overview();
@@ -54,13 +82,24 @@ class manage_tags extends \core_external\external_api {
         }
         return ['tags' => tag_manager::owned((int) $USER->id)];
     }
+    /**
+     * Describe the return value of this external service.
+     *
+     * @return \core_external\external_single_structure
+     */
     public static function execute_returns(): \core_external\external_single_structure {
         $tag = tag_manager::external_structure();
         return new \core_external\external_single_structure([
-            'tags' => new \core_external\external_multiple_structure(new \core_external\external_single_structure($tag->keys + [
-                'notecount' => new \core_external\external_value(PARAM_INT, 'Own notes using the tag.'),
-                'canmanage' => new \core_external\external_value(PARAM_BOOL, 'All tagged notes are editable.'),
-            ])),
+            'tags' => new \core_external\external_multiple_structure(
+                new \core_external\external_single_structure(
+                    $tag->keys + [
+
+                    'notecount' => new \core_external\external_value(PARAM_INT, 'Own notes using the tag.'),
+                    'canmanage' => new \core_external\external_value(PARAM_BOOL, 'All tagged notes are editable.'),
+
+                    ]
+                )
+            ),
         ]);
     }
 }

@@ -1,28 +1,26 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for tests/center_access_test.php.
  *
  * @package   local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-// GNU GPL v3 or later.
 namespace local_sidenotes;
 
 use local_sidenotes\external\edit_note;
@@ -33,12 +31,25 @@ use local_sidenotes\external\delete_screenshot;
 use local_sidenotes\external\delete_note;
 use local_sidenotes\local\access_policy;
 
-/** Private inline editing and student-mode access regressions.
+/**
+ * Private inline editing and student-mode access regressions.
  * @package local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \local_sidenotes\local\access_policy
+ * @covers \local_sidenotes\external\edit_note
+ * @covers \local_sidenotes\external\get_notes
+ * @covers \local_sidenotes\external\save_note
+ * @covers \local_sidenotes\external\upload_screenshot
+ * @covers \local_sidenotes\external\delete_screenshot
+ * @covers \local_sidenotes\external\delete_note
  */
 final class center_access_test extends \advanced_testcase {
+    /**
+     * Create an enrolled student with course notes enabled.
+     *
+     * @return array
+     */
     private function learner(): array {
         global $CFG;
         $this->resetAfterTest();
@@ -55,14 +66,21 @@ final class center_access_test extends \advanced_testcase {
         return [$user, $course, $url];
     }
 
+    /**
+     * Course mode allows unbound and scoped globals.
+     */
     public function test_course_mode_allows_unbound_and_scoped_globals(): void {
         [$user, $course, $url] = $this->learner();
         $this->assertTrue(access_policy::overview_allowed());
         $this->assertFalse(access_policy::sitewide());
-        $this->assertFalse(access_policy::page_allowed($course->id,
-            (new \moodle_url('/course/index.php', ['id' => $course->id]))->out(false)));
-        $this->assertFalse(access_policy::page_allowed($course->id,
-            (new \moodle_url('/course/search.php', ['id' => $course->id]))->out(false)));
+        $this->assertFalse(access_policy::page_allowed(
+            $course->id,
+            (new \moodle_url('/course/index.php', ['id' => $course->id]))->out(false)
+        ));
+        $this->assertFalse(access_policy::page_allowed(
+            $course->id,
+            (new \moodle_url('/course/search.php', ['id' => $course->id]))->out(false)
+        ));
         $note = edit_note::execute(0, 'create', '**Private overview**');
         $this->assertTrue($note['unbound']);
         $this->assertSame('', $note['url']);
@@ -76,12 +94,18 @@ final class center_access_test extends \advanced_testcase {
         get_notes::execute(0, (new \moodle_url('/'))->out(false));
     }
 
+    /**
+     * Forged course url cannot create student admin note.
+     */
     public function test_forged_course_url_cannot_create_student_admin_note(): void {
         [$user, $course, $url] = $this->learner();
         $this->expectException(\moodle_exception::class);
         save_note::execute(0, $course->id, 'Not permitted', (new \moodle_url('/admin/index.php'))->out(false));
     }
 
+    /**
+     * Unenrolled courses are not available.
+     */
     public function test_unenrolled_courses_are_not_available(): void {
         [$user, $course, $url] = $this->learner();
         $other = $this->getDataGenerator()->create_course();
@@ -90,6 +114,9 @@ final class center_access_test extends \advanced_testcase {
         get_notes::execute($other->id);
     }
 
+    /**
+     * Partial updates preserve source and plain format.
+     */
     public function test_partial_updates_preserve_source_and_plain_format(): void {
         global $DB;
         [$user, $course, $url] = $this->learner();
@@ -110,6 +137,9 @@ final class center_access_test extends \advanced_testcase {
         edit_note::execute($note['id'], 'content', 'stale overwrite', 'old text');
     }
 
+    /**
+     * Owner boundary and private screenshots.
+     */
     public function test_owner_boundary_and_private_screenshots(): void {
         [$user, $course, $url] = $this->learner();
         $note = edit_note::execute(0, 'create', 'Image note');
@@ -125,6 +155,9 @@ final class center_access_test extends \advanced_testcase {
         edit_note::execute($note['id'], 'tags', '', '', ['Stolen']);
     }
 
+    /**
+     * Course disable keeps archive but blocks edit.
+     */
     public function test_course_disable_keeps_archive_but_blocks_edit(): void {
         global $DB;
         [$user, $course, $url] = $this->learner();
@@ -138,6 +171,9 @@ final class center_access_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('local_sidenotes_notes', ['id' => $note['id']]));
     }
 
+    /**
+     * Course activity exclusion cannot be bypassed.
+     */
     public function test_course_activity_exclusion_cannot_be_bypassed(): void {
         global $DB;
         [$user, $course, $url] = $this->learner();
@@ -147,7 +183,9 @@ final class center_access_test extends \advanced_testcase {
         $DB->insert_record('local_sidenotes_course', (object) ['courseid' => $course->id, 'enabled' => 1,
             'module_settings' => json_encode([$module->cmid => 0])]);
         $this->assertFalse(access_policy::page_allowed($course->id, $pageurl));
-        $this->assertFalse(access_policy::page_allowed($course->id,
-            (new \moodle_url('/mod/forum/view.php', ['id' => $module->cmid]))->out(false)));
+        $this->assertFalse(access_policy::page_allowed(
+            $course->id,
+            (new \moodle_url('/mod/forum/view.php', ['id' => $module->cmid]))->out(false)
+        ));
     }
 }

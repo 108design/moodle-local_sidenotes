@@ -130,5 +130,4 @@ class hooks {
 
         return $html;
     }
-
 }

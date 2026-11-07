@@ -1,27 +1,26 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * External service for upload screenshot.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace local_sidenotes\external;
 
@@ -36,6 +35,11 @@ use local_sidenotes\local\screenshot_manager;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class upload_screenshot extends \core_external\external_api {
+    /**
+     * Describe the accepted parameters of this external service.
+     *
+     * @return \core_external\external_function_parameters
+     */
     public static function execute_parameters(): \core_external\external_function_parameters {
         return new \core_external\external_function_parameters([
             'noteid' => new \core_external\external_value(PARAM_INT, 'Owning note id.'),
@@ -45,6 +49,15 @@ class upload_screenshot extends \core_external\external_api {
         ]);
     }
 
+    /**
+     * Validate and store a screenshot for an owned, editable note.
+     *
+     * @param int $noteid Note ID.
+     * @param string $filename Screenshot filename.
+     * @param string $mimetype Submitted screenshot MIME type.
+     * @param string $data Submitted form values or screenshot data.
+     * @return array
+     */
     public static function execute(int $noteid, string $filename, string $mimetype, string $data): array {
         global $DB, $USER;
         $params = self::validate_parameters(self::execute_parameters(), [
@@ -59,18 +72,23 @@ class upload_screenshot extends \core_external\external_api {
         self::validate_context($context);
         $lock = \local_sidenotes\local\access_policy::note_lock($noteid);
         try {
-        $note = $DB->get_record('local_sidenotes_notes', [
+            $note = $DB->get_record('local_sidenotes_notes', [
             'id' => $params['noteid'],
             'userid' => $USER->id,
-        ], '*', MUST_EXIST);
-        \local_sidenotes\local\access_policy::require_edit($note);
+            ], '*', MUST_EXIST);
+            \local_sidenotes\local\access_policy::require_edit($note);
 
-        return screenshot_manager::create($note, $params['filename'], $params['mimetype'], $params['data']);
+            return screenshot_manager::create($note, $params['filename'], $params['mimetype'], $params['data']);
         } finally {
             $lock->release();
         }
     }
 
+    /**
+     * Describe the return value of this external service.
+     *
+     * @return \core_external\external_single_structure
+     */
     public static function execute_returns(): \core_external\external_single_structure {
         return screenshot_manager::external_structure();
     }

@@ -1,20 +1,20 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * Explicit installation-base mapping for stored Side Notes source metadata.
  *
  * @package   local_sidenotes
@@ -88,7 +88,7 @@ if ($error) {
 }
 if ($job) {
     $actions = [];
-    $addaction = static function(string $action, string $label, bool $primary = false) use (&$actions, $job, $url): void {
+    $addaction = static function (string $action, string $label, bool $primary = false) use (&$actions, $job, $url): void {
         $actions[] = ['url' => $url->out(false), 'action' => $action, 'jobid' => $job['id'],
             'sesskey' => sesskey(), 'label' => get_string($label, 'local_sidenotes'),
             'class' => $primary ? 'btn-primary' : 'btn-secondary', 'advance' => $action === 'advance'];
@@ -109,8 +109,11 @@ if ($job) {
         'old' => $job['old'], 'target' => $job['target'],
         'status' => get_string('sourcemovestatus_' . $job['status'], 'local_sidenotes'),
         'phase' => get_string('sourcemovephase_' . $job['phase'], 'local_sidenotes'),
-        'progress' => get_string('sourcemoveprogress', 'local_sidenotes',
-            (object)['scanned' => $job['scanned'], 'total' => $job['total']]),
+        'progress' => get_string(
+            'sourcemoveprogress',
+            'local_sidenotes',
+            (object)['scanned' => $job['scanned'], 'total' => $job['total']]
+        ),
         'changed' => $job['changed'], 'sourcecount' => $job['url'], 'quotecount' => $job['quoteurl'],
         'hashcount' => $job['pagehash'], 'skipped' => $job['skipped'],
         'percent' => $job['total'] ? min(100, (int)floor(100 * $job['scanned'] / $job['total'])) : 100,
@@ -124,6 +127,8 @@ if ($job) {
 if (!$job || in_array($job['status'], ['done', 'stopped'], true)) {
     $form->display();
 }
-echo html_writer::link(new moodle_url('/' . $CFG->admin . '/settings.php', ['section' => 'local_sidenotes']),
-    get_string('settings'));
+echo html_writer::link(
+    new moodle_url('/' . $CFG->admin . '/settings.php', ['section' => 'local_sidenotes']),
+    get_string('settings')
+);
 echo $OUTPUT->footer();

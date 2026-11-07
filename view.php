@@ -1,27 +1,18 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * SideNotes Notes Center page.
@@ -47,7 +38,9 @@ if (!$tagfilter) {
 $searchterm = optional_param('searchterm', '', PARAM_TEXT);
 $archive = optional_param('archive', false, PARAM_BOOL);
 $selectedtagids = \local_sidenotes\local\note_filters::normalise_tags(array_merge(
-    optional_param_array('tags', [], PARAM_INT), $tagfilter ? [$tagfilter] : []));
+    optional_param_array('tags', [], PARAM_INT),
+    $tagfilter ? [$tagfilter] : []
+));
 $export = optional_param('export', '', PARAM_ALPHA);
 $exportids = optional_param_array('noteids', [], PARAM_INT);
 if ($exportids) {
@@ -72,7 +65,9 @@ if ($coursefilter) {
 if ($selectedtagids) {
     $urlparams['tags'] = $selectedtagids;
 }
-if ($archive) {$urlparams['archive'] = 1;}
+if ($archive) {
+    $urlparams['archive'] = 1;
+}
 if ($searchterm !== '') {
     $urlparams['searchterm'] = $searchterm;
 }
@@ -150,23 +145,47 @@ $navigation = \local_sidenotes\local\overview_state::navigation((bool) $archive)
 $selectedtags = [];
 foreach ($selectedtagids as $tagid) {
     $tag = null;
-    foreach ($usertags as $candidate) {if ($candidate['id'] === $tagid) {$tag = $candidate; break;}}
+    foreach ($usertags as $candidate) {
+        if ($candidate['id'] === $tagid) {
+            $tag = $candidate;
+            break;
+        }
+    }
     // An obsolete/foreign filter never discloses another owner's tag name or causes a broader query.
     $tag = $tag ?: ['id' => $tagid, 'name' => get_string('tags', 'local_sidenotes'),
         'background' => '#e9ecef', 'foreground' => '#000000'];
     $removeparams = $navigationparams;
-    if ($archive) {$removeparams['archive'] = 1;}
+    if ($archive) {
+        $removeparams['archive'] = 1;
+    }
     $removeparams['tags'] = array_values(array_diff($selectedtagids, [$tagid]));
-    if (!$removeparams['tags']) {unset($removeparams['tags']);}
+    if (!$removeparams['tags']) {
+        unset($removeparams['tags']);
+    }
     $tag['removeurl'] = (new moodle_url('/local/sidenotes/view.php', $removeparams))->out(false);
     $selectedtags[] = $tag;
 }
 $hasnotestosearch = ($archive ? $archivestatus['archivecount'] : $archivestatus['activecount']) > 0;
-[$sqlfrom, $params] = \local_sidenotes\local\note_filters::query((int) $USER->id, (bool) $archive,
-    $exportids ? 0 : $coursefilter, $exportids ? [] : $selectedtagids, $exportids ? '' : $searchterm);
+[$sqlfrom, $params] = \local_sidenotes\local\note_filters::query(
+    (int) $USER->id,
+    (bool) $archive,
+    $exportids ? 0 : $coursefilter,
+    $exportids ? [] : $selectedtagids,
+    $exportids ? '' : $searchterm
+);
 if ($exportids) {
-    [$insql, $inparams] = $DB->get_in_or_equal(\local_sidenotes\local\bulk_manager::ids($exportids), SQL_PARAMS_NAMED, 'selected');
-    $sqlfrom .= ' AND qn.id ' . $insql; $params += $inparams;
+    [
+        $insql,
+         $inparams
+    ] = $DB->get_in_or_equal(
+        \local_sidenotes\local\bulk_manager::ids(
+            $exportids
+        ),
+        SQL_PARAMS_NAMED,
+        'selected'
+    );
+    $sqlfrom .= ' AND qn.id ' . $insql;
+    $params += $inparams;
 }
 
 $totalcount = $DB->count_records_sql("SELECT COUNT(qn.id) " . $sqlfrom, $params);
@@ -183,7 +202,7 @@ if ($export === 'pdf' || $export === 'md' || $perpage === 0) {
 }
 $notetags = \local_sidenotes\local\tag_manager::get_for_notes(array_keys($noterecords), (int) $USER->id);
 
-$recordlabel = static function(stdClass $record): string {
+$recordlabel = static function (stdClass $record): string {
     if (\local_sidenotes\local\access_policy::unbound($record)) {
         return get_string('note:unbound', 'local_sidenotes');
     }
@@ -195,7 +214,7 @@ $recordlabel = static function(stdClass $record): string {
     }
     return get_string('unknownpage', 'local_sidenotes');
 };
-$recordformat = static function(stdClass $record): int {
+$recordformat = static function (stdClass $record): int {
     $format = isset($record->contentformat) ? (int) $record->contentformat : FORMAT_PLAIN;
     return in_array($format, [(int) FORMAT_PLAIN, (int) FORMAT_MARKDOWN], true) ? $format : (int) FORMAT_PLAIN;
 };
@@ -244,7 +263,16 @@ if ($export === 'pdf') {
                 $html .= '<blockquote style="color:#555"><i>' . $quote . '</i></blockquote>';
             }
             if (!empty($record->url)) {
-                $html .= '<p><small><a href="' . s(clean_param(\local_sidenotes\local\source_move_manager::resolve_stored_url((string) $record->url), PARAM_URL)) . '">'
+                $html .= '<p><small><a href="'
+                . s(
+                    clean_param(
+                        \local_sidenotes\local\source_move_manager::resolve_stored_url(
+                            (string) $record->url
+                        ),
+                        PARAM_URL
+                    )
+                )
+                . '">'
                     . s(get_string('note:viewintext', 'local_sidenotes')) . '</a></small></p>';
             }
             if (trim((string) $record->content) !== '') {
@@ -270,10 +298,39 @@ if ($export === 'pdf') {
                 $pdf->writeHTML('<p><small>' . s(get_string('screenshot:attachment', 'local_sidenotes')) . ': '
                     . s($file->get_filename()) . '</small></p>', true, false, true, false, '');
                 try {
-                    $pdf->Image('@' . $content, '', '', $width, $height, '', '', 'N', true, 150, '', false, false, 0,
-                        false, false, true);
+                    $pdf->Image(
+                        '@' . $content,
+                        '',
+                        '',
+                        $width,
+                        $height,
+                        '',
+                        '',
+                        'N',
+                        true,
+                        150,
+                        '',
+                        false,
+                        false,
+                        0,
+                        false,
+                        false,
+                        true
+                    );
                 } catch (Throwable $exception) {
-                    $pdf->writeHTML('<p><small>' . s($file->get_filename()) . '</small></p>', true, false, true, false, '');
+                    $pdf->writeHTML(
+                        '<p><small>'
+                        . s(
+                            $file->get_filename(
+                            )
+                        )
+                        . '</small></p>',
+                        true,
+                        false,
+                        true,
+                        false,
+                        ''
+                    );
                 }
                 unset($content);
             }
@@ -318,7 +375,14 @@ if ($export === 'md') {
             }
             if (!empty($record->url)) {
                 $md .= '[_' . get_string('note:viewintext', 'local_sidenotes') . '_]('
-                    . clean_param(\local_sidenotes\local\source_move_manager::resolve_stored_url((string) $record->url), PARAM_URL) . ")\n\n";
+
+                . clean_param(
+                    \local_sidenotes\local\source_move_manager::resolve_stored_url(
+                        (string) $record->url
+                    ),
+                    PARAM_URL
+                )
+                . ")\n\n";
             }
             $md .= (string) $record->content . "\n\n";
             foreach ($screenshots as $screenshot) {
@@ -336,8 +400,18 @@ if ($export === 'md') {
 $notes = [];
 foreach ($noterecords as $record) {
     $screenshots = \local_sidenotes\local\screenshot_manager::get_for_note((int) $record->id);
-    $sourceurl = clean_param(\local_sidenotes\local\source_move_manager::resolve_stored_url((string) $record->url), PARAM_URL);
-    $quoteurl = clean_param(\local_sidenotes\local\source_move_manager::resolve_stored_url((string) $record->quoteurl), PARAM_URL);
+    $sourceurl = clean_param(
+        \local_sidenotes\local\source_move_manager::resolve_stored_url(
+            (string) $record->url
+        ),
+        PARAM_URL
+    );
+    $quoteurl = clean_param(
+        \local_sidenotes\local\source_move_manager::resolve_stored_url(
+            (string) $record->quoteurl
+        ),
+        PARAM_URL
+    );
     $actionurl = $quoteurl ?: $sourceurl;
     try {
         $actionurl = $actionurl ? \local_sidenotes\local\page_identity::with_open_drawer($actionurl) : null;
@@ -347,8 +421,10 @@ foreach ($noterecords as $record) {
     }
     // Only the card's display label changes; searches/exports retain the original source title.
     $cardlabel = !empty($record->pagetitle) && !\local_sidenotes\local\access_policy::unbound($record)
-        ? format_string(\local_sidenotes\local\page_presentation::title((string) $record->pagetitle,
-            [(string) $SITE->fullname, (string) $SITE->shortname]), true, ['context' => context_system::instance()])
+        ? format_string(\local_sidenotes\local\page_presentation::title(
+            (string) $record->pagetitle,
+            [(string) $SITE->fullname, (string) $SITE->shortname]
+        ), true, ['context' => context_system::instance()])
         : $recordlabel($record);
     $notes[] = [
         'id' => (int) $record->id,
@@ -362,10 +438,16 @@ foreach ($noterecords as $record) {
         'coursefullname' => $cardlabel,
         'isglobal' => !empty($record->isglobal),
         'globalbadge' => get_string('note:globalbadge', 'local_sidenotes'),
-        'contenthtml' => \local_sidenotes\local\note_formatter::format((string) $record->content,
-            (int) $record->contentformat, $context, \local_sidenotes\local\access_policy::can_edit($record)),
-        'timeupdated' => userdate($archive ? $record->timearchived : $record->timemodified,
-            get_string('strftimedatetimeshort', 'langconfig')),
+        'contenthtml' => \local_sidenotes\local\note_formatter::format(
+            (string) $record->content,
+            (int) $record->contentformat,
+            $context,
+            \local_sidenotes\local\access_policy::can_edit($record)
+        ),
+        'timeupdated' => userdate(
+            $archive ? $record->timearchived : $record->timemodified,
+            get_string('strftimedatetimeshort', 'langconfig')
+        ),
         'actionurl' => $actionurl,
         'actiontooltip' => $actionurl ? \local_sidenotes\local\page_identity::canonicalise($actionurl) : null,
         'notequote' => !empty($record->quote) ? $record->quote : null,
@@ -426,8 +508,17 @@ $templatecontext = [
     'unboundselected' => $coursefilter === -1,
     'globallabel' => get_string(\local_sidenotes\local\access_policy::sitewide()
         ? 'note:isglobal' : 'note:globalcourses', 'local_sidenotes'),
-    'draftnote' => ['id' => 0, 'canedit' => true, 'content' => '', 'coursefullname' => get_string('note:unbound', 'local_sidenotes'),
-        'tagsenabled' => \local_sidenotes\local\tag_manager::is_enabled()],
+    'draftnote' => [
+        'id' => 0,
+         'canedit' => true,
+         'content' => '',
+         'coursefullname' => get_string(
+             'note:unbound',
+             'local_sidenotes'
+         ),
+
+         'tagsenabled' => \local_sidenotes\local\tag_manager::is_enabled(),
+    ],
 ];
 $templatecontext += $navigation;
 

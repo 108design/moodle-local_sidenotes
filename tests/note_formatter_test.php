@@ -1,21 +1,19 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * File documentation for tests/note_formatter_test.php.
  *
@@ -24,19 +22,19 @@
  * @copyright 2026 Andreas Giesen (downstream changes)
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
 
 namespace local_sidenotes;
 
 use local_sidenotes\local\note_formatter;
 
-/** Tests the bounded SideNotes task-list enhancement around Moodle Markdown. */
+/**
+ * Tests the bounded SideNotes task-list enhancement around Moodle Markdown.
+ * @covers \local_sidenotes\local\note_formatter
+ */
 final class note_formatter_test extends \advanced_testcase {
+    /**
+     * Tasks at start are interactive and toggle only the marker.
+     */
     public function test_tasks_at_start_are_interactive_and_toggle_only_the_marker(): void {
         $this->resetAfterTest();
         $content = "- [ ] First\r\n- [x] Done";
@@ -51,6 +49,9 @@ final class note_formatter_test extends \advanced_testcase {
         $this->expectException(\invalid_parameter_exception::class);
         \local_sidenotes\local\note_formatter::toggle_task('ordinary text', 0, true, \context_system::instance());
     }
+    /**
+     * Markdown task markers become read only checkboxes.
+     */
     public function test_markdown_task_markers_become_read_only_checkboxes(): void {
         $html = note_formatter::format(
             "- [ ] Open item\n- [x] Completed item\n- [X] Also completed",
@@ -68,6 +69,9 @@ final class note_formatter_test extends \advanced_testcase {
         $this->assertStringContainsString('Completed item', $html);
     }
 
+    /**
+     * Non task markers and plain notes remain literal.
+     */
     public function test_non_task_markers_and_plain_notes_remain_literal(): void {
         $markdown = note_formatter::format(
             "Paragraph [ ] text\n\n- [maybe] Not a task",

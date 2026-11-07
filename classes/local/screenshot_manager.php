@@ -1,27 +1,26 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Private screenshot storage and validation.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace local_sidenotes\local;
 
@@ -36,8 +35,17 @@ use invalid_parameter_exception;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class screenshot_manager {
+    /**
+     * Private file area used for note screenshots.
+     */
     public const FILEAREA = 'screenshot';
+    /**
+     * Maximum bytes accepted for a single screenshot.
+     */
     public const MAX_BYTES = 5242880;
+    /**
+     * Maximum screenshot files stored for one note.
+     */
     public const MAX_FILES_PER_NOTE = 10;
 
     /** @var array<string, string> Supported MIME types and extensions. */
@@ -76,8 +84,10 @@ final class screenshot_manager {
         if (!isset(self::TYPES[$detectedtype]) || $detectedtype !== $mimetype) {
             throw new invalid_parameter_exception('The uploaded data is not a supported image of the declared type.');
         }
-        if ((int) $imageinfo[0] <= 0 || (int) $imageinfo[1] <= 0
-                || ((int) $imageinfo[0] * (int) $imageinfo[1]) > 40000000) {
+        if (
+            (int) $imageinfo[0] <= 0 || (int) $imageinfo[1] <= 0
+                || ((int) $imageinfo[0] * (int) $imageinfo[1]) > 40000000
+        ) {
             throw new invalid_parameter_exception('The screenshot dimensions are invalid or too large.');
         }
 
@@ -138,20 +148,26 @@ final class screenshot_manager {
         );
     }
 
-    /** Delete one owned screenshot. */
+    /**
+     * Delete one owned screenshot.
+     */
     public static function delete_file(int $fileid, int $noteid): bool {
         $file = get_file_storage()->get_file_by_id($fileid);
-        if (!$file || (int) $file->get_contextid() !== (int) context_system::instance()->id
+        if (
+            !$file || (int) $file->get_contextid() !== (int) context_system::instance()->id
                 || $file->get_component() !== 'local_sidenotes'
                 || $file->get_filearea() !== self::FILEAREA
                 || (int) $file->get_itemid() !== $noteid
-                || $file->is_directory()) {
+                || $file->is_directory()
+        ) {
             throw new invalid_parameter_exception('Screenshot not found.');
         }
         return $file->delete();
     }
 
-    /** Delete every screenshot attached to one note. */
+    /**
+     * Delete every screenshot attached to one note.
+     */
     public static function delete_for_note(int $noteid): void {
         get_file_storage()->delete_area_files(
             context_system::instance()->id,
@@ -161,7 +177,9 @@ final class screenshot_manager {
         );
     }
 
-    /** Convert a stored file into the AJAX structure. */
+    /**
+     * Convert a stored file into the AJAX structure.
+     */
     public static function export_file(\stored_file $file): array {
         $url = \moodle_url::make_pluginfile_url(
             $file->get_contextid(),
@@ -180,7 +198,9 @@ final class screenshot_manager {
         ];
     }
 
-    /** External API structure shared by note and upload responses. */
+    /**
+     * External API structure shared by note and upload responses.
+     */
     public static function external_structure(): \core_external\external_single_structure {
         return new \core_external\external_single_structure([
             'id' => new \core_external\external_value(PARAM_INT, 'Stored file id.'),

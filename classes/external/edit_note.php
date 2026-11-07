@@ -1,39 +1,43 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for classes/external/edit_note.php.
  *
  * @package   local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-// GNU GPL v3 or later.
 namespace local_sidenotes\external;
 
 use local_sidenotes\local\access_policy;
 use local_sidenotes\local\tag_manager;
 
-/** Partial Notes Center updates; source metadata is immutable here.
+/**
+ * Partial Notes Center updates; source metadata is immutable here.
  * @package local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class edit_note extends \core_external\external_api {
+    /**
+     * Describe the accepted parameters of this external service.
+     *
+     * @return \core_external\external_function_parameters
+     */
     public static function execute_parameters(): \core_external\external_function_parameters {
         return new \core_external\external_function_parameters([
             'noteid' => new \core_external\external_value(PARAM_INT, 'Owned note id, zero for create.'),
@@ -41,23 +45,58 @@ class edit_note extends \core_external\external_api {
             'content' => new \core_external\external_value(PARAM_RAW, 'Raw Markdown.', VALUE_DEFAULT, ''),
             'expectedcontent' => new \core_external\external_value(PARAM_RAW, 'Content read before editing.', VALUE_DEFAULT, ''),
             'tags' => new \core_external\external_multiple_structure(
-                new \core_external\external_value(PARAM_TAG, 'Private tag name'), 'Tags', VALUE_DEFAULT, []),
+                new \core_external\external_value(PARAM_TAG, 'Private tag name'),
+                'Tags',
+                VALUE_DEFAULT,
+                []
+            ),
             'isglobal' => new \core_external\external_value(PARAM_BOOL, 'Display globally.', VALUE_DEFAULT, false),
             'taskline' => new \core_external\external_value(PARAM_INT, 'Markdown task source line.', VALUE_DEFAULT, -1),
             'checked' => new \core_external\external_value(PARAM_BOOL, 'Task state.', VALUE_DEFAULT, false),
         ]);
     }
 
-    public static function execute(int $noteid, string $operation, string $content = '',
-        string $expectedcontent = '', array $tags = [], bool $isglobal = false, int $taskline = -1, bool $checked = false): array {
+    /**
+     * Apply a supported partial edit to the owned, editable note.
+     *
+     * @param int $noteid Note ID.
+     * @param string $operation Requested operation.
+     * @param string $content Submitted note content.
+     * @param string $expectedcontent Original content used for conflict detection.
+     * @param array $tags Tag values for this operation.
+     * @param bool $isglobal Whether to show the note across pages.
+     * @param int $taskline Task line index.
+     * @param bool $checked New task checkbox state.
+     * @return array
+     */
+    public static function execute(
+        int $noteid,
+        string $operation,
+        string $content = '',
+        string $expectedcontent = '',
+        array $tags = [],
+        bool $isglobal = false,
+        int $taskline = -1,
+        bool $checked = false
+    ): array {
         global $DB, $USER;
         $params = self::validate_parameters(self::execute_parameters(), compact(
-            'noteid', 'operation', 'content', 'expectedcontent', 'tags', 'isglobal', 'taskline', 'checked'));
+            'noteid',
+            'operation',
+            'content',
+            'expectedcontent',
+            'tags',
+            'isglobal',
+            'taskline',
+            'checked'
+        ));
         require_login();
         self::validate_context(\context_system::instance());
         access_policy::require_overview();
-        if (!in_array($params['operation'], ['create', 'content', 'task', 'tags', 'global'], true)
-                || (($params['operation'] === 'create') !== ($params['noteid'] === 0))) {
+        if (
+            !in_array($params['operation'], ['create', 'content', 'task', 'tags', 'global'], true)
+                || (($params['operation'] === 'create') !== ($params['noteid'] === 0))
+        ) {
             throw new \invalid_parameter_exception('Invalid note operation.');
         }
         $lock = \core\lock\lock_config::get_lock_factory('local_sidenotes')->get_lock('note-' . $noteid, 10);
@@ -66,8 +105,12 @@ class edit_note extends \core_external\external_api {
         }
         try {
             if ($operation !== 'create') {
-                $note = $DB->get_record('local_sidenotes_notes', ['id' => $params['noteid'], 'userid' => $USER->id],
-                    '*', MUST_EXIST);
+                $note = $DB->get_record(
+                    'local_sidenotes_notes',
+                    ['id' => $params['noteid'], 'userid' => $USER->id],
+                    '*',
+                    MUST_EXIST
+                );
                 access_policy::require_edit($note);
             }
             $transaction = $DB->start_delegated_transaction();
@@ -88,8 +131,12 @@ class edit_note extends \core_external\external_api {
                         throw new \invalid_parameter_exception('Plain text does not contain Markdown tasks.');
                     }
                     $update->content = $operation === 'task'
-                        ? \local_sidenotes\local\note_formatter::toggle_task($note->content, $params['taskline'],
-                            $params['checked'], \context_system::instance())
+                        ? \local_sidenotes\local\note_formatter::toggle_task(
+                            $note->content,
+                            $params['taskline'],
+                            $params['checked'],
+                            \context_system::instance()
+                        )
                         : \core_text::substr($params['content'], 0, 20000);
                     if ($update->content !== (string) ($note->content ?? '')) {
                         $update->contentformat = FORMAT_MARKDOWN;
@@ -113,6 +160,11 @@ class edit_note extends \core_external\external_api {
         }
     }
 
+    /**
+     * Describe the return value of this external service.
+     *
+     * @return \core_external\external_single_structure
+     */
     public static function execute_returns(): \core_external\external_single_structure {
         return save_note::note_structure();
     }

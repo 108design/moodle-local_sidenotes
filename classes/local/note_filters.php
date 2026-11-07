@@ -1,28 +1,26 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for classes/local/note_filters.php.
  *
  * @package   local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-// GNU GPL v3 or later.
 namespace local_sidenotes\local;
 
 /**
@@ -32,16 +30,25 @@ namespace local_sidenotes\local;
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class note_filters {
-    /** Shared owner-scoped query for overview, export and explicit bulk selection. */
+    /**
+     * Shared owner-scoped query for overview, export and explicit bulk selection.
+     */
     public static function query(int $userid, bool $archive, int $coursefilter, array $tags, string $search): array {
         global $DB;
         $sql = 'FROM {local_sidenotes_notes} qn LEFT JOIN {course} c ON c.id=qn.courseid
             WHERE qn.userid=:userid AND qn.archived=:archived';
         $params = ['userid' => $userid, 'archived' => (int) $archive];
-        if ($coursefilter > 0) {$sql .= ' AND qn.courseid=:courseid'; $params['courseid'] = $coursefilter;}
-        if ($coursefilter === -1) {$sql .= ' AND qn.pagehash=:unboundhash'; $params['unboundhash'] = access_policy::unbound_hash();}
+        if ($coursefilter > 0) {
+            $sql .= ' AND qn.courseid=:courseid';
+            $params['courseid'] = $coursefilter;
+        }
+        if ($coursefilter === -1) {
+            $sql .= ' AND qn.pagehash=:unboundhash';
+            $params['unboundhash'] = access_policy::unbound_hash();
+        }
         [$tagsql, $tagparams] = self::tag_conditions($tags, $userid);
-        $sql .= $tagsql; $params += $tagparams;
+        $sql .= $tagsql;
+        $params += $tagparams;
         if ($search !== '') {
             $parts = [];
             foreach (['content', 'quote', 'pagetitle'] as $field) {
@@ -63,15 +70,26 @@ final class note_filters {
         }
         return [$sql, $params];
     }
+    /**
+     * Normalise and sort positive tag IDs within the filter limit.
+     *
+     * @param array $ids Selected note IDs.
+     * @return array
+     */
     public static function normalise_tags(array $ids): array {
         $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn(int $id): bool => $id > 0)));
-        if (count($ids) > 50) {throw new \invalid_parameter_exception('At most 50 tag filters are supported.');}
+        if (count($ids) > 50) {
+            throw new \invalid_parameter_exception('At most 50 tag filters are supported.');
+        }
         sort($ids);
         return $ids;
     }
-    /** Caller uses qn for the notes table and has already restricted qn.userid. */
+    /**
+     * Caller uses qn for the notes table and has already restricted qn.userid.
+     */
     public static function tag_conditions(array $ids, int $userid): array {
-        $sql = ''; $params = [];
+        $sql = '';
+        $params = [];
         foreach (self::normalise_tags($ids) as $index => $id) {
             $prefix = 'filtertag' . $index;
             $sql .= " AND EXISTS (SELECT 1 FROM {tag_instance} tf

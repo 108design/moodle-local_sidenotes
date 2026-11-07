@@ -1,28 +1,26 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for classes/external/manage_archive.php.
  *
  * @package   local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-// GNU GPL v3 or later.
 namespace local_sidenotes\external;
 
 use local_sidenotes\local\access_policy;
@@ -35,6 +33,11 @@ use local_sidenotes\local\archive_manager;
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class manage_archive extends \core_external\external_api {
+    /**
+     * Describe the accepted parameters of this external service.
+     *
+     * @return \core_external\external_function_parameters
+     */
     public static function execute_parameters(): \core_external\external_function_parameters {
         return new \core_external\external_function_parameters([
             'operation' => new \core_external\external_value(PARAM_ALPHA, 'archive, restore, preview or empty'),
@@ -42,6 +45,14 @@ class manage_archive extends \core_external\external_api {
             'revision' => new \core_external\external_value(PARAM_ALPHANUM, 'Confirmed archive snapshot.', VALUE_DEFAULT, ''),
         ]);
     }
+    /**
+     * Apply the requested owner-private archive operation.
+     *
+     * @param string $operation Requested operation.
+     * @param int $noteid Note ID.
+     * @param string $revision Revision from the confirmation preview.
+     * @return array
+     */
     public static function execute(string $operation, int $noteid = 0, string $revision = ''): array {
         global $USER;
         $params = self::validate_parameters(self::execute_parameters(), compact('operation', 'noteid', 'revision'));
@@ -49,8 +60,10 @@ class manage_archive extends \core_external\external_api {
         self::validate_context(\context_system::instance());
         access_policy::require_overview();
         $operation = $params['operation'];
-        if (!in_array($operation, ['archive', 'restore', 'preview', 'empty'], true)
-                || (in_array($operation, ['archive', 'restore'], true) ? $params['noteid'] <= 0 : $params['noteid'] !== 0)) {
+        if (
+            !in_array($operation, ['archive', 'restore', 'preview', 'empty'], true)
+                || (in_array($operation, ['archive', 'restore'], true) ? $params['noteid'] <= 0 : $params['noteid'] !== 0)
+        ) {
             throw new \invalid_parameter_exception('Invalid archive operation.');
         }
         $deleted = 0;
@@ -62,6 +75,11 @@ class manage_archive extends \core_external\external_api {
         return ['noteid' => $params['noteid'], 'archived' => $operation === 'archive', 'deleted' => $deleted]
             + archive_manager::status((int) $USER->id);
     }
+    /**
+     * Describe the return value of this external service.
+     *
+     * @return \core_external\external_single_structure
+     */
     public static function execute_returns(): \core_external\external_single_structure {
         return new \core_external\external_single_structure([
             'noteid' => new \core_external\external_value(PARAM_INT, 'Affected note or zero.'),

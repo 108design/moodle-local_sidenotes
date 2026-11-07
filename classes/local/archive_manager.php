@@ -1,28 +1,26 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for classes/local/archive_manager.php.
  *
  * @package   local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-// GNU GPL v3 or later.
 namespace local_sidenotes\local;
 
 /**
@@ -32,23 +30,35 @@ namespace local_sidenotes\local;
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class archive_manager {
-    /** Serialize archive membership changes and deletion for one owner. */
+    /**
+     * Serialize archive membership changes and deletion for one owner.
+     */
     public static function owner_lock(int $userid): \core\lock\lock {
         $lock = \core\lock\lock_config::get_lock_factory('local_sidenotes')->get_lock('archive-owner-' . $userid, 10);
-        if (!$lock) {throw new \moodle_exception('error:busy', 'local_sidenotes');}
+        if (!$lock) {
+            throw new \moodle_exception('error:busy', 'local_sidenotes');
+        }
         return $lock;
     }
 
-    /** Public status contains counts and a revision, not any other owner's records. */
+    /**
+     * Public status contains counts and a revision, not any other owner's records.
+     */
     public static function status(int $userid): array {
         global $DB;
-        $records = $DB->get_records('local_sidenotes_notes', ['userid' => $userid, 'archived' => 1],
-            'id ASC', 'id,timearchived,timemodified');
+        $records = $DB->get_records(
+            'local_sidenotes_notes',
+            ['userid' => $userid, 'archived' => 1],
+            'id ASC',
+            'id,timearchived,timemodified'
+        );
         return ['activecount' => $DB->count_records('local_sidenotes_notes', ['userid' => $userid, 'archived' => 0]),
             'archivecount' => count($records), 'revision' => hash('sha256', $userid . ':' . json_encode(array_values($records)))];
     }
 
-    /** Set one owned note's state; preserve all original content, timestamps and source metadata. */
+    /**
+     * Set one owned note's state; preserve all original content, timestamps and source metadata.
+     */
     public static function set_state(int $noteid, int $userid, bool $archived): void {
         global $DB;
         $ownerlock = self::owner_lock($userid);
@@ -61,12 +71,16 @@ final class archive_manager {
                     'archived' => (int) $archived, 'timearchived' => $archived ? time() : 0]);
             }
         } finally {
-            if ($notelock) {$notelock->release();}
+            if ($notelock) {
+                $notelock->release();
+            }
             $ownerlock->release();
         }
     }
 
-    /** Delete one owned note, optionally requiring the archive state displayed by the client. */
+    /**
+     * Delete one owned note, optionally requiring the archive state displayed by the client.
+     */
     public static function delete_owned(int $noteid, int $userid, int $expectedarchived = -1): void {
         global $DB;
         $ownerlock = self::owner_lock($userid);
@@ -79,31 +93,41 @@ final class archive_manager {
             }
             self::purge([$note], $userid);
         } finally {
-            if ($notelock) {$notelock->release();}
+            if ($notelock) {
+                $notelock->release();
+            }
             $ownerlock->release();
         }
     }
 
-    /** Empty only the same owner's exact archive snapshot confirmed in the UI, ignoring search filters. */
+    /**
+     * Empty only the same owner's exact archive snapshot confirmed in the UI, ignoring search filters.
+     */
     public static function empty_owned(int $userid, string $revision): int {
         global $DB;
         $ownerlock = self::owner_lock($userid);
         $locks = [];
         try {
             $notes = $DB->get_records('local_sidenotes_notes', ['userid' => $userid, 'archived' => 1], 'id ASC');
-            foreach ($notes as $note) {$locks[] = access_policy::note_lock((int) $note->id);}
+            foreach ($notes as $note) {
+                $locks[] = access_policy::note_lock((int) $note->id);
+            }
             if ($revision === '' || !hash_equals(self::status($userid)['revision'], $revision)) {
                 throw new \moodle_exception('archive:changed', 'local_sidenotes');
             }
             self::purge($notes, $userid);
             return count($notes);
         } finally {
-            foreach (array_reverse($locks) as $lock) {$lock->release();}
+            foreach (array_reverse($locks) as $lock) {
+                $lock->release();
+            }
             $ownerlock->release();
         }
     }
 
-    /** Caller already holds the membership and note locks. Receipts remain to prevent resurrection by import. */
+    /**
+     * Caller already holds the membership and note locks. Receipts remain to prevent resurrection by import.
+     */
     private static function purge(array $notes, int $userid): void {
         global $DB;
         $transaction = $DB->start_delegated_transaction();

@@ -1,27 +1,26 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * External service for get notes.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace local_sidenotes\external;
 
@@ -39,6 +38,11 @@ use local_sidenotes\local\access_policy;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class get_notes extends \core_external\external_api {
+    /**
+     * Describe the accepted parameters of this external service.
+     *
+     * @return \core_external\external_function_parameters
+     */
     public static function execute_parameters(): \core_external\external_function_parameters {
         return new \core_external\external_function_parameters([
             'courseid' => new \core_external\external_value(PARAM_INT, 'Course id or 0.', VALUE_DEFAULT, 0),
@@ -46,9 +50,23 @@ class get_notes extends \core_external\external_api {
         ]);
     }
 
+    /**
+     * Return the current user notes available on the validated page.
+     *
+     * @param int $courseid Course ID, or zero outside a course.
+     * @param string $pageurl Source page URL.
+     * @return array
+     */
     public static function execute(int $courseid = 0, string $pageurl = ''): array {
         global $DB, $USER;
-        $params = self::validate_parameters(self::execute_parameters(), ['courseid' => $courseid, 'pageurl' => $pageurl]);
+        $params = self::validate_parameters(
+            self::execute_parameters(
+            ),
+            [
+            'courseid' => $courseid,
+            'pageurl' => $pageurl,
+            ]
+        );
 
         require_login();
         $context = context_system::instance();
@@ -59,28 +77,51 @@ class get_notes extends \core_external\external_api {
 
         $queryparams = ['userid' => $USER->id];
         if ($params['pageurl'] !== '') {
-            [$hashsql, $hashparams] = $DB->get_in_or_equal(\local_sidenotes\local\source_move_manager::lookup_hashes($params['pageurl']), SQL_PARAMS_NAMED, 'pagehash');
+            [
+            $hashsql,
+            $hashparams
+            ] = $DB->get_in_or_equal(
+                \local_sidenotes\local\source_move_manager::lookup_hashes(
+                    $params['pageurl']
+                ),
+                SQL_PARAMS_NAMED,
+                'pagehash'
+            );
             $queryparams += $hashparams;
             $select = 'userid = :userid AND (pagehash ' . $hashsql . ' OR isglobal = 1)';
         } else if ($params['courseid'] > 0) {
             $queryparams['courseid'] = $params['courseid'];
             $select = 'userid = :userid AND (courseid = :courseid OR isglobal = 1)';
         } else {
-            [$hashsql, $hashparams] = $DB->get_in_or_equal(\local_sidenotes\local\source_move_manager::lookup_hashes($allowedurl), SQL_PARAMS_NAMED, 'pagehash');
+            [
+            $hashsql,
+            $hashparams
+            ] = $DB->get_in_or_equal(
+                \local_sidenotes\local\source_move_manager::lookup_hashes(
+                    $allowedurl
+                ),
+                SQL_PARAMS_NAMED,
+                'pagehash'
+            );
             $queryparams += $hashparams;
             $select = 'userid = :userid AND (pagehash ' . $hashsql . ' OR isglobal = 1)';
         }
 
         $select .= ' AND archived = 0';
         $records = $DB->get_records_select(
-            'local_sidenotes_notes', $select, $queryparams, 'isglobal DESC, timemodified DESC, id DESC'
+            'local_sidenotes_notes',
+            $select,
+            $queryparams,
+            'isglobal DESC, timemodified DESC, id DESC'
         );
         $records = array_values($records);
         $tags = tag_manager::get_for_notes(array_column($records, 'id'), (int) $USER->id);
         $result = [];
         foreach ($records as $record) {
-            if (!access_policy::sitewide() && !access_policy::unbound($record)
-                    && !access_policy::stored_page_allowed((int) $record->courseid, (string) $record->url)) {
+            if (
+                !access_policy::sitewide() && !access_policy::unbound($record)
+                    && !access_policy::stored_page_allowed((int) $record->courseid, (string) $record->url)
+            ) {
                 continue;
             }
             $result[] = save_note::export_note($record, $tags[(int) $record->id] ?? []);
@@ -88,6 +129,11 @@ class get_notes extends \core_external\external_api {
         return $result;
     }
 
+    /**
+     * Describe the return value of this external service.
+     *
+     * @return \core_external\external_multiple_structure
+     */
     public static function execute_returns(): \core_external\external_multiple_structure {
         return new \core_external\external_multiple_structure(save_note::note_structure());
     }

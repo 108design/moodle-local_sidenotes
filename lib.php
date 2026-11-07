@@ -39,13 +39,21 @@ function local_sidenotes_before_standard_top_of_body_html() {
     return \local_sidenotes\hooks::get_top_of_body_html();
 }
 
-/** Course settings remain native Moodle controls, separate from private note access. */
+/**
+ * Course settings remain native Moodle controls, separate from private note access.
+ */
 function local_sidenotes_extend_navigation_course($navigation, $course, $context) {
-    if (get_config('local_sidenotes', 'courseenabled') && $course->id !== SITEID
-            && has_capability('local/sidenotes:managecourse', $context)) {
-        $navigation->add(get_string('course:settings', 'local_sidenotes'),
+    if (
+        get_config('local_sidenotes', 'courseenabled') && $course->id !== SITEID
+            && has_capability('local/sidenotes:managecourse', $context)
+    ) {
+        $navigation->add(
+            get_string('course:settings', 'local_sidenotes'),
             new moodle_url('/local/sidenotes/course.php', ['courseid' => $course->id]),
-            navigation_node::TYPE_SETTING, null, 'sidenotes');
+            navigation_node::TYPE_SETTING,
+            null,
+            'sidenotes'
+        );
     }
 }
 
@@ -92,7 +100,9 @@ function local_sidenotes_pluginfile($course, $cm, $context, $filearea, $args, $f
     send_stored_file($file, DAYSECS, 0, $forcedownload, $options);
 }
 
-/** Product identity fallback for supported Moodle versions before output hooks. */
+/**
+ * Product identity fallback for supported Moodle versions before output hooks.
+ */
 function local_sidenotes_before_standard_html_head(): string {
     global $PAGE;
     if (class_exists(\core\hook\output\before_standard_head_html_generation::class)) {
@@ -101,7 +111,9 @@ function local_sidenotes_before_standard_html_head(): string {
     return \local_sidenotes\local\admin_branding::html($PAGE->get_renderer('core'));
 }
 
-/** Contextual help for the explicitly registered administration pages only. */
+/**
+ * Contextual help for the explicitly registered administration pages only.
+ */
 function local_sidenotes_render_navbar_output(\renderer_base $renderer): string {
     return \local_sidenotes\local\admin_help::navbar($renderer);
 }

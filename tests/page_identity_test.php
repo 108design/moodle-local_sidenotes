@@ -1,27 +1,26 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Regression tests for page identity.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace local_sidenotes;
 
@@ -33,8 +32,12 @@ use local_sidenotes\local\page_identity;
  * @package     local_sidenotes
  * @copyright   2026 Andreas Giesen
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \local_sidenotes\local\page_identity
  */
 final class page_identity_test extends \advanced_testcase {
+    /**
+     * Canonicalise removes volatile values and sorts query.
+     */
     public function test_canonicalise_removes_volatile_values_and_sorts_query(): void {
         global $CFG;
 
@@ -44,6 +47,9 @@ final class page_identity_test extends \advanced_testcase {
         $this->assertSame($path . '/admin/settings.php?a=1&z=2', page_identity::canonicalise($url));
     }
 
+    /**
+     * Hash ignores fragment and sesskey.
+     */
     public function test_hash_ignores_fragment_and_sesskey(): void {
         global $CFG;
 
@@ -53,6 +59,9 @@ final class page_identity_test extends \advanced_testcase {
         $this->assertSame(page_identity::hash($base), page_identity::hash($withvolatiledata));
     }
 
+    /**
+     * Notes center link opens drawer without changing page identity.
+     */
     public function test_notes_center_link_opens_drawer_without_changing_page_identity(): void {
         global $CFG;
 
@@ -65,11 +74,17 @@ final class page_identity_test extends \advanced_testcase {
         $this->assertSame(page_identity::hash($base), page_identity::hash($target));
     }
 
+    /**
+     * Foreign host is rejected.
+     */
     public function test_foreign_host_is_rejected(): void {
         $this->expectException(\invalid_parameter_exception::class);
         page_identity::canonicalise('https://example.invalid/admin/index.php');
     }
 
+    /**
+     * Legacy hash survives host migration.
+     */
     public function test_legacy_hash_survives_host_migration(): void {
         global $CFG;
 

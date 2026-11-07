@@ -1,20 +1,20 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for classes/local/admin_branding.php.
  *
  * @package   local_sidenotes
@@ -24,36 +24,59 @@
 // Copyright (C) 2026 Andreas Giesen. See the plugin's LICENSE or LICENSE.md.
 namespace local_sidenotes\local;
 
+// Keep the explicit direct-access guard for this Moodle-only helper.
+// phpcs:ignore moodle.Files.MoodleInternal.MoodleInternalNotNeeded
 defined('MOODLE_INTERNAL') || die();
 
-/** Decorative product identity on explicitly selected administration surfaces only. */
+/**
+ * Decorative product identity on explicitly selected administration surfaces only.
+ */
 final class admin_branding {
-    /** Native page paths and their existing system-level administration capabilities. */
+    /**
+     * Native page paths and their existing system-level administration capabilities.
+     */
     private const PAGES = ['/local/sidenotes/source_move.php' => 'moodle/site:config'];
-    /** Existing native settings sections; these are never customer routes. */
+    /**
+     * Existing native settings sections; these are never customer routes.
+     */
     private const SECTIONS = ['local_sidenotes'];
-    /** Existing administration links, without changing their labels or destinations. */
+    /**
+     * Existing administration links, without changing their labels or destinations.
+     */
     private const LINKS = ['/{admin}/settings.php?section=local_sidenotes' => 'moodle/site:config'];
 
-    /** Give native external pages a product heading when Core supplied only the site name. */
+    /**
+     * Give native external pages a product heading when Core supplied only the site name.
+     */
     public static function prepare(\core\hook\output\before_http_headers $hook): void {
         global $CFG, $PAGE, $SITE;
-        if (self::page_capability() !== null
+        if (
+            self::page_capability() !== null
                 && ($PAGE->url->get_path() === (new \moodle_url('/' . $CFG->admin . '/settings.php'))->get_path()
-                    || trim(strip_tags($PAGE->heading)) === trim(strip_tags($SITE->fullname)))) {
+                    || trim(strip_tags($PAGE->heading)) === trim(strip_tags($SITE->fullname)))
+        ) {
             $PAGE->set_heading(get_string('pluginname', 'local_sidenotes'));
         }
     }
 
+    /**
+     * Append the permitted administration branding to the native head hook.
+     *
+     * @param \core\hook\output\before_standard_head_html_generation $hook Native output hook.
+     */
     public static function head(\core\hook\output\before_standard_head_html_generation $hook): void {
         $hook->add_html(self::html($hook->renderer));
     }
 
-    /** Allowlist shared with this plugin's contextual administration help, if present. */
+    /**
+     * Allowlist shared with this plugin's contextual administration help, if present.
+     */
     public static function page_capability(): ?string {
         global $CFG, $PAGE;
-        if (during_initial_install() || !isloggedin() || isguestuser()
-                || (int)$PAGE->context->contextlevel !== CONTEXT_SYSTEM) {
+        if (
+            during_initial_install() || !isloggedin() || isguestuser()
+                || (int)$PAGE->context->contextlevel !== CONTEXT_SYSTEM
+        ) {
             return null;
         }
         $path = $PAGE->url->get_path();
@@ -63,15 +86,19 @@ final class admin_branding {
                 return $capability;
             }
         }
-        if ($path === (new \moodle_url('/' . $CFG->admin . '/settings.php'))->get_path()
+        if (
+            $path === (new \moodle_url('/' . $CFG->admin . '/settings.php'))->get_path()
                 && in_array((string)$PAGE->url->get_param('section'), self::SECTIONS, true)
-                && has_capability('moodle/site:config', $system)) {
+                && has_capability('moodle/site:config', $system)
+        ) {
             return 'moodle/site:config';
         }
         return null;
     }
 
-    /** Also used by the pre-hook fallback on supported older Moodle versions. */
+    /**
+     * Also used by the pre-hook fallback on supported older Moodle versions.
+     */
     public static function html(\renderer_base $renderer): string {
         global $CFG, $PAGE;
 
@@ -83,8 +110,10 @@ final class admin_branding {
         $nativepath = static fn(string $value): string => (new \moodle_url($value))->get_path();
         $system = \context_system::instance();
         $css = '';
-        $image = json_encode($renderer->image_url('adminbrand', 'local_sidenotes')->out(false),
-            JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        $image = json_encode(
+            $renderer->image_url('adminbrand', 'local_sidenotes')->out(false),
+            JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+        );
 
         // An administrator looking at a customer or course page still sees no product branding.
         if (self::page_capability() !== null && $path !== $nativepath($admin . '/settings.php')) {
@@ -94,16 +123,20 @@ final class admin_branding {
             $css .= self::title_css('#page-header h1', $image);
             $css .= '#adminsettings .settingsform > h2 { display: none; }' . "\n";
         }
-        if ($path === $nativepath($admin . '/plugins.php')
-                && has_capability('moodle/site:config', $system)) {
+        if (
+            $path === $nativepath($admin . '/plugins.php')
+                && has_capability('moodle/site:config', $system)
+        ) {
             // Do not replace pix/icon or monologo: those may also identify a learner-facing activity.
             $row = 'body#page-admin-plugins tr.name-local_sidenotes .pluginname .displayname';
             $css .= $row . ' > img.icon { display: none; }' . "\n";
             $css .= self::icon_css($row . '::before', $image, '1em');
         }
-        if ($path === $nativepath($admin . '/index.php')
+        if (
+            $path === $nativepath($admin . '/index.php')
                 && (int)$PAGE->context->contextlevel === CONTEXT_SYSTEM
-                && has_capability('moodle/site:config', $system)) {
+                && has_capability('moodle/site:config', $system)
+        ) {
             // Upgrade checks have different markup from the ordinary plugin overview.
             // Keep the activity's icon/monologo assets unchanged for course pages.
             $row = 'body#page-admin-index #plugins-check tr.name-local_sidenotes td.displayname';
@@ -116,21 +149,41 @@ final class admin_branding {
                     continue;
                 }
                 $target = str_replace('{admin}', $CFG->admin, $target);
-                $link = json_encode((new \moodle_url($target))->out(false),
-                    JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-                $css .= self::icon_css('body#page-admin-search #region-main a[href=' . $link . ']::before',
-                    $image, '1em');
+                $link = json_encode(
+                    (new \moodle_url($target))->out(false),
+                    JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+                );
+                $css .= self::icon_css(
+                    'body#page-admin-search #region-main a[href=' . $link . ']::before',
+                    $image,
+                    '1em'
+                );
             }
         }
         return $css === '' ? '' : \html_writer::tag('style', $css, ['id' => 'local_sidenotes-admin-branding']);
     }
 
+    /**
+     * Build CSS for the specified branding selector, image and dimensions.
+     *
+     * @param string $selector CSS selector.
+     * @param string $image Branding image URL.
+     * @param string $size CSS width and height.
+     * @return string
+     */
     private static function icon_css(string $selector, string $image, string $size): string {
         return $selector . ' { content: ""; display: inline-block; width: ' . $size . '; height: ' . $size
             . '; margin-inline-end: .35em; vertical-align: -.125em; background: url(' . $image
             . ') center / contain no-repeat; }' . "\n";
     }
 
+    /**
+     * Build title branding and the responsive administration action layout.
+     *
+     * @param string $selector CSS selector.
+     * @param string $image Branding image URL.
+     * @return string
+     */
     private static function title_css(string $selector, string $image): string {
         return self::icon_css($selector . '::before', $image, '1em') . <<<CSS
 @media (max-width: 575.98px) {

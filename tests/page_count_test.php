@@ -1,28 +1,26 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for tests/page_count_test.php.
  *
  * @package   local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-// GNU GPL v3 or later.
 namespace local_sidenotes;
 
 use local_sidenotes\external\get_page_count;
@@ -30,12 +28,20 @@ use local_sidenotes\external\save_note;
 use local_sidenotes\external\edit_note;
 use local_sidenotes\local\access_policy;
 
-/** Count-only endpoint privacy, page identity and availability regressions.
+/**
+ * Count-only endpoint privacy, page identity and availability regressions.
  * @package local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \local_sidenotes\external\get_page_count
+ * @covers \local_sidenotes\local\access_policy
  */
 final class page_count_test extends \advanced_testcase {
+    /**
+     * Create an enrolled student and an enabled course for count assertions.
+     *
+     * @return array
+     */
     private function learner(): array {
         $this->resetAfterTest();
         set_config('sitewideenabled', 0, 'local_sidenotes');
@@ -49,6 +55,9 @@ final class page_count_test extends \advanced_testcase {
         return [$user, $course, (new \moodle_url('/course/view.php', ['id' => $course->id]))->out(false)];
     }
 
+    /**
+     * Count excludes global archive other page and other owner.
+     */
     public function test_count_excludes_global_archive_other_page_and_other_owner(): void {
         global $DB;
         [$user, $course, $url] = $this->learner();
@@ -57,8 +66,12 @@ final class page_count_test extends \advanced_testcase {
         save_note::execute(0, $course->id, 'global', $url, '', true);
         $archived = save_note::execute(0, $course->id, 'archived', $url);
         $DB->set_field('local_sidenotes_notes', 'archived', 1, ['id' => $archived['id']]);
-        save_note::execute(0, $course->id, 'other page',
-            (new \moodle_url('/course/resources.php', ['id' => $course->id]))->out(false));
+        save_note::execute(
+            0,
+            $course->id,
+            'other page',
+            (new \moodle_url('/course/resources.php', ['id' => $course->id]))->out(false)
+        );
         edit_note::execute(0, 'create', 'unbound');
         $other = $this->getDataGenerator()->create_user();
         $this->getDataGenerator()->enrol_user($other->id, $course->id, 'student');
@@ -71,9 +84,14 @@ final class page_count_test extends \advanced_testcase {
         $this->assertSame(PARAM_INT, get_page_count::execute_returns()->type);
     }
 
+    /**
+     * Sitewide count uses the same private bound scope.
+     */
     public function test_sitewide_count_uses_the_same_private_bound_scope(): void {
         global $DB;
-        $this->resetAfterTest(); $this->setAdminUser(); set_config('sitewideenabled', 1, 'local_sidenotes');
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        set_config('sitewideenabled', 1, 'local_sidenotes');
         $url = (new \moodle_url('/admin/search.php'))->out(false);
         $note = save_note::execute(0, 0, 'active', $url);
         save_note::execute(0, 0, 'global', $url, '', true);
@@ -83,12 +101,18 @@ final class page_count_test extends \advanced_testcase {
         $this->assertSame(0, get_page_count::execute(0, $url));
     }
 
+    /**
+     * Student cannot count site or forged course pages.
+     */
     public function test_student_cannot_count_site_or_forged_course_pages(): void {
         [$user, $course, $url] = $this->learner();
         $this->expectException(\moodle_exception::class);
         get_page_count::execute($course->id, (new \moodle_url('/admin/search.php'))->out(false));
     }
 
+    /**
+     * Disabled course is not countable.
+     */
     public function test_disabled_course_is_not_countable(): void {
         global $DB;
         [$user, $course, $url] = $this->learner();
@@ -98,8 +122,13 @@ final class page_count_test extends \advanced_testcase {
         get_page_count::execute($course->id, $url);
     }
 
+    /**
+     * Foreign host is rejected in sitewide mode.
+     */
     public function test_foreign_host_is_rejected_in_sitewide_mode(): void {
-        $this->resetAfterTest(); $this->setAdminUser(); set_config('sitewideenabled', 1, 'local_sidenotes');
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        set_config('sitewideenabled', 1, 'local_sidenotes');
         $this->expectException(\invalid_parameter_exception::class);
         get_page_count::execute(0, 'https://foreign.invalid/course/view.php?id=2');
     }

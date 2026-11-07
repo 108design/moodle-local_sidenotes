@@ -1,27 +1,26 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Page identity and canonical URLs.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace local_sidenotes\local;
 
@@ -35,10 +34,14 @@ use invalid_parameter_exception;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class page_identity {
-    /** Query argument used by Notes Center links to open the destination page drawer. */
+    /**
+     * Query argument used by Notes Center links to open the destination page drawer.
+     */
     public const OPEN_DRAWER_QUERY_KEY = 'local_sidenotes_open';
 
-    /** Query arguments that must not split one logical page into several note pages. */
+    /**
+     * Query arguments that must not split one logical page into several note pages.
+     */
     private const VOLATILE_QUERY_KEYS = ['sesskey', '_qf__', 'local_quicknote_open', self::OPEN_DRAWER_QUERY_KEY];
 
     /**
@@ -55,9 +58,11 @@ final class page_identity {
 
         $urlparts = parse_url($url);
         $baseparts = parse_url($CFG->wwwroot);
-        if ($urlparts === false || $baseparts === false || empty($urlparts['host']) || empty($baseparts['host'])
+        if (
+            $urlparts === false || $baseparts === false || empty($urlparts['host']) || empty($baseparts['host'])
                 || isset($urlparts['user']) || isset($urlparts['pass'])
-                || !in_array(strtolower($urlparts['scheme'] ?? ''), ['http', 'https'], true)) {
+                || !in_array(strtolower($urlparts['scheme'] ?? ''), ['http', 'https'], true)
+        ) {
             throw new invalid_parameter_exception('A valid Moodle page URL is required.');
         }
 
@@ -174,11 +179,15 @@ final class page_identity {
         return null;
     }
 
-    /** Remove transient top-level form/session arguments before hashing a page. */
+    /**
+     * Remove transient top-level form/session arguments before hashing a page.
+     */
     private static function stable_query(array $query): array {
         foreach (array_keys($query) as $key) {
-            if (in_array((string) $key, self::VOLATILE_QUERY_KEYS, true)
-                    || str_starts_with((string) $key, '_qf__')) {
+            if (
+                in_array((string) $key, self::VOLATILE_QUERY_KEYS, true)
+                    || str_starts_with((string) $key, '_qf__')
+            ) {
                 unset($query[$key]);
             }
         }

@@ -1,35 +1,42 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
  * File documentation for tests/quicknote_import_test.php.
  *
  * @package   local_sidenotes
  * @copyright 2026 Andreas Giesen
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-// This file is part of Moodle - https://moodle.org/
-// GNU GPL v3 or later. Copyright 2026 Andreas Giesen.
 namespace local_sidenotes;
 use local_sidenotes\local\access_policy;
 use local_sidenotes\local\quicknote_importer;
 use local_sidenotes\local\page_identity;
 
-/** Conversion requires no QuickNote code, tables, renderer or installed plugin. */
+/**
+ * Conversion requires no QuickNote code, tables, renderer or installed plugin.
+ * @covers \local_sidenotes\local\quicknote_importer
+ * @covers \local_sidenotes\local\page_identity
+ */
 final class quicknote_import_test extends \advanced_testcase {
+    /**
+     * Build an original QuickNote record with literal text and source metadata.
+     *
+     * @return \stdClass
+     */
     private function original(): \stdClass {
         return (object) ['id' => 7, 'userid' => 2, 'courseid' => 0, 'content' => '**Literal**\n- [ ] Literal',
             'quote' => 'Quote', 'quoteurl' => null,
@@ -37,6 +44,9 @@ final class quicknote_import_test extends \advanced_testcase {
             'timecreated' => 123456, 'timemodified' => 234567];
     }
 
+    /**
+     * Original text and metadata remain literal.
+     */
     public function test_original_text_and_metadata_remain_literal(): void {
         $this->resetAfterTest();
         $source = $this->original();
@@ -49,6 +59,9 @@ final class quicknote_import_test extends \advanced_testcase {
         $this->assertSame(0, $target->isglobal);
     }
 
+    /**
+     * Enhanced unbound and own routes follow the rename.
+     */
     public function test_enhanced_unbound_and_own_routes_follow_the_rename(): void {
         global $CFG;
         $this->resetAfterTest();
@@ -71,6 +84,9 @@ final class quicknote_import_test extends \advanced_testcase {
         $this->assertSame(page_identity::hash($target->url), $target->pagehash);
     }
 
+    /**
+     * Product name is never translated.
+     */
     public function test_product_name_is_never_translated(): void {
         $this->assertSame('Side Notes', get_string_manager()->get_string('pluginname', 'local_sidenotes', null, 'en'));
         $this->assertSame('Side Notes', get_string_manager()->get_string('pluginname', 'local_sidenotes', null, 'de'));

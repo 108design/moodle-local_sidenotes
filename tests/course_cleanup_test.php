@@ -1,28 +1,26 @@
 <?php
-/**
- * This file is part of Moodle - https://moodle.org/
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
- *
- */
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// Moodle is distributed without any warranty. See <https://www.gnu.org/licenses/>.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Regression tests for course cleanup.
+ *
+ * @package local_sidenotes
+ * @copyright 2026 Andreas Giesen
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace local_sidenotes;
 
@@ -39,7 +37,9 @@ use local_sidenotes\task\delete_course_notes;
  */
 #[\PHPUnit\Framework\Attributes\CoversClass(observers::class)]
 final class course_cleanup_test extends \advanced_testcase {
-    /** Insert a synthetic note without requiring enrolment in its course. */
+    /**
+     * Insert a synthetic note without requiring enrolment in its course.
+     */
     private function note(int $userid, int $courseid): int {
         global $DB;
         return (int)$DB->insert_record('local_sidenotes_notes', (object)[
@@ -50,7 +50,12 @@ final class course_cleanup_test extends \advanced_testcase {
         ]);
     }
 
-    /** A native course deletion queues work; each execution handles at most one batch. */
+    /**
+     * A native course deletion queues work; each execution handles at most one batch.
+     *
+     * @covers \local_sidenotes\observers
+     * @covers \local_sidenotes\task\delete_course_notes
+     */
     public function test_course_delete_queues_bounded_cleanup_and_preserves_other_scopes(): void {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/course/lib.php');
@@ -121,7 +126,11 @@ final class course_cleanup_test extends \advanced_testcase {
         $this->assertCount(1, tag_manager::get_for_note($keptid, $other->id));
     }
 
-    /** An invalid or accidentally queued active-course ID can never erase its notes. */
+    /**
+     * An invalid or accidentally queued active-course ID can never erase its notes.
+     *
+     * @covers \local_sidenotes\task\delete_course_notes
+     */
     public function test_cleanup_ignores_existing_courses_and_invalid_data(): void {
         global $DB;
         $this->resetAfterTest();
@@ -137,7 +146,11 @@ final class course_cleanup_test extends \advanced_testcase {
         }
     }
 
-    /** Ordinary unenrolment still erases that user's course data synchronously. */
+    /**
+     * Ordinary unenrolment still erases that user's course data synchronously.
+     *
+     * @covers \local_sidenotes\observers
+     */
     public function test_user_unenrolment_retains_immediate_private_cleanup(): void {
         global $DB;
         $this->resetAfterTest();

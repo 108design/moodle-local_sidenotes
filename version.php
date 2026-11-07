@@ -26,8 +26,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sidenotes';
-$plugin->release = '1.29.0';
-$plugin->version = 2026110702;
+$plugin->release = '1.30.0';
+$plugin->version = 2026110703;
 $plugin->requires = 2024100700; // Moodle 4.5.
 $plugin->supported = [405, 503];
 $plugin->maturity = MATURITY_STABLE;

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.30.0 - 2026-11-07
+
+- Standardise PHP formatting and complete PHPDoc and test coverage metadata.
+- Sort language keys while preserving every translated value.
+- Preserve note behaviour, access checks and stored data.
+
 ## 1.24.0 — unreleased
 
 - Add an administrator preview and resumable update of source links after a Moodle domain or subdirectory move.
