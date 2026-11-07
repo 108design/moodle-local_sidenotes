@@ -53,3 +53,7 @@
     .local-sidenotes-center__filter-row {grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr);}
     .local-sidenotes-center__filter-row:not(:has(#tagfilter)) {grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);}
 }
+/* Keep the completion action next to Delete without moving the saved-state text. */
+.local-sidenotes__note-actions .local-sidenotes__status {margin-right:auto}
+.local-sidenotes__complete {color:inherit;opacity:.7}
+.local-sidenotes__complete:hover,.local-sidenotes__complete:focus {opacity:1}

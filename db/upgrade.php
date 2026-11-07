@@ -66,5 +66,16 @@ function xmldb_local_sidenotes_upgrade(int $oldversion): bool {
         }
         upgrade_plugin_savepoint(true, 2026102401, 'local', 'sidenotes');
     }
+    if ($oldversion < 2026110700) {
+        // Drawer completion, private tag suggestions and help; no note or attachment migration.
+        upgrade_plugin_savepoint(true, 2026110700, 'local', 'sidenotes');
+    }
+    if ($oldversion < 2026110701) {
+        upgrade_plugin_savepoint(true, 2026110701, 'local', 'sidenotes');
+    }
+    if ($oldversion < 2026110702) {
+        // Focus the current view after a card disappears; no stored data changes.
+        upgrade_plugin_savepoint(true, 2026110702, 'local', 'sidenotes');
+    }
     return true;
 }

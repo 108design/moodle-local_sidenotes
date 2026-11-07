@@ -72,6 +72,19 @@ define([
 
     var state = null;
 
+    var refreshTags = function() {
+        if (!state.tagsenabled) {return Promise.resolve();}
+        if (state.tagloading) {return state.tagloading;}
+        state.tagloading = Promise.resolve(Ajax.call([{methodname: 'local_sidenotes_manage_tags',
+            args: {operation: 'list'}}])[0]).then(function(response) {
+            var list = state.root.querySelector('#local-sidenotes-sidebar-tags');
+            list.replaceChildren();
+            response.tags.forEach(function(tag) {list.appendChild(new Option(tag.name, tag.name));});
+        }).catch(function() { /* Optional suggestions retry on the next opening or focus. */ })
+            .finally(function() {state.tagloading = null;});
+        return state.tagloading;
+    };
+
     var renderPageCount = function(value) {
         var count = Number.isFinite(Number(value)) ? Math.max(0, Math.floor(Number(value))) : 0;
         var badge = state.root.querySelector('[data-region="page-note-count"]');
@@ -431,7 +444,7 @@ define([
                 var remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '×';
                 remove.dataset.action = 'remove-tag'; remove.dataset.tagname = tag.name;
                 remove.setAttribute('aria-label', state.strings.removetaglabel.replace('__TAG__', tag.name));
-                remove.disabled = !!note.tagpending;
+                remove.disabled = !!note.tagpending || !!note.archiving;
                 chip.append(name, remove); tagslist.appendChild(chip);
             });
         }
@@ -879,6 +892,7 @@ define([
     // Categories save independently: never submit stale content or scope from the drawer.
     var saveTags = function(note, names, noteEl) {
         if (note.tagpending) {return;}
+        note.tagerror = false;
         note.tagpending = true;
         var form = noteEl.querySelector('[data-region="tag-form"]');
         form.querySelectorAll('input,button').forEach(function(control) {control.disabled = true;});
@@ -889,12 +903,13 @@ define([
                 args: {noteid: note.id, operation: 'tags', tags: names}}])[0];
         }).then(function(saved) {
             note.tags = saved.tags; note.timemodified = saved.timemodified;
+            refreshTags();
             noteEl.querySelector(SELECTORS.tagsinput).value = '';
             setNoteStatus(noteEl, state.strings.savedtext, note.timemodified); applyFilter();
-        }).catch(Notification.exception).finally(function() {
+        }).catch(function(error) {note.tagerror = true; Notification.exception(error);}).finally(function() {
             note.tagrequest = null;
             note.tagpending = false; renderTagsAndPreview(noteEl, note);
-            form.querySelectorAll('input,button').forEach(function(control) {control.disabled = false;});
+            form.querySelectorAll('input,button').forEach(function(control) {control.disabled = !!note.archiving;});
         });
     };
 
@@ -916,6 +931,7 @@ define([
     // QuickNote 0.12 lazy-loading concept (Matheus Mathias). Side Notes retains mounted
     // editors and merges into current state rather than replacing drafts/focus on response.
     var loadNotes = function() {
+        refreshTags();
         if (state.loaded) {return Promise.resolve();}
         if (state.loading) {return state.loading;}
         var indicator = document.createElement('p');
@@ -957,6 +973,41 @@ define([
             indicator.remove(); state.loading = null;
         });
         return state.loading;
+    };
+
+    var archiveNote = function(note, noteEl) {
+        if (note.archiving || note.archived) {return;}
+        note.archiving = true;
+        window.clearTimeout(state.timers[note.clientid]); delete state.timers[note.clientid];
+        var disabled = Array.from(noteEl.querySelectorAll('button,input,textarea,[contenteditable="true"]'))
+            .map(function(control) {return {node: control, disabled: control.disabled,
+                editable: control.getAttribute('contenteditable')};});
+        disabled.forEach(function(item) {item.node.disabled = true;
+            if (item.editable !== null) {item.node.setAttribute('contenteditable', 'false');}});
+        noteEl.setAttribute('aria-busy', 'true');
+        Promise.resolve(note.mediarequest).then(function() {return note.tagrequest;}).then(function() {
+            if (note.tagerror || note.mediaerror) {throw new Error(state.strings.errortext);}
+            return Promise.resolve(note.saving).then(function() {
+                return !note.id || note.content !== note.savedcontent || note.tagschanged ? saveNote(note) : null;
+            });
+        }).then(function() {
+            return Ajax.call([{methodname: 'local_sidenotes_manage_archive',
+                args: {operation: 'archive', noteid: note.id}}])[0];
+        }).then(function(response) {
+            state.notes = state.notes.filter(function(item) {return item !== note;});
+            noteEl.remove();
+            document.dispatchEvent(new CustomEvent('local_sidenotes:archivechanged', {detail: Object.assign({sidebar: true}, response)}));
+            applyFilter();
+            state.root.querySelector(SELECTORS.toggle).focus();
+        }).catch(function(error) {setNoteStatus(noteEl, state.strings.errortext, note.timemodified);
+            Notification.exception(error);}).finally(function() {
+            note.archiving = false; noteEl.removeAttribute('aria-busy');
+            disabled.forEach(function(item) {item.node.disabled = item.disabled;
+                if (item.editable !== null) {item.node.setAttribute('contenteditable', item.editable);}});
+            renderTagsAndPreview(noteEl, note);
+            noteEl.querySelectorAll('[data-region="tag-form"] input,[data-region="tag-form"] button')
+                .forEach(function(control) {control.disabled = !!note.tagpending;});
+        });
     };
 
     var deleteNote = function(note, noteEl) {
@@ -1042,6 +1093,7 @@ define([
     };
 
     var uploadScreenshot = function(note, file) {
+        note.mediaerror = false;
         var noteEl = getNoteElementByKey(note.clientid);
         if (state.timers[note.clientid]) {
             window.clearTimeout(state.timers[note.clientid]);
@@ -1073,6 +1125,7 @@ define([
             }
             return screenshot;
         }).catch(function(error) {
+            note.mediaerror = true;
             if (noteEl) {
                 setNoteStatus(noteEl, state.strings.errortext, note.timemodified);
             }
@@ -1081,10 +1134,12 @@ define([
     };
 
     var deleteScreenshot = function(note, fileid, noteEl) {
-        Ajax.call([{
+        if (note.archiving) {return;}
+        note.mediaerror = false;
+        note.mediarequest = Promise.resolve(note.mediarequest).then(function() {return Ajax.call([{
             methodname: 'local_sidenotes_delete_screenshot',
             args: {noteid: note.id, fileid: fileid}
-        }])[0].then(function(response) {
+        }])[0];}).then(function(response) {
             if (response.deleted) {
                 note.screenshots = (note.screenshots || []).filter(function(screenshot) {
                     return Number(screenshot.id) !== Number(fileid);
@@ -1092,10 +1147,13 @@ define([
                 renderScreenshots(noteEl, note);
             }
             return response;
-        }).catch(Notification.exception);
+        }).catch(function(error) {note.mediaerror = true; Notification.exception(error);});
     };
 
     var bindEvents = function() {
+        state.root.addEventListener('focusin', function(event) {
+            if (event.target.matches(SELECTORS.tagsinput)) {refreshTags();}
+        });
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {refreshPageCount();}
         });
@@ -1375,6 +1433,12 @@ define([
         };
 
         state.root.addEventListener('click', function(e) {
+            var archiveButton = e.target.closest('[data-action="archive-note"]');
+            if (archiveButton) {
+                var archiveEl = archiveButton.closest(SELECTORS.note);
+                archiveNote(getNoteByKey(archiveEl.getAttribute('data-note-key')), archiveEl);
+                return;
+            }
             var removeTag = e.target.closest('[data-action="remove-tag"]');
             if (removeTag && !removeTag.disabled) {
                 var tagEl = removeTag.closest(SELECTORS.note);
@@ -1521,11 +1585,11 @@ define([
             if (!note) {
                 return;
             }
-            images.reduce(function(chain, file) {
+            note.mediarequest = images.reduce(function(chain, file) {
                 return chain.then(function() {
                     return uploadScreenshot(note, file);
                 });
-            }, Promise.resolve());
+            }, Promise.resolve(note.mediarequest));
         });
 
         state.root.addEventListener('keyup', function(e) {

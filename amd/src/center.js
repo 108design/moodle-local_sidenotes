@@ -29,8 +29,8 @@
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['core/ajax', 'core/notification', 'core/str', 'local_sidenotes/mini_editor', 'core/user_date', 'core_filters/events',
-    'local_sidenotes/screenshot_gallery'],
-function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
+    'local_sidenotes/screenshot_gallery', 'theme_boost/index', 'jquery'],
+function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery, Bootstrap, $) {
     return {init: function() {
         var center = document.querySelector('.local-sidenotes-center');
         if (!center || center.dataset.initialized) {return;}
@@ -89,7 +89,32 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
             text.style.height = Math.min(maximum, Math.max(100, text.scrollHeight + 2)) + 'px';
             text.style.overflowY = text.scrollHeight > maximum ? 'auto' : 'hidden';
         };
+        var disposingTooltips = new WeakSet();
+        var clearTooltips = function(scope, dispose) {
+            scope.querySelectorAll('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]').forEach(function(node) {
+                var instance = Bootstrap.Tooltip.getInstance ? Bootstrap.Tooltip.getInstance(node) : $(node).data('bs.tooltip');
+                if (!instance || disposingTooltips.has(node)) {return;}
+                var tip = (node.getAttribute('aria-describedby') || '').split(' ').map(function(id) {
+                    return document.getElementById(id);
+                }).find(function(element) {return element && element.classList.contains('tooltip');});
+                if (dispose && tip) {
+                    // Bootstrap's pending fade callback still owns the instance until hidden fires.
+                    disposingTooltips.add(node);
+                    var complete = function() {
+                        node.removeEventListener('hidden.bs.tooltip', complete);
+                        $(node).off('hidden.bs.tooltip', complete);
+                        if (!disposingTooltips.has(node)) {return;}
+                        disposingTooltips.delete(node); instance.dispose();
+                    };
+                    node.addEventListener('hidden.bs.tooltip', complete);
+                    $(node).one('hidden.bs.tooltip', complete);
+                    if (tip.classList.contains('show')) {instance.hide();}
+                } else if (dispose) {instance.dispose();}
+                else if (tip && tip.classList.contains('show')) {instance.hide();}
+            });
+        };
         var busy = function(card, value) {
+            if (value) {clearTooltips(card, false);}
             stateFor(card).pending = value; card.setAttribute('aria-busy', String(value));
             card.querySelectorAll('button, input, select').forEach(function(control) {
                 if (value) {control.dataset.sidenotesDisabled = String(control.disabled); control.disabled = true;}
@@ -116,12 +141,15 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
             document.dispatchEvent(new CustomEvent('local_sidenotes:archivechanged', {detail: response}));
         };
         var removeCard = function(card) {
+            clearTooltips(card, true);
             selected.delete(Number(card.dataset.noteid));
             card.parentElement.remove();
             selectionStatus();
-            var next = results.querySelector('[data-action="toggle-archive"]')
+            // The next card's completion label opens a fresh focus tooltip after the fade.
+            // Keep focus in the current view without triggering another card action's hint.
+            var next = center.querySelector('.local-sidenotes-center__views [aria-current="page"]')
                 || center.querySelector('[data-region="active-view"]');
-            if (next) {next.focus({preventScroll: true});}
+            if (next) {next.focus({preventScroll: true}); clearTooltips(center, false);}
         };
         var run = function(card, action, message) {
             if (stateFor(card).pending) {return Promise.resolve();}
@@ -501,6 +529,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
         });
         center.addEventListener('change', function(event) {
             if (event.target.matches('[data-action="toggle-archive"]')) {
+                clearTooltips(center, false);
                 var archiveInput = event.target, archiveCard = archiveInput.closest('[data-noteid]');
                 var requested = archiveInput.checked, archived = false;
                 run(archiveCard, function() {
@@ -602,6 +631,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
                     var columns = pinned.map(function(card) {return card.parentElement;});
                     columns.forEach(function(column) {column.remove();});
                     var incoming = Array.from(nextResults.children);
+                    clearTooltips(results, true);
                     results.replaceChildren.apply(results, columns.concat(incoming));
                     selectionStatus();
                     updateQuotes();
@@ -631,6 +661,7 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
                         focusTarget.focus({preventScroll: true});
                         if (selection && focusTarget === focused) {focusTarget.setSelectionRange(selection[0], selection[1]);}
                         if (richSelection) {rich.editor.chain().setTextSelection(richSelection).focus().run();}
+                        clearTooltips(center, false);
                     }
                     window.history.replaceState({}, '', url);
                 }).catch(function(error) {
@@ -648,6 +679,20 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery) {
             updateFilterChips(url);
             return url.toString();
         };
+        document.addEventListener('local_sidenotes:archivechanged', function(event) {
+            if (!event.detail || !event.detail.sidebar) {return;}
+            syncCounts(event.detail);
+            var card = results.querySelector('[data-noteid="' + Number(event.detail.noteid) + '"]');
+            if (card && event.detail.archived) {
+                var state = stateFor(card), text = region(card, 'note-text');
+                if (state.pending || state.editing && text && text.value !== state.baseline) {
+                    Str.get_string('archive:draftblocked', 'local_sidenotes').then(function(message) {status(card, message, true);});
+                    return;
+                }
+                removeCard(card);
+            }
+            beginMutation(); submitSearch(searchUrl());
+        });
         var updateFilterChips = function(url) {
             var chip = function(container, label, action, removed, input) {
                 var link = document.createElement('a'); link.className = 'badge badge-light';

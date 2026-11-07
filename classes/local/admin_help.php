@@ -31,10 +31,15 @@ final class admin_help {
     private const TOPICS = ['overview', 'lists', 'sourcemove'];
     private static bool $prepared = false;
 
+    private static function personal(): bool {
+        global $PAGE;
+        return str_ends_with($PAGE->url->get_path(), '/local/sidenotes/view.php') && access_policy::overview_allowed();
+    }
+
     /** Register only the permitted settings page before its header is rendered. */
     public static function prepare(\core\hook\output\before_http_headers $hook): void {
         global $CFG, $PAGE;
-        if (self::$prepared || admin_branding::page_capability() === null) {
+        if (self::$prepared || (admin_branding::page_capability() === null && !self::personal())) {
             return;
         }
         $PAGE->add_body_class('local-sidenotes-admin-help-page');
@@ -72,7 +77,7 @@ final class admin_help {
         if (!self::$prepared) {
             return '';
         }
-        $label = get_string('adminhelp', 'local_sidenotes');
+        $label = get_string(self::personal() ? 'noteshelptitle' : 'adminhelp', 'local_sidenotes');
         return \html_writer::tag('button', $renderer->pix_icon(
             (int)$CFG->version < 2026100500 ? 'i/info' : 'i/circleinfo', ''), [
                 'type' => 'button', 'class' => 'nav-link icon-no-margin local-sidenotes-help-navbar',
@@ -88,18 +93,18 @@ final class admin_help {
             return '';
         }
         $fieldhelp = '';
-        foreach (['courseenabled' => 'overview', 'coursedefault' => 'overview',
+        foreach (self::personal() ? [] : ['courseenabled' => 'overview', 'coursedefault' => 'overview',
                 'sitewideenabled' => 'overview', 'perpage' => 'lists'] as $field => $topic) {
             $fieldhelp .= \html_writer::span(self::icon($topic), '', ['data-sidenotes-help-field' => $field]);
         }
-        $title = get_string('adminhelp', 'local_sidenotes');
+        $title = get_string(self::personal() ? 'noteshelptitle' : 'adminhelp', 'local_sidenotes');
         $close = \html_writer::tag('button', \html_writer::span('&#215;', '', ['aria-hidden' => 'true']), [
             'type' => 'button', 'class' => 'btn btn-secondary btn-sm local-sidenotes-help-close',
             'aria-label' => get_string('closebuttontitle', 'moodle'), 'data-sidenotes-help-close' => '1',
         ]);
         $options = '';
         $articles = '';
-        $topics = self::TOPICS;
+        $topics = self::personal() ? ['notes'] : self::TOPICS;
         if (str_ends_with($PAGE->url->get_path(), '/local/sidenotes/source_move.php')) {
             $topics = ['sourcemove', 'overview', 'lists'];
         }

@@ -146,10 +146,16 @@ File documentation for templates/sidebar.mustache.
         <div class="local-sidenotes__notes" data-region="notes-list">
             <p class="local-sidenotes__empty">{{emptytext}}</p>
         </div>
+        <datalist id="local-sidenotes-sidebar-tags"></datalist>
         <template data-region="note-template">
             <article class="local-sidenotes__note" data-note-key="">
                 <div class="local-sidenotes__note-actions">
                     <span class="local-sidenotes__status" data-region="note-status"></span>
+                    <button type="button" class="btn btn-link btn-sm local-sidenotes__complete" data-action="archive-note"
+                        title="{{#str}} archive:complete, local_sidenotes {{/str}}"
+                        aria-label="{{#str}} archive:complete, local_sidenotes {{/str}}">
+                        <i class="fa fa-check" aria-hidden="true"></i>
+                    </button>
                     <button
                         type="button"
                         class="btn btn-link btn-sm local-sidenotes__delete"
@@ -165,7 +171,7 @@ File documentation for templates/sidebar.mustache.
                 <div class="local-sidenotes-center__tagstrip local-sidenotes__tagstrip" data-region="note-tags-wrapper" hidden>
                     <div class="local-sidenotes-center__tags" data-region="note-tags" aria-label="{{taglabel}}"></div>
                     <form class="local-sidenotes-center__tag-form" data-region="tag-form">
-                        <input type="text" class="form-control form-control-sm" data-region="tag-input" maxlength="100"
+                        <input type="text" class="form-control form-control-sm" data-region="tag-input" maxlength="100" list="local-sidenotes-sidebar-tags"
                             placeholder="{{#str}} tags:add, local_sidenotes {{/str}}" aria-label="{{#str}} tags:add, local_sidenotes {{/str}}" autocomplete="off">
                         <button type="submit" class="local-sidenotes-center__card-action" aria-label="{{#str}} tags:add, local_sidenotes {{/str}}" title="{{#str}} tags:add, local_sidenotes {{/str}}"><i class="fa fa-plus" aria-hidden="true"></i></button>
                     </form>
