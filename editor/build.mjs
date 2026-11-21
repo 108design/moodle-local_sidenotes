@@ -24,18 +24,28 @@
 // GNU GPL v3 or later. Copyright 2026 Andreas Giesen.
 // Build the local AMD engine and retain all third-party licence notices in the distributed plugin.
 const metadataOnly = process.argv.includes('--metadata-only');
-const {build} = metadataOnly ? {} : await import('esbuild');
+const headerOnly = process.argv.includes('--header-only');
+const {build} = metadataOnly || headerOnly ? {} : await import('esbuild');
 import {readFile, writeFile, readdir, mkdir} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 const plugin = new URL('../', import.meta.url);
-for (const minify of metadataOnly ? [] : [false, true]) {
+const entry = await readFile(new URL('entry.js', import.meta.url), 'utf8');
+const preamble = entry.match(/^\/\*\*[\s\S]*?\*\//)?.[0];
+if (!preamble?.includes('@package   local_sidenotes')) throw new Error('Missing editor file header');
+for (const minify of headerOnly ? [false, true] : []) {
+    const output = new URL(minify ? 'amd/build/editor_engine.min.js' : 'amd/src/editor_engine.js', plugin);
+    const existing = await readFile(output, 'utf8');
+    if (!existing.startsWith(preamble + '\n')) await writeFile(output, preamble + '\n' + existing);
+}
+for (const minify of metadataOnly || headerOnly ? [] : [false, true]) {
     const result = await build({entryPoints: [fileURLToPath(new URL('entry.js', import.meta.url))],
         bundle: true, write: false, minify, format: 'iife', globalName: 'SideNotesEditorEngine',
         target: 'es2019', legalComments: 'inline'});
     const name = minify ? 'amd/build/editor_engine.min.js' : 'amd/src/editor_engine.js';
-    await writeFile(new URL(name, plugin), "define('local_sidenotes/editor_engine',[],function(){"
+    await writeFile(new URL(name, plugin), preamble + "\n" + "define('local_sidenotes/editor_engine',[],function(){"
         + result.outputFiles[0].text + ';return SideNotesEditorEngine;});\n');
 }
+if (headerOnly) process.exit(0);
 const lock = JSON.parse(await readFile(new URL('package-lock.json', import.meta.url), 'utf8'));
 await mkdir(new URL('thirdparty/', plugin), {recursive: true});
 const notices = ['# Bundled editor dependencies', '',
