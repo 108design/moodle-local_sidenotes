@@ -104,6 +104,9 @@ class edit_note extends \core_external\external_api {
             throw new \moodle_exception('error:busy', 'local_sidenotes');
         }
         try {
+            if ($operation === 'create' && !access_policy::can_create_overview()) {
+                throw new \moodle_exception('access:denied', 'local_sidenotes');
+            }
             if ($operation !== 'create') {
                 $note = $DB->get_record(
                     'local_sidenotes_notes',

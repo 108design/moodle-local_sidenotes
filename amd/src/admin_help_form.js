@@ -27,7 +27,7 @@ export const init = () => {
     // Move only the native icons from authorised footer placeholders.
     document.querySelectorAll('[data-sidenotes-help-field]').forEach(holder => {
         const name = holder.dataset.sidenotesHelpField;
-        if (!['courseenabled', 'coursedefault', 'sitewideenabled', 'perpage', 'oldbase'].includes(name)) return;
+        if (!['courseenabled', 'coursedefault', 'sitewideenabled', 'perpage', 'oldbase', 'preserve_on_unenrol', 'preserve_on_course_delete', 'imagequota'].includes(name)) return;
         const field = document.getElementById(name === 'oldbase' ? 'id_oldbase' : 'id_s_local_sidenotes_' + name);
         const icon = holder.querySelector('.local-sidenotes-context-help-icon');
         if (!field || !icon || field.closest('.local-sidenotes-setting-help-control')) return;

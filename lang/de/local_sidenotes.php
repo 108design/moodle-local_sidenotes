@@ -32,7 +32,7 @@ $string['adminhelp'] = 'Hilfe zur Verwaltung';
 $string['adminhelp_lists'] = 'Übersichten und Seitengröße';
 $string['adminhelp_lists_article'] = '<p><strong>Notizen pro Seite</strong> legt fest, wie viele Einträge auf einer Seite der Notizübersicht erscheinen. Wählen Sie 12, 24 oder 48, oder <strong>Alle</strong> für die vollständige Liste.</p><p>Die Seitengröße begrenzt nicht die Zahl der gespeicherten Notizen und löscht oder archiviert nichts. Bei vielen Notizen kann <strong>Alle</strong> eine lange Seite erzeugen.</p>';
 $string['adminhelp_notes'] = 'Side Notes verwenden';
-$string['adminhelp_notes_article'] = '<p>Öffnen Sie die Notizleiste über den Stift am rechten Rand. Das Plus legt eine Notiz zur aktuellen Seite an, der Ordner öffnet die Notizübersicht. Globale Notizen stehen in einer eigenen Gruppe der Seitenleiste.</p><p>Das Tag-Feld schlägt Ihre vorhandenen privaten Tags vor. Einen neuen Tag geben Sie ein und fügen ihn mit dem Plus hinzu. Änderungen in der Seitenleiste werden automatisch gespeichert.</p><p>Mit dem Häkchen neben Löschen archivieren Sie eine erledigte Notiz. Die Seitenleiste speichert offenen Text vorher; Tags und Screenshots bleiben erhalten. Im Archiv der Notizübersicht können Sie die Notiz wiederherstellen. Schlägt das Speichern fehl, bleibt Ihr Entwurf erhalten.</p><p>In der Notizübersicht finden Sie Notizen über Kurs-, Tag- und Textfilter. Ausgewählte Tags müssen alle zutreffen. Mit dem Stift bearbeiten Sie Text, mit Änderungen speichern sichern Sie ihn. Das Erledigt-Häkchen ist von der Auswahl für Sammelaktionen getrennt.</p><p>Notizen ohne Seitenbindung bleiben in der Übersicht. Globale Anzeige zeigt eine Notiz auf Ihren erlaubten Seiten; andere Personen können sie nicht sehen. Das Archiv bewahrt erledigte Notizen auf. Endgültiges Löschen und Leeren des Archivs verlangen eine Bestätigung. Ausgewählte Notizen können Sie als Markdown oder PDF exportieren.</p>';
+$string['adminhelp_notes_article'] = '<p>Öffnen Sie die Notizleiste über den Stift am rechten Rand. Das Plus legt eine Notiz zur aktuellen Seite an, der Ordner öffnet die Notizübersicht. Globale Notizen stehen im Tab Kursweit oder Websiteweit.</p><p>Das Tag-Feld schlägt Ihre vorhandenen privaten Tags vor. Einen neuen Tag geben Sie ein und fügen ihn mit dem Plus hinzu. Änderungen in der Seitenleiste werden automatisch gespeichert.</p><p>Mit dem Häkchen neben Löschen archivieren Sie eine erledigte Notiz. Die Seitenleiste speichert offenen Text vorher; Tags und Screenshots bleiben erhalten. Im Archiv der Notizübersicht können Sie die Notiz wiederherstellen. Schlägt das Speichern fehl, bleibt Ihr Entwurf erhalten.</p><p>In der Notizübersicht finden Sie Notizen über Kurs-, Tag- und Textfilter. Ausgewählte Tags müssen alle zutreffen. Mit dem Stift bearbeiten Sie Text, mit Änderungen speichern sichern Sie ihn. Das Erledigt-Häkchen ist von der Auswahl für Sammelaktionen getrennt.</p><p>Notizen ohne Seitenbindung bleiben in der Übersicht. Globale Anzeige zeigt eine Notiz auf Ihren erlaubten Seiten; andere Personen können sie nicht sehen. Das Archiv bewahrt erledigte Notizen auf. Endgültiges Löschen und Leeren des Archivs verlangen eine Bestätigung. Ausgewählte Notizen können Sie als Markdown oder PDF exportieren.</p><p>Behaltene Kursnotizen zeigen den ursprünglichen Kursnamen. Sie sind schreibgeschützt und können exportiert oder gelöscht werden. Das Behalten einer Notiz erteilt keine Kursrechte.</p><p>Diese Seite und Kursweit bzw. Websiteweit filtern Ihre eigenen Notizen. Die Suche bleibt beim Tabwechsel erhalten; die Zahlen zeigen Treffer je Bereich. Neue Notizen, Textauswahl und Alt+Q öffnen Diese Seite. Der Zähler an der Randlasche zählt weiterhin nur gespeicherte Seitennotizen. Beim Wechsel zur Hilfe oder zu einem Moodle-Drawer bleiben offene Entwürfe erhalten. Hilfe bleibt ein eigenes Panel.</p><p>In den Notizeinstellungen der Übersicht können Sie Neue Bilder vor dem Hochladen verkleinern auswählen. Die Einstellung ist zunächst ausgeschaltet und gilt für Ihre neuen Bilder im Seitenpanel und in der Übersicht.</p>';
 $string['adminhelp_overview'] = 'Notizen bereitstellen';
 $string['adminhelp_overview_article'] = '<p><strong>Kursnotizen aktivieren</strong> stellt persönliche Notizen in zugänglichen Kursen bereit. Kursverantwortliche können die Notizleiste für ihren Kurs oder einzelne Aktivitäten ausschalten. Vorhandene Notizen bleiben beim Ausschalten erhalten.</p><p><strong>In Kursen standardmäßig aktiv</strong> gilt für Kurse ohne eigene Side Notes-Einstellung, auch für bestehende Kurse. Hat ein Kurs eine ausdrückliche Einstellung, bleibt diese maßgeblich.</p><p><strong>Seitenweite Nutzung zusätzlich aktivieren</strong> erlaubt Notizen außerhalb von Kursen für Administrator/innen und Personen, die bereits das Systemrecht zur Verwendung von Side Notes haben. Der Schalter vergibt dieses Recht nicht und eröffnet keinen Zugriff auf fremde Notizen.</p>';
 $string['adminhelp_sourcemove'] = 'Quellverweise nach einem Website-Umzug';
@@ -258,3 +258,69 @@ $string['tags:selectedfilters'] = 'Ausgewählte Tags – alle müssen zutreffen'
 $string['taskdeletecoursenotes'] = 'Notizen eines gelöschten Kurses bereinigen';
 $string['unknownpage'] = 'Moodle-Seite';
 $string['viewnotescenter'] = 'Notizübersicht öffnen';
+
+$string['preserve_on_unenrol'] = 'Notizen nach Ausschreibung behalten';
+
+$string['preserve_on_unenrol_desc'] = 'Persönliche Kursnotizen behalten, wenn die letzte Einschreibung der verfassenden Person endet. Andernfalls werden die Notizen und ihre Screenshots gelöscht.';
+
+$string['preserve_on_course_delete'] = 'Notizen nach Kurslöschung behalten';
+
+$string['preserve_on_course_delete_desc'] = 'Persönliche Notizen aus gelöschten Kursen behalten. Moodle-Cron verarbeitet die Änderung in Teilmengen. Andernfalls werden diese Notizen und ihre Screenshots gelöscht.';
+
+$string['retention:sourceunavailable'] = 'Aus {$a} behalten. Die ursprüngliche Kursquelle ist nicht verfügbar. Sie können diese persönliche Kopie lesen, exportieren oder löschen.';
+
+$string['adminhelp_retention'] = 'Notizen nach Ende des Kurszugangs behalten';
+
+$string['retention_help'] = 'Legen Sie getrennt fest, was nach der letzten Einschreibung und nach einer Kurslöschung geschieht. Behaltene Notizen bleiben privat und sind in der persönlichen Übersicht schreibgeschützt.';
+
+$string['adminhelp_retention_article'] = '<p>Beide Optionen sind standardmäßig ausgeschaltet. Bei ausgeschalteter Option werden die betroffenen Kursnotizen und Screenshots gelöscht. Solange eine weitere Einschreibung besteht, bleiben die Notizen beim Entfernen einer einzelnen Einschreibung erhalten.</p><p>Bei aktivierter Option bleiben Text, Zitate, Screenshots, private Tags und ursprüngliche Zeitstempel erhalten. Die Übersicht zeigt den bisherigen Kursnamen. Behaltene Notizen sind schreibgeschützt und können exportiert oder gelöscht werden, auch wenn die verfassende Person in keinem Kurs mehr eingeschrieben ist. Bereits archivierte Notizen bleiben im Archiv.</p><p>Eine kursweite Notiz wird zu einem persönlichen Eintrag in der Übersicht und erscheint nicht auf anderen Seiten. Der frühere Kurszugang wird dadurch nicht wiederhergestellt. Bei einer Kurslöschung verarbeitet Moodle-Cron die Notizen mit der zum Löschzeitpunkt gewählten Option. Kontolöschung und Moodles Datenschutz-Löschfunktion entfernen auch behaltene Notizen.</p>';
+
+$string['privacy:metadata:retainedcourseid'] = 'Die ursprüngliche Kurs-ID einer behaltenen persönlichen Notiz.';
+
+$string['privacy:metadata:retainedcoursename'] = 'Der ursprüngliche Kursname einer behaltenen persönlichen Notiz.';
+
+$string['privacy:metadata:retentionreason'] = 'Ob eine Notiz nach einer Ausschreibung oder Kurslöschung behalten wurde.';
+
+
+$string['retention'] = 'Notizen behalten';
+$string['retention:overviewhint'] = 'Ihre behaltenen Kursnotizen sind privat und schreibgeschützt. Sie können diese exportieren oder löschen.';
+$string['taskpreservecoursenotes'] = 'Persönliche Notizen aus einem gelöschten Kurs behalten';
+
+$string['sidebar:pagetab'] = 'Diese Seite';
+
+$string['sidebar:coursewidetab'] = 'Kursweit';
+
+$string['sidebar:sitewidetab'] = 'Websiteweit';
+
+$string['sidebar:globalempty'] = 'Hier haben Sie noch keine Notizen. In der Übersicht wählen Sie, wo eine Notiz erscheint.';
+
+$string['settings:imagequota'] = 'Bildspeicher pro Person (MiB)';
+
+$string['settings:imagequota_desc'] = 'Gesamter Screenshot-Speicher einer Person über aktive, archivierte und behaltene Notizen. 0 bedeutet unbegrenzt. Vorhandene Bilder bleiben bei einer niedrigeren Grenze verfügbar.';
+
+$string['screenshot:quotaexceeded'] = 'Ihr Bildspeicher für Side Notes ({$a} MiB) ist ausgeschöpft. Löschen Sie Bilder oder bitten Sie die Administration, die Grenze zu erhöhen.';
+
+$string['screenshot:reduce'] = 'Neue Bilder vor dem Hochladen verkleinern';
+
+
+$string['images'] = 'Bildspeicher';
+
+$string['adminhelp_images'] = 'Persönlicher Bildspeicher';
+
+$string['images_help'] = 'Die Grenze umfasst Screenshots in allen Notizen einer Person, einschließlich archivierter und behaltener Notizen. Eine niedrigere Grenze blockiert neue Bilder; vorhandene bleiben lesbar und exportierbar.';
+
+$string['adminhelp_images_article'] = '<p>Bildspeicher pro Person (MiB) gilt für alle Screenshots einer Person. 0 bedeutet unbegrenzt. Archivierte und behaltene Notizen zählen mit. Das Löschen eines Screenshots oder einer Notiz gibt den Speicher frei.</p><p>Eine niedrigere Grenze erhält vorhandene Bilder. Neue Uploads und Importe mit Bildern müssen in den verbleibenden Speicher passen. Reine Textnotizen können weiterhin angelegt werden. Für eingefügte Bilder gelten zusätzlich die bisherigen Grenzen von 5 MiB pro Bild und 10 Bildern pro Notiz.</p>';
+
+$string['note:retry'] = 'Ihr Entwurf bleibt geöffnet. Prüfen Sie die Verbindung und bearbeiten Sie die Notiz erneut, um das Speichern nochmals zu versuchen.';
+
+$string['preferences:title'] = 'Notizeinstellungen';
+
+$string['imagepreferences'] = 'Bildverkleinerung';
+
+$string['imagepreferences_help'] = 'Diese persönliche Einstellung gilt für neue Bilder im Seitenpanel und in der Übersicht. Vorhandene Bilder bleiben unverändert.';
+
+$string['adminhelp_imagepreferences'] = 'Neue Bilder verkleinern';
+
+$string['adminhelp_imagepreferences_article'] = '<p>Öffnen Sie die Notizeinstellungen in der Notizübersicht und wählen Sie Neue Bilder vor dem Hochladen verkleinern. Die Einstellung ist zunächst ausgeschaltet und wird für Ihr Nutzerkonto gespeichert. Sie gilt für neue Bilder, die Sie im Seitenpanel oder in der Übersicht einfügen.</p><p>PNG-, JPEG- und WebP-Bilder können auf höchstens 2048 Pixel an der längsten Seite verkleinert werden. JPEG und WebP verwenden 85 % Qualität. Side Notes übernimmt das verkleinerte Bild nur, wenn es weniger Speicher benötigt. Prüfen Sie die Lesbarkeit kleiner Schrift. GIFs und bereits gespeicherte Bilder bleiben unverändert.</p>';
+
+$string['privacy:metadata:reduceimages'] = 'Persönliche Einstellung für die Verkleinerung neuer Notizbilder vor dem Hochladen.';

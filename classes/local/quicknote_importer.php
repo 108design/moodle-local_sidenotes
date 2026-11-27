@@ -67,6 +67,9 @@ final class quicknote_importer {
         global $USER;
         require_login();
         access_policy::require_overview();
+        if (!access_policy::can_create_overview()) {
+            throw new \moodle_exception('access:denied', 'local_sidenotes');
+        }
         return self::copy_user((int) $USER->id);
     }
 
@@ -222,8 +225,10 @@ final class quicknote_importer {
         if (!$lock) {
             throw new \moodle_exception('error:busy', 'local_sidenotes');
         }
-        $transaction = $DB->start_delegated_transaction();
+        $ownerlock = null;
         try {
+            $ownerlock = archive_manager::owner_lock($userid);
+            $transaction = $DB->start_delegated_transaction();
             $sources = $DB->get_recordset(self::SOURCE, ['userid' => $userid], 'id');
             try {
                 foreach ($sources as $source) {
@@ -233,6 +238,10 @@ final class quicknote_importer {
                         $result['skipped']++;
                         continue;
                     }
+                    $sourcefiles = get_file_storage()->get_area_files(\context_system::instance()->id,
+                        'local_quicknote', 'screenshot', (int)$source->id, 'id', false);
+                    $bytes = array_sum(array_map(static fn($file) => $file->get_filesize(), $sourcefiles));
+                    screenshot_manager::require_capacity($userid, $bytes);
                     $mappedsource = clone($source);
                     $mappedsource->url = source_move_manager::resolve_stored_url((string) $source->url);
                     $mappedsource->quoteurl = $source->quoteurl === null ? null :
@@ -251,9 +260,14 @@ final class quicknote_importer {
             $transaction->allow_commit();
             return $result;
         } catch (\Throwable $exception) {
-            $transaction->rollback($exception);
+            if (isset($transaction)) {
+                $transaction->rollback($exception);
+            }
             throw $exception;
         } finally {
+            if ($ownerlock) {
+                $ownerlock->release();
+            }
             $lock->release();
         }
     }

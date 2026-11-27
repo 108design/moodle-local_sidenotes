@@ -83,7 +83,7 @@ Click a preview to open the full-size screenshot.
 
 ## Features
 
-- A notes drawer alongside course pages and a searchable notes overview.
+- A notes side panel with separate tabs for page notes and course-wide or site-wide notes, plus a searchable Notes centre.
 - A discreet neutral count inside the drawer tab shows saved notes for the current page; global and archived notes do not count. Zero is hidden, and the tooltip gives the exact count above99.
 - Page notes, notes shown throughout a course, and personal notes kept in the overview.
 - A visual Markdown editor with headings, bold, italic, lists and clickable checklists.
@@ -99,15 +99,14 @@ does not make other users' notes visible to administrators.
 ## Installation
 
 Supported Moodle versions: **4.5–5.3**. Use the PHP and database versions required
-by your Moodle branch. This source version is **1.24.0**. Check the notes interface
+by your Moodle branch. Check the notes interface
 with your site's theme before enabling it for learners.
 
 1. Install the plugin as `local/sidenotes` below Moodle's plugin directory.
 2. Complete installation through **Site administration → Notifications**.
 3. Review the Side Notes site settings and the availability settings in your courses.
-4. Keep Moodle cron running. It removes remaining notes, screenshots and tags from
-   deleted courses in background batches. User unenrolment removes that user's
-   course notes immediately.
+4. Keep Moodle cron running. It processes notes from deleted courses in background
+   batches, using your chosen retention policy.
 
 ## Using Side Notes
 
@@ -144,6 +143,37 @@ The optional administrator mode allows notes outside courses for users granted
 the separate system capability. It is disabled by default. Enable it explicitly
 and grant access only to the users who need it; students' course access stays limited
 to their accessible courses.
+
+## Notes panel and image storage
+
+The notes panel uses the same layout as contextual help. This page and Course-wide
+(or Site-wide in administration mode) organise your own notes. Search text stays in
+place when you switch tabs. Quick creation and text quotations open This page.
+Open drafts remain available when you switch to help or a Moodle drawer.
+
+Administrators can set Image storage per person (MiB). The default, 0, is unlimited.
+The limit includes screenshots in active, archived and kept notes. A reduced limit
+preserves existing images and limits new uploads and imports containing images.
+Pasted images retain the limits of 5 MiB per image and 10 images per note.
+
+Open **Note preferences** in the overview to enable **Reduce new images before uploading**.
+This personal setting is initially off and applies to new images in the side panel and overview.
+It can resize PNG, JPEG and WebP images to at most 2,048 pixels on the longest side;
+JPEG and WebP use 85% quality. Only a smaller result is uploaded. Check small text
+for readability. GIFs and existing images stay unchanged.
+
+## Keeping notes after course access ends
+
+Site administrators can enable **Keep notes after unenrolment** and **Keep notes after
+course deletion** separately. Both are off by default. When off, the corresponding
+notes and screenshots are deleted; removing one enrolment keeps notes while another
+enrolment remains.
+
+Kept notes remain private, with their original text, quotations, screenshots, tags,
+dates and archive status. They appear read-only in the personal overview with their
+former course name, and can be exported or deleted without an active enrolment.
+Course-wide notes become personal overview entries. The former course source is
+marked unavailable. Account deletion and Moodle privacy erasure remove kept notes.
 
 ## Importing QuickNote notes
 

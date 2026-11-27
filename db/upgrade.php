@@ -81,5 +81,39 @@ function xmldb_local_sidenotes_upgrade(int $oldversion): bool {
         // Focus the current view after a card disappears; no stored data changes.
         upgrade_plugin_savepoint(true, 2026110702, 'local', 'sidenotes');
     }
+    if ($oldversion < 2026112700) {
+        $manager = $DB->get_manager();
+        $table = new xmldb_table('local_sidenotes_notes');
+        $fields = [
+            new xmldb_field('retainedcourseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0),
+            new xmldb_field('retainedcoursename', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null),
+            new xmldb_field('retentionreason', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 0),
+        ];
+        foreach ($fields as $field) {
+            if (!$manager->field_exists($table, $field)) {
+                $manager->add_field($table, $field);
+            }
+        }
+        upgrade_plugin_savepoint(true, 2026112700, 'local', 'sidenotes');
+    }
+    if ($oldversion < 2026112701) {
+        // The new quota preserves existing storage behaviour unless an administrator chooses a limit.
+        if (get_config('local_sidenotes', 'imagequota') === false) {
+            set_config('imagequota', 0, 'local_sidenotes');
+        }
+        upgrade_plugin_savepoint(true, 2026112701, 'local', 'sidenotes');
+    }
+    if ($oldversion < 2026112702) {
+        // Final panel and personal image preference; existing note contents remain unchanged.
+        upgrade_plugin_savepoint(true, 2026112702, 'local', 'sidenotes');
+    }
+    if ($oldversion < 2026112703) {
+        // Refresh the directly loaded panel assets after the close-button correction.
+        upgrade_plugin_savepoint(true, 2026112703, 'local', 'sidenotes');
+    }
+    if ($oldversion < 2026112704) {
+        // Refresh the centred SVG close symbol; no note or preference changes.
+        upgrade_plugin_savepoint(true, 2026112704, 'local', 'sidenotes');
+    }
     return true;
 }

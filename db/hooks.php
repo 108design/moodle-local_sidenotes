@@ -51,3 +51,8 @@ $callbacks[] = [
     'hook' => \core\hook\output\before_standard_footer_html_generation::class,
     'callback' => [\local_sidenotes\local\admin_help::class, 'footer'],
 ];
+
+$callbacks[] = [
+    'hook' => \core\hook\output\before_http_headers::class,
+    'callback' => [\local_sidenotes\hooks::class, 'prepare'],
+];

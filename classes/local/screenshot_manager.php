@@ -98,6 +98,8 @@ final class screenshot_manager {
             throw new invalid_parameter_exception('A note can contain at most 10 screenshots.');
         }
 
+        self::require_capacity((int)$note->userid, strlen($content));
+
         $basename = clean_param(pathinfo($filename, PATHINFO_FILENAME), PARAM_FILE);
         if ($basename === '' || $basename === '.') {
             $basename = 'screenshot';
@@ -118,9 +120,33 @@ final class screenshot_manager {
     }
 
     /**
-     * List screenshots attached to a note.
+     * Count logical screenshot bytes across all notes belonging to one person.
      *
-     * @param int $noteid Note id.
+     * @param int $userid Note owner.
+     * @return int
+     */
+    public static function usage(int $userid): int {
+        global $DB;
+        return (int)$DB->get_field_sql("SELECT COALESCE(SUM(f.filesize), 0)
+            FROM {files} f JOIN {local_sidenotes_notes} n ON n.id = f.itemid
+            WHERE n.userid = :userid AND f.contextid = :contextid
+              AND f.component = :component AND f.filearea = :filearea AND f.filename <> :directory", [
+                'userid' => $userid, 'contextid' => context_system::instance()->id,
+                'component' => 'local_sidenotes', 'filearea' => self::FILEAREA, 'directory' => '.',
+            ]);
+    }
+
+    /** Require free personal quota; caller holds archive_manager::owner_lock through file creation. */
+    public static function require_capacity(int $userid, int $additional): void {
+        $limit = max(0, (int)get_config('local_sidenotes', 'imagequota'));
+        if ($additional > 0 && $limit && (self::usage($userid) + $additional) > $limit * 1048576) {
+            throw new \moodle_exception('screenshot:quotaexceeded', 'local_sidenotes', '', $limit);
+        }
+    }
+
+    /**
+     * List screenshots attached to a note after caller-side ownership validation.
+     * @param int $noteid Note ID.
      * @return array
      */
     public static function get_for_note(int $noteid): array {

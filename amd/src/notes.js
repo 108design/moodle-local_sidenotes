@@ -35,8 +35,10 @@ define([
     'core/str',
     'core/user_date',
     'local_sidenotes/screenshot_gallery',
-    'local_sidenotes/page_identity'
-], function(Editor, Ajax, Notification, Str, UserDate, Gallery, PageIdentity) {
+    'local_sidenotes/page_identity',
+    'local_sidenotes/panel',
+    'local_sidenotes/image_upload'
+], function(Editor, Ajax, Notification, Str, UserDate, Gallery, PageIdentity, Panel, ImageUpload) {
     var SELECTORS = {
         root: '#local-sidenotes-root',
         panel: '[data-region="panel"]',
@@ -514,16 +516,7 @@ define([
         return element;
     };
 
-    var renderEmptyState = function() {
-        getList().innerHTML = '<p class="local-sidenotes__empty">' + escapeHtml(state.strings.emptytext) + '</p>';
-    };
-
-    var renderNoResultsState = function() {
-        var empty = document.createElement('p');
-        empty.className = 'local-sidenotes__empty';
-        empty.textContent = state.strings.noresultstext;
-        getList().appendChild(empty);
-    };
+    var renderEmptyState = function() {applyFilter();};
 
     var noteMatchesSearch = function(note, term) {
         if (!term) {
@@ -538,100 +531,78 @@ define([
             });
     };
 
-    var applyFilter = function() {
-        var term = getSearchTerm();
-        var visiblecount = 0;
+    var selectTab = function(tab, focus) {
         var list = getList();
+        var old = list.querySelector('[data-region="' + (state.activeTab === 'global' ? 'global-list' : 'page-group') + '"]');
+        if (old) {state.tabScroll[state.activeTab] = list.scrollTop;}
+        state.activeTab = tab;
+        state.root.querySelectorAll('[data-action="note-tab"]').forEach(function(button) {
+            var selected = button.dataset.tab === tab;
+            button.setAttribute('aria-selected', String(selected));
+            button.tabIndex = selected ? 0 : -1;
+            button.classList.toggle('active', selected);
+            if (selected && focus) {button.focus();}
+        });
+        applyFilter();
+        list.scrollTop = state.tabScroll[tab] || 0;
+        scheduleAutogrowTextareas();
+    };
 
-        if (!state.notes.length) {
-            renderEmptyState();
-            return;
-        }
+    var ensureGroups = function() {
+        var list = getList();
+        if (list.querySelector('[data-region="page-group"]')) {return;}
+        list.querySelectorAll(SELECTORS.emptystate).forEach(function(node) {node.remove();});
+        ['page', 'global'].forEach(function(tab) {
+            var group = document.createElement('div');
+            group.dataset.region = tab === 'page' ? 'page-group' : 'global-list';
+            group.id = 'local-sidenotes-tabpanel-' + tab;
+            group.setAttribute('role', 'tabpanel');
+            group.setAttribute('aria-labelledby', 'local-sidenotes-tab-' + tab);
+            list.appendChild(group);
+        });
+    };
 
-        var noteElements = list.querySelectorAll(SELECTORS.note);
-        noteElements.forEach(function(noteEl) {
-            var note = getNoteByKey(noteEl.getAttribute('data-note-key'));
-            var matches = note && noteMatchesSearch(note, term);
-
-            if (matches) {
-                noteEl.style.display = '';
-                visiblecount += 1;
-            } else {
-                noteEl.style.display = 'none';
+    var applyFilter = function() {
+        var term = getSearchTerm(), list = getList();
+        ensureGroups();
+        var counts = {page: 0, global: 0};
+        var totals = {page: 0, global: 0};
+        state.notes.forEach(function(note) {
+            var tab = note.isglobal ? 'global' : 'page';
+            totals[tab]++;
+            if (noteMatchesSearch(note, term)) {counts[tab]++;}
+        });
+        list.querySelectorAll(SELECTORS.note).forEach(function(noteEl) {
+            var note = getNoteByKey(noteEl.dataset.noteKey);
+            var destination = list.querySelector(note && note.isglobal ? '[data-region="global-list"]' : '[data-region="page-group"]');
+            if (noteEl.parentElement !== destination) {destination.appendChild(noteEl);}
+            noteEl.hidden = !note || !noteMatchesSearch(note, term);
+            noteEl.style.display = '';
+        });
+        ['page', 'global'].forEach(function(tab) {
+            var button = state.root.querySelector('[data-tab="' + tab + '"]');
+            button.querySelector('[data-region="tab-count"]').textContent = term ? counts[tab] + '/' + totals[tab] : totals[tab];
+            var group = list.querySelector(tab === 'page' ? '[data-region="page-group"]' : '[data-region="global-list"]');
+            group.hidden = state.activeTab !== tab;
+            group.querySelectorAll(SELECTORS.emptystate).forEach(function(node) {node.remove();});
+            if (!counts[tab]) {
+                var empty = document.createElement('p'); empty.className = 'local-sidenotes__empty';
+                empty.textContent = term ? state.strings.noresultstext :
+                    (tab === 'page' ? state.strings.pageempty : state.strings.globalempty);
+                group.appendChild(empty);
             }
         });
-
-        var emptyState = list.querySelector(SELECTORS.emptystate);
-        if (emptyState) {
-            emptyState.remove();
-        }
-
-        if (!visiblecount) {
-            noteElements.forEach(function(n) {
-                n.style.display = 'none';
-            });
-            renderNoResultsState();
-        }
-
-        var globalGroup = list.querySelector('[data-region="global-group"]');
-        if (globalGroup) {
-            var globalNotes = state.notes.filter(function(note) {return note.isglobal;});
-            var matches = globalNotes.filter(function(note) {return noteMatchesSearch(note, term);});
-            var pageGroup = list.querySelector('[data-region="page-group"]');
-            noteElements.forEach(function(noteEl) {
-                var note = getNoteByKey(noteEl.getAttribute('data-note-key'));
-                var destination = note && note.isglobal ? globalGroup.querySelector('[data-region="global-list"]') : pageGroup;
-                if (noteEl.parentElement !== destination) {destination.appendChild(noteEl);}
-            });
-            globalGroup.hidden = !globalNotes.length || (!!term && !matches.length);
-            globalGroup.open = term ? !!matches.length : !!state.globalOpen;
-            var count = term ? state.strings.globalcount.replace('{$a->visible}', String(matches.length))
-                .replace('{$a->total}', String(globalNotes.length)) : String(globalNotes.length);
-            globalGroup.querySelector('summary').textContent = state.strings.globalnotes + ' · ' + count;
-            var pageEmpty = list.querySelector('[data-region="page-empty"]');
-            pageEmpty.hidden = !!term || state.notes.some(function(note) {return !note.isglobal;});
-        }
     };
 
     var renderNotes = function() {
-        var list = getList();
-
         updateSearchVisibility();
-
-        if (!state.notes.length) {
-            renderEmptyState();
-            return;
-        }
-
-        list.innerHTML = '';
-        var pageGroup = document.createElement('div');
-        pageGroup.dataset.region = 'page-group';
-        list.appendChild(pageGroup);
-        var pageEmpty = document.createElement('p');
-        pageEmpty.className = 'local-sidenotes__page-empty text-muted';
-        pageEmpty.dataset.region = 'page-empty';
-        pageEmpty.textContent = state.strings.pageempty;
-        list.appendChild(pageEmpty);
-        var globalGroup = document.createElement('details');
-        globalGroup.className = 'local-sidenotes__globals';
-        globalGroup.dataset.region = 'global-group';
-        globalGroup.open = !!state.globalOpen;
-        var summary = document.createElement('summary');
-        summary.addEventListener('click', function() {
-            if (!getSearchTerm()) {state.globalOpen = !globalGroup.open;}
-        });
-        globalGroup.appendChild(summary);
-        var globalList = document.createElement('div');
-        globalList.dataset.region = 'global-list';
-        globalGroup.appendChild(globalList);
-        globalGroup.addEventListener('toggle', function() {
-            if (globalGroup.open) {scheduleAutogrowTextareas();}
-        });
-        list.appendChild(globalGroup);
+        ensureGroups();
         state.notes.forEach(function(note) {
-            (note.isglobal ? globalList : pageGroup).appendChild(createNoteElement(note));
+            if (!getNoteElementByKey(note.clientid)) {
+                getList().querySelector(note.isglobal ? '[data-region="global-list"]' : '[data-region="page-group"]')
+                    .appendChild(createNoteElement(note));
+            }
         });
-
         applyFilter();
         scheduleAutogrowTextareas();
     };
@@ -732,21 +703,43 @@ define([
         }
     };
 
+    // Native messaging releases its focus trap in a promise chain. Focus the requested
+    // editor after that handover and layout, only while our panel and tab remain visible.
+    var focusEditor = function(textarea) {
+        var revision = state.focusRevision;
+        Promise.resolve(state.focusReady).then(function() {
+            window.requestAnimationFrame(function() {
+                if (revision === state.focusRevision && textarea.isConnected
+                        && textarea.closest(SELECTORS.note)?.offsetWidth && state.root.classList.contains('is-open')) {
+                    Editor.focus(textarea).catch(Notification.exception);
+                }
+            });
+        });
+    };
+
     var prependNote = function(note) {
+        ensureGroups();
+        selectTab('page', false);
         state.notes.unshift(note);
         var group = getList().querySelector('[data-region="page-group"]');
         if (group) {group.prepend(createNoteElement(note)); applyFilter(); scheduleAutogrowTextareas();}
         else {renderNotes();}
     };
 
-    var setOpenState = function(isopen) {
+    var setOpenState = function(isopen, returnFocus) {
+        var revision = ++state.focusRevision;
         var panel = state.root.querySelector(SELECTORS.panel);
         var toggle = state.root.querySelector(SELECTORS.toggle);
 
         if (isopen) {
+            state.focusReady = state.panel.show();
+            panel.hidden = false;
             loadNotes().catch(function() { /* Inline retry keeps the local draft available. */ });
             state.root.classList.add('is-open');
         } else {
+            if (panel.contains(document.activeElement)) {state.lastFocus = document.activeElement;}
+            state.panel.release();
+            panel.hidden = true;
             state.root.classList.remove('is-open');
         }
 
@@ -760,11 +753,18 @@ define([
         if (isopen) {
             scheduleAutogrowTextareas();
             var closeBtn = panel ? panel.querySelector(SELECTORS.close) : null;
-            if (closeBtn) {
-                closeBtn.focus();
-            }
+            Promise.resolve(state.focusReady).then(function() {
+                window.requestAnimationFrame(function() {
+                    if (revision !== state.focusRevision || !state.root.classList.contains('is-open')) {return;}
+                    if (state.lastFocus?.isConnected && state.lastFocus.offsetWidth) {
+                        state.lastFocus.focus({preventScroll: true});
+                    } else if (closeBtn) {
+                        closeBtn.focus();
+                    }
+                });
+            });
         } else {
-            if (toggle) {
+            if (toggle && returnFocus !== false) {
                 toggle.focus();
             }
         }
@@ -871,8 +871,10 @@ define([
                 applyFilter();
 
                 setTimeout(function() {
-                    note.status = '';
-                    setNoteStatus(currentnoteEl, note.status, note.timemodified);
+                    if (note.status === state.strings.savedtext) {
+                        note.status = '';
+                        setNoteStatus(currentnoteEl, note.status, note.timemodified);
+                    }
                 }, 3000);
             }
             return response;
@@ -883,7 +885,8 @@ define([
                 setNoteStatus(noteEl, note.status, note.timemodified);
             }
 
-            Notification.exception(error);
+            if (error?.message) {Notification.exception(error);}
+            else {Notification.alert(state.strings.errortext, state.strings.retrytext);}
             throw error;
         }).finally(function() {note.saving = null;});
         return note.saving;
@@ -1071,24 +1074,11 @@ define([
         var noteEl = getNoteElementByKey(note.clientid);
         var textarea = noteEl ? noteEl.querySelector(SELECTORS.textarea) : null;
         if (textarea) {
-            Editor.focus(textarea).catch(Notification.exception);
+            focusEditor(textarea);
         }
 
         saveNote(note).catch(function() {
             // saveNote already presents the error and updates the note status.
-        });
-    };
-
-    var fileToBase64 = function(file) {
-        return new Promise(function(resolve, reject) {
-            var reader = new FileReader();
-            reader.onload = function() {
-                var result = String(reader.result || '');
-                var separator = result.indexOf(',');
-                resolve(separator === -1 ? result : result.substring(separator + 1));
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
         });
     };
 
@@ -1105,15 +1095,15 @@ define([
             if (noteEl) {
                 setNoteStatus(noteEl, state.strings.uploadingtext, note.timemodified);
             }
-            return fileToBase64(file);
+            return ImageUpload.prepare(file);
         }).then(function(data) {
             return Ajax.call([{
                 methodname: 'local_sidenotes_upload_screenshot',
                 args: {
                     noteid: note.id,
-                    filename: file.name || 'screenshot.png',
-                    mimetype: file.type,
-                    data: data
+                    filename: data.filename,
+                    mimetype: data.mimetype,
+                    data: data.data
                 }
             }])[0];
         }).then(function(screenshot) {
@@ -1246,7 +1236,8 @@ define([
 
         document.addEventListener('keyup', function(e) {
             if (Gallery.consumeEscape(e)) {return;}
-            if (e.key === 'Escape' && state.root.classList.contains('is-open')) {
+            if (e.key === 'Escape' && !document.querySelector('.modal.show, dialog[open], .pswp--open')
+                    && state.root.classList.contains('is-open')) {
                 setOpenState(false);
             }
         });
@@ -1273,7 +1264,7 @@ define([
             var noteEl = getNoteElementByKey(note.clientid);
             var textarea = noteEl ? noteEl.querySelector(SELECTORS.textarea) : null;
             if (textarea) {
-                Editor.focus(textarea).catch(Notification.exception);
+                focusEditor(textarea);
             }
         };
 
@@ -1653,6 +1644,7 @@ define([
                 return;
             }
 
+            ImageUpload.configure(!!config.reduceimages, true);
             state = {
                 root: rootEl,
                 courseid: Number(config.courseid || rootEl.getAttribute('data-courseid')),
@@ -1660,7 +1652,10 @@ define([
                 pagetitle: config.pagetitle || rootEl.getAttribute('data-pagetitle') || document.title,
                 tagsenabled: rootEl.getAttribute('data-tagsenabled') === '1',
                 notes: [],
-                globalOpen: false,
+                activeTab: 'page',
+                focusRevision: 0,
+                focusReady: Promise.resolve(),
+                tabScroll: {page: 0, global: 0},
                 loaded: false,
                 removedIds: new Set(),
                 loading: null,
@@ -1677,6 +1672,7 @@ define([
                     savingtext: rootEl.getAttribute('data-savingtext'),
                     savedtext: rootEl.getAttribute('data-savedtext'),
                     errortext: rootEl.getAttribute('data-errortext'),
+                    retrytext: rootEl.getAttribute('data-retrytext'),
                     updatedlabel: rootEl.getAttribute('data-updatedlabel'),
                     removetaglabel: rootEl.getAttribute('data-removetaglabel'),
                     highlightlabel: rootEl.getAttribute('data-highlightlabel'),
@@ -1686,6 +1682,7 @@ define([
                     globalnotes: rootEl.getAttribute('data-globalnotes'),
                     globalcount: rootEl.getAttribute('data-globalcount'),
                     pageempty: rootEl.getAttribute('data-pageempty'),
+                    globalempty: rootEl.getAttribute('data-globalempty'),
                     uploadingtext: rootEl.getAttribute('data-uploadingtext'),
                     deleteimagelabel: rootEl.getAttribute('data-deleteimagelabel'),
                     loadingtext: rootEl.getAttribute('data-loadingtext'), loaderror: rootEl.getAttribute('data-loaderror')
@@ -1695,6 +1692,18 @@ define([
             state.highlightbutton = createHighlightButton();
             state.highlightselectiontext = '';
 
+            state.panel = Panel.create(rootEl.querySelector(SELECTORS.panel), function() {setOpenState(false, false);});
+            rootEl.querySelectorAll('[data-action="note-tab"]').forEach(function(button) {
+                button.addEventListener('click', function() {selectTab(button.dataset.tab, false);});
+                button.addEventListener('keydown', function(event) {
+                    var rtl = getComputedStyle(button).direction === 'rtl';
+                    var direction = event.key === 'ArrowRight' ? (rtl ? -1 : 1) : event.key === 'ArrowLeft' ? (rtl ? 1 : -1) : 0;
+                    if (!direction && event.key !== 'Home' && event.key !== 'End') {return;}
+                    event.preventDefault();
+                    selectTab(event.key === 'Home' ? 'page' : event.key === 'End' ? 'global' :
+                        (button.dataset.tab === 'page' ? 'global' : 'page'), true);
+                });
+            });
             Gallery.init(rootEl);
             bindEvents();
             refreshPageCount();

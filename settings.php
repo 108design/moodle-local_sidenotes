@@ -37,6 +37,23 @@ if ($hassiteconfig) {
         ));
     }
 
+    foreach (['preserve_on_unenrol', 'preserve_on_course_delete'] as $name) {
+        $settings->add(new admin_setting_configcheckbox(
+            'local_sidenotes/' . $name,
+            get_string($name, 'local_sidenotes'),
+            get_string($name . '_desc', 'local_sidenotes'),
+            0
+        ));
+    }
+
+    $settings->add(new admin_setting_configtext(
+        'local_sidenotes/imagequota',
+        get_string('settings:imagequota', 'local_sidenotes'),
+        get_string('settings:imagequota_desc', 'local_sidenotes'),
+        0,
+        '/^[0-9]+$/'
+    ));
+
     // Adds notes per page option.
     $settings->add(new admin_setting_configselect(
         'local_sidenotes/perpage',

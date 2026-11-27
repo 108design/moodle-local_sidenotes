@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.34.0 — unreleased
+
+- Open personal notes in a side panel, with separate tabs for page and global notes.
+- Keep open drafts when switching between notes, help and Moodle drawers.
+- Add an optional image storage limit per person and a personal image reduction setting in the overview.
+- Keep course notes after unenrolment or course deletion when enabled by an administrator, with read-only access for their author.
+- Preserve notes while another enrolment remains and retain inherited settings in course backups.
+
 ## 1.30.0 - 2026-11-07
 
 - Standardise PHP formatting and complete PHPDoc and test coverage metadata.

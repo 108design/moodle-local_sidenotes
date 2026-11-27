@@ -29,13 +29,14 @@
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['core/ajax', 'core/notification', 'core/str', 'local_sidenotes/mini_editor', 'core/user_date', 'core_filters/events',
-    'local_sidenotes/screenshot_gallery', 'theme_boost/index', 'jquery'],
-function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery, Bootstrap, $) {
+    'local_sidenotes/screenshot_gallery', 'theme_boost/index', 'jquery', 'local_sidenotes/image_upload'],
+function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery, Bootstrap, $, ImageUpload) {
     return {init: function() {
         var center = document.querySelector('.local-sidenotes-center');
         if (!center || center.dataset.initialized) {return;}
         center.dataset.initialized = '1';
         Gallery.init(center);
+        ImageUpload.configure(center.dataset.reduceimages === '1', true);
         var search = document.getElementById('searchterm'), form = search.form;
         var clear = document.getElementById('clearsearch');
         var results = center.querySelector('[data-region="sidenotes-results"]');
@@ -78,6 +79,38 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery, Boots
         var call = function(method, args) {
             return Promise.resolve(Ajax.call([{methodname: 'local_sidenotes_' + method, args: args}])[0]);
         };
+        var preferences = center.querySelector('[data-region="note-preferences"]');
+        var reduction = preferences?.querySelector('[data-action="reduce-images"]');
+        if (reduction) {
+            reduction.addEventListener('change', function() {
+                var enabled = reduction.checked;
+                var message = preferences.querySelector('[data-region="preference-status"]');
+                reduction.disabled = true;
+                stringsReady.then(function() {
+                    message.textContent = strings.saving;
+                    message.classList.remove('text-danger');
+                    message.setAttribute('role', 'status');
+                    return call('set_image_preference', {enabled: enabled});
+                }).then(function(saved) {
+                    ImageUpload.configure(saved);
+                    center.dataset.reduceimages = saved ? '1' : '0';
+                    message.textContent = strings.saved;
+                }).catch(function(error) {
+                    reduction.checked = !enabled;
+                    message.textContent = error.message || strings.error;
+                    message.classList.add('text-danger');
+                    message.setAttribute('role', 'alert');
+                }).finally(function() {reduction.disabled = false;});
+            });
+            preferences.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && preferences.open) {
+                    event.preventDefault(); event.stopPropagation();
+                    preferences.open = false;
+                    preferences.querySelector('summary').focus();
+                }
+            });
+            reduction.disabled = false;
+        }
         var status = function(card, text, error) {
             var node = region(card, 'note-status'); node.textContent = text;
             node.classList.toggle('text-danger', !!error); node.setAttribute('role', error ? 'alert' : 'status');
@@ -585,9 +618,8 @@ function(Ajax, Notification, Str, Editor, UserDate, FilterEvents, Gallery, Boots
             run(card, function() {
                 return ensureSaved(card).then(function(id) {
                     return files.reduce(function(chain, file) {
-                        return chain.then(function() {return readImage(file).then(function(data) {
-                            return call('upload_screenshot', {noteid: id, filename: file.name || 'screenshot.png',
-                                mimetype: file.type, data: data});
+                        return chain.then(function() {return ImageUpload.prepare(file).then(function(data) {
+                            return call('upload_screenshot', Object.assign({noteid: id}, data));
                         }).then(function(image) {appendImage(card, image);});});
                     }, Promise.resolve());
                 });

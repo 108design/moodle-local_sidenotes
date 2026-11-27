@@ -49,7 +49,7 @@ class backup_local_sidenotes_plugin extends backup_local_plugin {
         $courseid = $this->step->get_task()->get_courseid();
         global $DB;
         $record = $DB->get_record('local_sidenotes_course', ['courseid' => $courseid]);
-        $enabled = $record ? $record->enabled : '';
+        $enabled = $record && $record->enabled !== '' ? $record->enabled : null;
         $coursenode->set_source_array([['id' => $courseid, 'enabled' => $enabled]]);
 
         // Module-level settings container node.

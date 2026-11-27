@@ -141,7 +141,7 @@ class access_policy {
      *
      * @return bool
      */
-    public static function overview_allowed(): bool {
+    public static function can_create_overview(): bool {
         global $USER;
         if (!isloggedin() || isguestuser()) {
             return false;
@@ -153,12 +153,19 @@ class access_policy {
             return false;
         }
         // An enrolled learner may retain access to their archive even if a course disables its drawer.
-        foreach (get_user_capability_course('local/sidenotes:usecourse', $USER->id, true, 'visible') as $course) {
+        foreach ((get_user_capability_course('local/sidenotes:usecourse', $USER->id, true, 'visible') ?: []) as $course) {
             if ((int) $course->id !== SITEID && can_access_course($course, $USER, 'local/sidenotes:usecourse', true)) {
                 return true;
             }
         }
         return false;
+    }
+
+    /** Reading retained own notes is independent of current enrolment and authoring rights. */
+    public static function overview_allowed(): bool {
+        global $DB, $USER;
+        return self::can_create_overview() || (isloggedin() && !isguestuser()
+            && $DB->record_exists_select('local_sidenotes_notes', 'userid = ? AND retainedcourseid > 0', [$USER->id]));
     }
 
     /**
@@ -177,11 +184,11 @@ class access_policy {
      * @return bool
      */
     public static function can_edit(\stdClass $note): bool {
-        if (!empty($note->archived)) {
+        if (!empty($note->archived) || retention_manager::retained($note)) {
             return false;
         }
         try {
-            return self::sitewide() || (self::overview_allowed()
+            return self::sitewide() || (self::can_create_overview()
                 && (self::unbound($note) || self::stored_page_allowed((int) $note->courseid, (string) $note->url)));
         } catch (\invalid_parameter_exception $exception) {
             return false;

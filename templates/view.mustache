@@ -63,7 +63,7 @@ File documentation for templates/view.mustache.
     }
 }}
 
-<div class="local-sidenotes-center" data-archive="{{#archive}}1{{/archive}}{{^archive}}0{{/archive}}" data-bulkmax="{{bulkmax}}" data-totalcount="{{totalcount}}" data-sesskey="{{sesskey}}">
+<div class="local-sidenotes-center" data-archive="{{#archive}}1{{/archive}}{{^archive}}0{{/archive}}" data-reduceimages="{{#reduceimages}}1{{/reduceimages}}{{^reduceimages}}0{{/reduceimages}}" data-bulkmax="{{bulkmax}}" data-totalcount="{{totalcount}}" data-sesskey="{{sesskey}}">
     <div class="local-sidenotes-center__managerbar" data-region="archive-navigation">
         {{> local_sidenotes/navigation }}
     </div>
@@ -74,9 +74,24 @@ File documentation for templates/view.mustache.
         {{#archive}}<button type="button" class="btn btn-outline-danger btn-sm" data-action="empty-archive" {{^canemptyarchive}}disabled{{/canemptyarchive}}>
             <i class="fa fa-trash mr-1" aria-hidden="true"></i>{{#str}} archive:clear, local_sidenotes {{/str}}
         </button>{{/archive}}
-        {{^archive}}<small class="text-muted local-sidenotes-center__addhint">{{#str}} center:addhint, local_sidenotes {{/str}}</small>{{/archive}}
+        {{^archive}}<small class="text-muted local-sidenotes-center__addhint">{{#cancreate}}{{#str}} center:addhint, local_sidenotes {{/str}}{{/cancreate}}{{^cancreate}}{{#str}} retention:overviewhint, local_sidenotes {{/str}}{{/cancreate}}</small>{{/archive}}
         <div class="local-sidenotes-center__tools">
-            {{^archive}}<button type="button" class="btn btn-primary" data-action="add-note"><i class="fa fa-plus mr-1" aria-hidden="true"></i>{{#str}} center:add, local_sidenotes {{/str}}</button>{{/archive}}
+            {{#cancreate}}
+            <details class="local-sidenotes-preferences" data-region="note-preferences">
+                <summary class="btn btn-outline-secondary" title="{{#str}} preferences:title, local_sidenotes {{/str}}">
+                    <i class="fa fa-cog" aria-hidden="true"></i><span class="sr-only">{{#str}} preferences:title, local_sidenotes {{/str}}</span>
+                </summary>
+                <div class="local-sidenotes-preferences__content card card-body shadow-sm">
+                    <div class="local-sidenotes-preferences__field">
+                        <input type="checkbox" id="sidenotes-reduce-images" data-action="reduce-images" disabled {{#reduceimages}}checked{{/reduceimages}}>
+                        <label for="sidenotes-reduce-images">{{#str}} screenshot:reduce, local_sidenotes {{/str}}</label>
+                        {{{imagepreferencehelp}}}
+                    </div>
+                    <span class="small text-muted" data-region="preference-status" role="status" aria-live="polite"></span>
+                </div>
+            </details>
+            {{/cancreate}}
+            {{^archive}}{{#cancreate}}<button type="button" class="btn btn-primary" data-action="add-note"><i class="fa fa-plus mr-1" aria-hidden="true"></i>{{#str}} center:add, local_sidenotes {{/str}}</button>{{/cancreate}}{{/archive}}
             <div class="local-sidenotes-center__exports" data-region="sidenotes-exports" {{^hasnotes}}hidden{{/hasnotes}}>
                 {{#hasnotes}}
                 <a href="{{mdurl}}" class="local-sidenotes-center__export" title="{{exportmd}}" aria-label="{{exportmd}}"><i class="fa fa-file-text-o" aria-hidden="true"></i></a>

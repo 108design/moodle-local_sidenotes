@@ -71,13 +71,14 @@ class restore_local_sidenotes_plugin extends restore_local_plugin {
         $courseid = $this->task->get_courseid();
         $record = new \stdClass();
         $record->courseid = $courseid;
-        $record->enabled = 1;
+        $record->enabled = null;
         $record->module_settings = '';
         $shouldsave = false;
 
         // Restore course-level configuration.
         if ($this->courseconfig && isset($this->courseconfig->enabled)) {
-            $record->enabled = $this->courseconfig->enabled;
+            $value = $this->courseconfig->enabled;
+            $record->enabled = ($value === '' || $value === '$@NULL@$') ? null : (int)$value;
             $shouldsave = true;
         }
 

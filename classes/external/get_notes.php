@@ -117,12 +117,18 @@ class get_notes extends \core_external\external_api {
         $records = array_values($records);
         $tags = tag_manager::get_for_notes(array_column($records, 'id'), (int) $USER->id);
         $result = [];
+        // This read operation cannot change course policy. Reuse only within this call,
+        // never across later settings/restore/enrolment writes or another user request.
+        $availability = [];
         foreach ($records as $record) {
-            if (
-                !access_policy::sitewide() && !access_policy::unbound($record)
-                    && !access_policy::stored_page_allowed((int) $record->courseid, (string) $record->url)
-            ) {
-                continue;
+            if (!access_policy::sitewide() && !access_policy::unbound($record)) {
+                $key = $record->courseid . ':' . $record->url;
+                if (!array_key_exists($key, $availability)) {
+                    $availability[$key] = access_policy::stored_page_allowed((int)$record->courseid, (string)$record->url);
+                }
+                if (!$availability[$key]) {
+                    continue;
+                }
             }
             $result[] = save_note::export_note($record, $tags[(int) $record->id] ?? []);
         }

@@ -36,6 +36,11 @@ $functions = [
         'description' => 'Select and apply guarded owner-private batch operations.',
         'type' => 'write', 'ajax' => true, 'loginrequired' => true,
     ],
+    'local_sidenotes_set_image_preference' => [
+        'classname' => 'local_sidenotes\\external\\set_image_preference', 'methodname' => 'execute',
+        'description' => 'Set the current owner personal image reduction preference.',
+        'type' => 'write', 'ajax' => true, 'loginrequired' => true,
+    ],
     'local_sidenotes_set_shortcut' => [
         'classname' => 'local_sidenotes\\external\\set_shortcut', 'methodname' => 'execute',
         'description' => 'Set the current owner personal keyboard shortcut preference.',
@@ -108,6 +113,7 @@ $services = [
             'local_sidenotes_get_page_count',
             'local_sidenotes_manage_bulk',
             'local_sidenotes_set_shortcut',
+            'local_sidenotes_set_image_preference',
             'local_sidenotes_manage_archive',
             'local_sidenotes_manage_tags',
             'local_sidenotes_edit_note',

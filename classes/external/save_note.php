@@ -263,6 +263,7 @@ class save_note extends \core_external\external_api {
         if ($tags === null) {
             $tags = tag_manager::get_for_note((int) $note->id, (int) $note->userid);
         }
+        $canedit = access_policy::can_edit($note);
         return [
             'id' => (int) $note->id,
             'userid' => (int) $note->userid,
@@ -273,7 +274,7 @@ class save_note extends \core_external\external_api {
                 $content,
                 $contentformat,
                 context_system::instance(),
-                access_policy::can_edit($note)
+                $canedit
             ),
             'quote' => $quote,
             'hasquote' => trim($quote) !== '',
@@ -285,7 +286,7 @@ class save_note extends \core_external\external_api {
             'archived' => !empty($note->archived),
             'timearchived' => (int) ($note->timearchived ?? 0),
             'unbound' => access_policy::unbound($note),
-            'canedit' => access_policy::can_edit($note),
+            'canedit' => $canedit,
             'tagsenabled' => tag_manager::is_enabled(),
             'tags' => array_values($tags),
             'screenshots' => screenshot_manager::get_for_note((int) $note->id),

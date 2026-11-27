@@ -35,7 +35,7 @@ final class admin_help {
     /**
      * Administration topics supported by the contextual help panel.
      */
-    private const TOPICS = ['overview', 'lists', 'sourcemove'];
+    private const TOPICS = ['overview', 'lists', 'sourcemove', 'retention', 'images'];
     /**
      * @var bool Whether permitted page assets have already been registered.
      */
@@ -76,7 +76,7 @@ final class admin_help {
      */
     public static function icon(string $key): string {
         global $CFG, $PAGE;
-        if (!in_array($key, self::TOPICS, true)) {
+        if (!in_array($key, array_merge(self::TOPICS, ['imagepreferences']), true)) {
             throw new \coding_exception('Unknown Administration help topic.');
         }
         $url = new \moodle_url($PAGE->url);
@@ -120,18 +120,21 @@ final class admin_help {
         $fieldhelp = '';
         foreach (
             self::personal() ? [] : ['courseenabled' => 'overview', 'coursedefault' => 'overview',
-                'sitewideenabled' => 'overview', 'perpage' => 'lists'] as $field => $topic
+                'sitewideenabled' => 'overview', 'perpage' => 'lists',
+                'preserve_on_unenrol' => 'retention', 'preserve_on_course_delete' => 'retention', 'imagequota' => 'images'] as $field => $topic
         ) {
             $fieldhelp .= \html_writer::span(self::icon($topic), '', ['data-sidenotes-help-field' => $field]);
         }
         $title = get_string(self::personal() ? 'noteshelptitle' : 'adminhelp', 'local_sidenotes');
-        $close = \html_writer::tag('button', \html_writer::span('&#215;', '', ['aria-hidden' => 'true']), [
+        $close = \html_writer::tag('button', '<svg class="design108-panel-close-icon" viewBox="0 0 16 16"'
+            . ' width="16" height="16" aria-hidden="true" focusable="false"'
+            . ' fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>', [
             'type' => 'button', 'class' => 'btn btn-secondary btn-sm local-sidenotes-help-close',
             'aria-label' => get_string('closebuttontitle', 'moodle'), 'data-sidenotes-help-close' => '1',
         ]);
         $options = '';
         $articles = '';
-        $topics = self::personal() ? ['notes'] : self::TOPICS;
+        $topics = self::personal() ? ['notes', 'imagepreferences'] : self::TOPICS;
         if (str_ends_with($PAGE->url->get_path(), '/local/sidenotes/source_move.php')) {
             $topics = ['sourcemove', 'overview', 'lists'];
         }

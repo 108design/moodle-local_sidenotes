@@ -51,6 +51,7 @@ File documentation for templates/sidebar.mustache.
     data-emptytext="{{emptytext}}"
     data-savingtext="{{savingtext}}"
     data-savedtext="{{savedtext}}"
+    data-retrytext="{{#str}} note:retry, local_sidenotes {{/str}}"
     data-errortext="{{errortext}}"
     data-updatedlabel="{{updatedlabel}}"
     data-highlightlabel="{{highlightlabel}}"
@@ -59,6 +60,7 @@ File documentation for templates/sidebar.mustache.
     data-globalbadge="{{globalbadge}}"
     data-globalnotes="{{#str}} sidebar:globalnotes, local_sidenotes {{/str}}"
     data-globalcount="{{#str}} sidebar:globalcount, local_sidenotes {{/str}}"
+    data-globalempty="{{#str}} sidebar:globalempty, local_sidenotes {{/str}}"
     data-pageempty="{{#str}} sidebar:pageempty, local_sidenotes {{/str}}"
     data-uploadingtext="{{uploadingtext}}"
     data-deleteimagelabel="{{deleteimagelabel}}"
@@ -105,21 +107,34 @@ File documentation for templates/sidebar.mustache.
         id="local-sidenotes-panel"
         class="local-sidenotes__panel"
         data-region="panel"
-        aria-hidden="true"
+        aria-hidden="true" hidden
+        aria-labelledby="local-sidenotes-title"
     >
         <div class="local-sidenotes__header">
-            <h3 class="local-sidenotes__title">{{title}}</h3>
+            <h3 id="local-sidenotes-title" class="local-sidenotes__title" tabindex="-1">{{title}}</h3>
             <button
                 type="button"
-                class="local-sidenotes__close"
+                class="local-sidenotes__panel-close btn btn-secondary btn-sm"
                 data-action="close"
                 title="{{closelabel}}"
                 aria-label="{{closelabel}}"
             >
-                {{#pix}} e/cancel, core {{/pix}}
+                <svg class="local-sidenotes__close-symbol" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+                    <path d="M3 3l10 10M13 3L3 13"/>
+                </svg>
             </button>
         </div>
 
+        <div class="local-sidenotes__tabs nav nav-tabs" role="tablist" aria-label="{{title}}">
+            <button type="button" id="local-sidenotes-tab-page" class="nav-link active" role="tab"
+                data-action="note-tab" data-tab="page" aria-selected="true" aria-controls="local-sidenotes-tabpanel-page">
+                {{#str}} sidebar:pagetab, local_sidenotes {{/str}} <span data-region="tab-count">0</span>
+            </button>
+            <button type="button" id="local-sidenotes-tab-global" class="nav-link" role="tab" tabindex="-1"
+                data-action="note-tab" data-tab="global" aria-selected="false" aria-controls="local-sidenotes-tabpanel-global">
+                {{globaltab}} <span data-region="tab-count">0</span>
+            </button>
+        </div>
         <div class="local-sidenotes__toolbar">
         <div class="local-sidenotes__search position-relative">
             <label class="sr-only" for="local-sidenotes-search">{{#str}} search:placeholder, local_sidenotes {{/str}}</label>
@@ -201,6 +216,7 @@ File documentation for templates/sidebar.mustache.
 
                 <div class="local-sidenotes__screenshots" data-region="screenshots"></div>
                 <div class="local-sidenotes__note-tools">
+
                     <p class="local-sidenotes__paste-hint">{{pastehint}}</p>
                     <button type="button" class="btn btn-sm btn-link local-sidenotes__copy-btn" data-action="copy-note" title="{{#str}} copy, core {{/str}}" aria-label="{{#str}} copy, core {{/str}}">
                         <i class="fa-regular fa-copy" aria-hidden="true"></i>

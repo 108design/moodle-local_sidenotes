@@ -25,6 +25,9 @@
 require_once('../../config.php');
 require_login();
 \local_sidenotes\local\access_policy::require_overview();
+if (!\local_sidenotes\local\access_policy::can_create_overview()) {
+    throw new moodle_exception('access:denied', 'local_sidenotes');
+}
 $url = new moodle_url('/local/sidenotes/import.php');
 $overview = new moodle_url('/local/sidenotes/view.php');
 $PAGE->set_url($url);

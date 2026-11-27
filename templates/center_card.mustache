@@ -54,6 +54,7 @@ File documentation for templates/center_card.mustache.
             {{/tagsenabled}}{{/canedit}}
         </div>
         <div class="card-body">
+            {{#retainedmessage}}<p class="small text-muted">{{retainedmessage}}</p>{{/retainedmessage}}
             {{#notequote}}<blockquote class="blockquote border-left border-primary pl-3 mb-3 local-sidenotes-center__quote">
                 <p class="mb-1 font-italic text-muted local-sidenotes-center__quote-text" id="sidenotes-quote-{{id}}">{{notequote}}</p>
                 <button type="button" class="local-sidenotes-center__quote-toggle" data-action="toggle-quote" aria-controls="sidenotes-quote-{{id}}" aria-expanded="false" data-more="{{#str}} quote:more, local_sidenotes {{/str}}" data-less="{{#str}} quote:less, local_sidenotes {{/str}}" hidden>{{#str}} quote:more, local_sidenotes {{/str}}</button>
@@ -83,7 +84,7 @@ File documentation for templates/center_card.mustache.
             </div>
             {{/canedit}}
             <div class="small mt-2" data-region="note-status" role="status" aria-live="polite"></div>
-            {{^canedit}}{{^archived}}<small class="text-muted">{{#str}} note:readonly, local_sidenotes {{/str}}</small>{{/archived}}{{/canedit}}
+            {{^retainedmessage}}{{^canedit}}{{^archived}}<small class="text-muted">{{#str}} note:readonly, local_sidenotes {{/str}}</small>{{/archived}}{{/canedit}}{{/retainedmessage}}
         </div>
         <div class="card-footer local-sidenotes-center__card-footer text-muted small">
             <span><i class="fa {{#archived}}fa-archive{{/archived}}{{^archived}}fa-clock-o{{/archived}} mr-1" aria-hidden="true"></i><span data-region="note-date">{{timeupdated}}</span></span>

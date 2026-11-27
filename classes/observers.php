@@ -42,8 +42,13 @@ class observers {
 
         // File and tag cleanup can be large; the request only records the bounded background job.
         $task = new \local_sidenotes\task\delete_course_notes();
-        $task->set_custom_data(['courseid' => (int)$courseid, 'batch' => 0]);
+        $policy = \local_sidenotes\local\retention_manager::deleting((int)$courseid) ?? [
+            'preserve' => (bool)get_config('local_sidenotes', 'preserve_on_course_delete'),
+            'coursename' => (string)($event->other['fullname'] ?? ''),
+        ];
+        $task->set_custom_data(['courseid' => (int)$courseid, 'batch' => 0] + $policy);
         \core\task\manager::queue_adhoc_task($task, true);
+        \local_sidenotes\local\retention_manager::forget((int)$courseid);
 
         // Remove the per-course configuration.
         $DB->delete_records('local_sidenotes_course', ['courseid' => $courseid]);
@@ -60,10 +65,15 @@ class observers {
         $userid = $event->relateduserid;
         $courseid = $event->courseid;
 
-        self::delete_notes([
-            'userid' => $userid,
-            'courseid' => $courseid,
-        ]);
+        if (\local_sidenotes\local\retention_manager::deleting((int)$courseid) !== null) {
+            return; // The captured course-deletion policy owns the later background transition.
+        }
+        $lastenrol = $event->other['userenrolment']['lastenrol'] ?? null;
+        if ($lastenrol === false || ($lastenrol === null
+                && is_enrolled(\context_course::instance($courseid), $userid))) {
+            return;
+        }
+        \local_sidenotes\local\retention_manager::unenrol((int)$userid, (int)$courseid);
     }
 
     /**

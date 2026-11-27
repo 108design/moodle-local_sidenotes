@@ -57,6 +57,11 @@ function local_sidenotes_extend_navigation_course($navigation, $course, $context
     }
 }
 
+/** Capture course-deletion intent before Moodle removes individual enrolments. */
+function local_sidenotes_pre_course_delete($course): void {
+    \local_sidenotes\local\retention_manager::before_course_delete($course);
+}
+
 /**
  * Serve a screenshot only to the owner of its note.
  *

@@ -24,6 +24,7 @@
 import {publish, subscribe} from 'core/pubsub';
 import DrawerEvents from 'core/drawer_events';
 import Drawers from 'theme_boost/drawers';
+import {hideMessageDrawer, nativeDrawerRequested} from 'local_sidenotes/panel';
 import jQuery from 'jquery';
 
 /** Nonmodal contextual help; use native exclusive drawer coordination when available. */
@@ -40,6 +41,7 @@ export const init = config => {
     let opener = null;
     let activeTopic = '';
     let ownsSpace = false;
+    let focusRevision = 0;
     const exclusiveDrawers = Boolean(DrawerEvents.DRAWER_EXCLUSIVE_REQUESTED && DrawerEvents.DRAWER_EXCLUSIVE_RELEASED);
     document.body.classList.toggle('local-sidenotes-help-legacy-drawers', !exclusiveDrawers);
 
@@ -50,6 +52,7 @@ export const init = config => {
     };
     const hide = (returnFocus = true, releaseSpace = true) => {
         if (panel.hidden) return;
+        focusRevision++;
         panel.hidden = true;
         document.body.classList.remove('local-sidenotes-help-open');
         document.querySelectorAll('[data-sidenotes-help-open]').forEach(button => button.setAttribute('aria-expanded', 'false'));
@@ -73,6 +76,8 @@ export const init = config => {
         if (trigger) opener = trigger;
         showTopic(topic || activeTopic || choice.value);
         position();
+        const revision = ++focusRevision;
+        const focusReady = hideMessageDrawer();
         if (panel.hidden) {
             if (exclusiveDrawers) {
                 publish(DrawerEvents.DRAWER_EXCLUSIVE_REQUESTED, {region: 'right'});
@@ -82,8 +87,16 @@ export const init = config => {
             document.body.classList.add('local-sidenotes-help-open');
         }
         document.querySelectorAll('[data-sidenotes-help-open]').forEach(button => button.setAttribute('aria-expanded', 'true'));
-        (panel.querySelector('article:not([hidden]) h3') || heading).focus();
+        focusReady.then(() => window.requestAnimationFrame(() => {
+            if (!panel.hidden && revision === focusRevision) (panel.querySelector('article:not([hidden]) h3') || heading).focus();
+        }));
     };
+    document.addEventListener('click', event => {
+        if (nativeDrawerRequested(event)) hide(false, false);
+    }, true);
+    subscribe(DrawerEvents.DRAWER_SHOWN, drawer => {
+        if (drawer?.[0]?.matches('[data-region="right-hand-drawer"]')) hide(false, false);
+    });
     document.addEventListener('click', event => {
         // Native information controls inside labels/disclosures must not change their host control.
         if (event.target.closest('.local-sidenotes-context-help-icon')?.closest('label, summary')) {
@@ -118,13 +131,14 @@ export const init = config => {
     });
     choice.addEventListener('change', () => showTopic(choice.value));
     document.addEventListener('keydown', event => {
-        if (event.key !== 'Escape' || panel.hidden || document.querySelector('.modal.show, dialog[open]')) return;
+        if (event.key !== 'Escape' || panel.hidden || document.querySelector('.modal.show, dialog[open], .pswp--open')) return;
         event.preventDefault();
         hide();
     });
     // Native tools win when explicitly reopened. Their DOM and input state are never replaced.
     document.addEventListener(Drawers.eventTypes.drawerShow, event => {
-        if (event.target.classList.contains('drawer-right') && !panel.hidden) hide(false);
+        if ((event.target.classList.contains('drawer-right') || window.matchMedia('(max-width: 991.98px)').matches)
+                && !panel.hidden) hide(false, false);
     });
     // A second overlay now owns the native exclusive request; do not release its claim.
     if (exclusiveDrawers) subscribe(DrawerEvents.DRAWER_EXCLUSIVE_REQUESTED, ({region} = {}) => {

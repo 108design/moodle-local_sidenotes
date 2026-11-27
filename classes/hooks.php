@@ -46,8 +46,27 @@ class hooks {
     }
 
     /**
-     * Generates the SideNotes UI HTML.
+     * Register complete panel CSS before HTTP headers on permitted note pages.
      *
+     * @param \core\hook\output\before_http_headers $hook Output hook.
+     */
+    public static function prepare(\core\hook\output\before_http_headers $hook): void {
+        global $PAGE;
+        if (during_initial_install() || (defined('CLI_SCRIPT') && CLI_SCRIPT) || !isloggedin() || isguestuser()) {
+            return;
+        }
+        $courseid = !empty($PAGE->course->id) && (int)$PAGE->course->id !== SITEID ? (int)$PAGE->course->id : 0;
+        if (!\local_sidenotes\local\access_policy::page_allowed($courseid, $PAGE->url->out(false))
+                || in_array($PAGE->pagelayout, ['embedded', 'popup', 'frametop', 'maintenance', 'print'], true)) {
+            return;
+        }
+        $PAGE->requires->css(new \moodle_url('/local/sidenotes/styles/notes_panel.css', [
+            'rev' => get_config('local_sidenotes', 'version'),
+        ]));
+    }
+
+    /**
+     * Generate the page-scoped private notes UI.
      * @return string
      */
     public static function get_top_of_body_html(): string {
@@ -93,6 +112,7 @@ class hooks {
             'pageurl' => $pageurl,
             'pagetitle' => $pagetitle,
             'shortcutenabled' => (bool) get_user_preferences('local_sidenotes_shortcut', 1),
+            'reduceimages' => (bool) get_user_preferences('local_sidenotes_reduceimages', 0),
         ]]);
 
         $html = $OUTPUT->render_from_template('local_sidenotes/sidebar', [
@@ -117,6 +137,8 @@ class hooks {
             'highlightlabel' => get_string('select:highlightlabel', 'local_sidenotes'),
             'globallabel' => get_string(\local_sidenotes\local\access_policy::sitewide()
                 ? 'note:isglobal' : 'note:globalcourses', 'local_sidenotes'),
+            'globaltab' => get_string(\local_sidenotes\local\access_policy::sitewide()
+                ? 'sidebar:sitewidetab' : 'sidebar:coursewidetab', 'local_sidenotes'),
             'globalbadge' => get_string('note:globalbadge', 'local_sidenotes'),
             'pastehint' => get_string('screenshot:pastehint', 'local_sidenotes'),
             'uploadingtext' => get_string('screenshot:uploading', 'local_sidenotes'),
@@ -126,6 +148,7 @@ class hooks {
             'previewlabel' => get_string('markdown:preview', 'local_sidenotes'),
             'tagsenabled' => \local_sidenotes\local\tag_manager::is_enabled() ? '1' : '0',
             'shortcutenabled' => (bool) get_user_preferences('local_sidenotes_shortcut', 1),
+            'reduceimages' => (bool) get_user_preferences('local_sidenotes_reduceimages', 0),
         ]);
 
         return $html;

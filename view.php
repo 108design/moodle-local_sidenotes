@@ -191,6 +191,7 @@ if ($exportids) {
 $totalcount = $DB->count_records_sql("SELECT COUNT(qn.id) " . $sqlfrom, $params);
 $sql = "SELECT qn.id, qn.userid, qn.content, qn.contentformat, qn.url, qn.quote, qn.quoteurl,
                qn.timemodified, qn.pagehash, qn.pagetitle, qn.isglobal, qn.courseid, qn.archived, qn.timearchived,
+                qn.retainedcourseid, qn.retainedcoursename, qn.retentionreason,
                c.fullname AS coursefullname
           " . $sqlfrom . "
       ORDER BY " . ($archive ? 'qn.timearchived' : 'qn.timemodified') . " DESC, qn.id DESC";
@@ -203,6 +204,9 @@ if ($export === 'pdf' || $export === 'md' || $perpage === 0) {
 $notetags = \local_sidenotes\local\tag_manager::get_for_notes(array_keys($noterecords), (int) $USER->id);
 
 $recordlabel = static function (stdClass $record): string {
+    if (!empty($record->retainedcourseid)) {
+        return \local_sidenotes\local\retention_manager::course_label($record->retainedcoursename) . ' · ' . get_string('note:unbound', 'local_sidenotes');
+    }
     if (\local_sidenotes\local\access_policy::unbound($record)) {
         return get_string('note:unbound', 'local_sidenotes');
     }
@@ -262,7 +266,11 @@ if ($export === 'pdf') {
                 $quote = format_text($record->quote, FORMAT_PLAIN, ['context' => $context, 'filter' => false]);
                 $html .= '<blockquote style="color:#555"><i>' . $quote . '</i></blockquote>';
             }
-            if (!empty($record->url)) {
+            if (!empty($record->retainedcourseid)) {
+                $html .= '<p><small>' . s(get_string('retention:sourceunavailable', 'local_sidenotes',
+                    \local_sidenotes\local\retention_manager::course_label($record->retainedcoursename))) . '</small></p>';
+            }
+            if (!empty($record->url) && empty($record->retainedcourseid)) {
                 $html .= '<p><small><a href="'
                 . s(
                     clean_param(
@@ -373,7 +381,11 @@ if ($export === 'md') {
                 )), ENT_QUOTES, 'UTF-8');
                 $md .= '> ' . str_replace("\n", "\n> ", $quote) . "\n\n";
             }
-            if (!empty($record->url)) {
+            if (!empty($record->retainedcourseid)) {
+                $md .= get_string('retention:sourceunavailable', 'local_sidenotes',
+                    \local_sidenotes\local\retention_manager::course_label($record->retainedcoursename)) . "\n\n";
+            }
+            if (!empty($record->url) && empty($record->retainedcourseid)) {
                 $md .= '[_' . get_string('note:viewintext', 'local_sidenotes') . '_]('
 
                 . clean_param(
@@ -412,7 +424,7 @@ foreach ($noterecords as $record) {
         ),
         PARAM_URL
     );
-    $actionurl = $quoteurl ?: $sourceurl;
+    $actionurl = !empty($record->retainedcourseid) ? null : ($quoteurl ?: $sourceurl);
     try {
         $actionurl = $actionurl ? \local_sidenotes\local\page_identity::with_open_drawer($actionurl) : null;
     } catch (invalid_parameter_exception $exception) {
@@ -436,6 +448,8 @@ foreach ($noterecords as $record) {
         'archivelabel' => get_string($archive ? 'archive:restore' : 'archive:complete', 'local_sidenotes'),
         'tagsenabled' => \local_sidenotes\local\tag_manager::is_enabled(),
         'coursefullname' => $cardlabel,
+        'retainedmessage' => !empty($record->retainedcourseid)
+            ? get_string('retention:sourceunavailable', 'local_sidenotes', \local_sidenotes\local\retention_manager::course_label($record->retainedcoursename)) : '',
         'isglobal' => !empty($record->isglobal),
         'globalbadge' => get_string('note:globalbadge', 'local_sidenotes'),
         'contenthtml' => \local_sidenotes\local\note_formatter::format(
@@ -469,6 +483,9 @@ unset($exportparams['page']);
 $mdurl = new moodle_url('/local/sidenotes/view.php', $exportparams + ['export' => 'md']);
 $pdfurl = new moodle_url('/local/sidenotes/view.php', $exportparams + ['export' => 'pdf']);
 $templatecontext = [
+    'cancreate' => \local_sidenotes\local\access_policy::can_create_overview(),
+    'reduceimages' => (bool) get_user_preferences('local_sidenotes_reduceimages', 0),
+    'imagepreferencehelp' => \local_sidenotes\local\admin_help::icon('imagepreferences'),
     'archive' => $archive,
     'activecount' => $archivestatus['activecount'],
     'archivecount' => $archivestatus['archivecount'],
@@ -476,7 +493,8 @@ $templatecontext = [
     'selectedtags' => $selectedtags,
     'unknowntags' => array_values(array_filter($selectedtags, static fn(array $tag): bool =>
         !in_array($tag['id'], array_column($usertags, 'id'), true))),
-    'quicknoteimports' => \local_sidenotes\local\quicknote_importer::pending((int) $USER->id),
+    'quicknoteimports' => \local_sidenotes\local\access_policy::can_create_overview()
+        ? \local_sidenotes\local\quicknote_importer::pending((int) $USER->id) : 0,
     'pagingbar' => $pagingbarhtml,
     'filterbycourse' => get_string('filterbycourse', 'local_sidenotes'),
     'filterbytag' => get_string('filterbytag', 'local_sidenotes'),
@@ -522,6 +540,9 @@ $templatecontext = [
 ];
 $templatecontext += $navigation;
 
+$PAGE->requires->css(new moodle_url('/local/sidenotes/styles/preferences.css', [
+    'rev' => get_config('local_sidenotes', 'version'),
+]));
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_sidenotes/view', $templatecontext);
 echo $OUTPUT->footer();

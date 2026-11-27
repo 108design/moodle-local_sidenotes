@@ -45,7 +45,8 @@ final class delete_course_notes extends \core\task\adhoc_task {
      * Human-readable task name in native task administration.
      */
     public function get_name(): string {
-        return get_string('taskdeletecoursenotes', 'local_sidenotes');
+        $data = (array)$this->get_custom_data();
+        return get_string(empty($data['preserve']) ? 'taskdeletecoursenotes' : 'taskpreservecoursenotes', 'local_sidenotes');
     }
 
     /**
@@ -67,11 +68,11 @@ final class delete_course_notes extends \core\task\adhoc_task {
             0,
             self::BATCH_SIZE
         );
-        $transaction = $DB->start_delegated_transaction();
+        $preserve = !empty($data['preserve']); // Old queued jobs retain their original delete action.
         foreach ($notes as $note) {
-            \local_sidenotes\local\screenshot_manager::delete_for_note((int)$note->id);
-            \local_sidenotes\local\tag_manager::remove_for_note((int)$note->id, (int)$note->userid);
-            $DB->delete_records('local_sidenotes_notes', ['id' => $note->id, 'courseid' => $courseid]);
+            \local_sidenotes\local\retention_manager::process(
+                (int)$note->id, $courseid, $preserve, (string)($data['coursename'] ?? ''), 2
+            );
         }
 
         if ($DB->record_exists('local_sidenotes_notes', ['courseid' => $courseid])) {
@@ -79,11 +80,13 @@ final class delete_course_notes extends \core\task\adhoc_task {
             // A distinct batch identity avoids deduplication against the currently running task.
             // Always select the lowest remaining IDs, so a retry cannot skip partially processed data.
             $next->set_custom_data(['courseid' => $courseid,
-                'batch' => max((int)array_key_last($notes), (int)($data['batch'] ?? 0) + 1)]);
+                'batch' => max((int)array_key_last($notes), (int)($data['batch'] ?? 0) + 1),
+                'preserve' => $preserve, 'coursename' => (string)($data['coursename'] ?? '')]);
             \core\task\manager::queue_adhoc_task($next, true);
+        } else if ($preserve) {
+            $DB->set_field('local_sidenotes_import', 'courseid', 0, ['courseid' => $courseid]);
         } else {
             $DB->delete_records('local_sidenotes_import', ['courseid' => $courseid]);
         }
-        $transaction->allow_commit();
     }
 }

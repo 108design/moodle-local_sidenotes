@@ -37,6 +37,17 @@ use local_sidenotes\local\access_policy;
  * @covers \local_sidenotes\local\access_policy
  */
 final class page_count_test extends \advanced_testcase {
+    /** A completed read cannot cache availability past a later course-policy change. */
+    public function test_note_list_rechecks_policy_between_calls(): void {
+        global $DB;
+        [$user, $course, $url] = $this->learner();
+        save_note::execute(0, $course->id, 'Private page note', $url);
+        $this->assertCount(1, \local_sidenotes\external\get_notes::execute((int)$course->id, $url));
+        $DB->insert_record('local_sidenotes_course', (object)['courseid' => $course->id, 'enabled' => 0]);
+        $this->expectException(\moodle_exception::class);
+        \local_sidenotes\external\get_notes::execute((int)$course->id, $url);
+    }
+
     /**
      * Create an enrolled student and an enabled course for count assertions.
      *

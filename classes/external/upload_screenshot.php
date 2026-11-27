@@ -70,8 +70,10 @@ class upload_screenshot extends \core_external\external_api {
         require_login();
         $context = context_system::instance();
         self::validate_context($context);
-        $lock = \local_sidenotes\local\access_policy::note_lock($noteid);
+        $ownerlock = \local_sidenotes\local\archive_manager::owner_lock((int)$USER->id);
+        $lock = null;
         try {
+            $lock = \local_sidenotes\local\access_policy::note_lock($noteid);
             $note = $DB->get_record('local_sidenotes_notes', [
             'id' => $params['noteid'],
             'userid' => $USER->id,
@@ -80,7 +82,10 @@ class upload_screenshot extends \core_external\external_api {
 
             return screenshot_manager::create($note, $params['filename'], $params['mimetype'], $params['data']);
         } finally {
-            $lock->release();
+            if ($lock) {
+                $lock->release();
+            }
+            $ownerlock->release();
         }
     }
 

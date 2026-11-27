@@ -34,7 +34,7 @@ $string['adminhelp'] = 'Administration help';
 $string['adminhelp_lists'] = 'Lists and page size';
 $string['adminhelp_lists_article'] = '<p><strong>Notes per page</strong> controls how many entries appear on one page in the notes centre. Choose 12, 24 or 48, or <strong>All</strong> to display the full list.</p><p>A page limit does not limit how many notes a user can store and does not delete or archive notes. <strong>All</strong> can create a long page when many notes exist.</p>';
 $string['adminhelp_notes'] = 'Using Side Notes';
-$string['adminhelp_notes_article'] = '<p>Open the notes drawer with the pen tab at the right edge. The plus tab creates a note for the current page; the folder opens notes overview. Global notes appear in their own drawer group.</p><p>The tag field suggests your existing private tags. Type a new tag and press the plus button to add it. Changes save automatically in the drawer.</p><p>Use the checkmark beside delete to archive a completed note. The drawer saves pending text first; tags and screenshots stay with the note. Open archive in notes overview to restore it. If saving fails, your draft stays available.</p><p>In notes overview, use the course, tag and text filters to find your notes. Selected tags must all match. Use the pencil to edit text and Save changes to save it. The completion checkmark is separate from the selection checkbox used for bulk actions.</p><p>Notes without a page binding remain in the overview. Global display makes a note available on your own permitted pages; other people cannot see it. Archive retains completed notes. Permanent deletion and emptying the archive require confirmation. Selected notes can be exported as Markdown or PDF.</p>';
+$string['adminhelp_notes_article'] = '<p>Open the notes drawer with the pen tab at the right edge. The plus tab creates a note for the current page; the folder opens notes overview. Global notes appear in the Course-wide or Site-wide tab.</p><p>The tag field suggests your existing private tags. Type a new tag and press the plus button to add it. Changes save automatically in the drawer.</p><p>Use the checkmark beside delete to archive a completed note. The drawer saves pending text first; tags and screenshots stay with the note. Open archive in notes overview to restore it. If saving fails, your draft stays available.</p><p>In notes overview, use the course, tag and text filters to find your notes. Selected tags must all match. Use the pencil to edit text and Save changes to save it. The completion checkmark is separate from the selection checkbox used for bulk actions.</p><p>Notes without a page binding remain in the overview. Global display makes a note available on your own permitted pages; other people cannot see it. Archive retains completed notes. Permanent deletion and emptying the archive require confirmation. Selected notes can be exported as Markdown or PDF.</p><p>Kept course notes show their original course name. They are read-only; you can export or delete them. Keeping notes does not grant access to the course.</p><p>This page and Course-wide or Site-wide filter your own notes. Search text is retained between tabs; counts show matches in each scope. New notes, text selection and Alt+Q open This page. The edge badge still counts only saved page notes. Switching to help or a Moodle drawer keeps open drafts. Help remains a separate panel.</p><p>Open Note preferences in the overview to choose whether to reduce new images before uploading. The setting is off initially and applies to your new images in the side panel and overview.</p>';
 $string['adminhelp_overview'] = 'Making notes available';
 $string['adminhelp_overview_article'] = '<p><strong>Enable course notes</strong> makes personal notes available in accessible courses. Course managers can disable the drawer for their course or individual activities. Turning availability off retains existing notes.</p><p><strong>Enabled in courses by default</strong> applies to courses without their own Side Notes setting, including existing courses. A course with an explicit setting keeps that choice.</p><p><strong>Additionally enable sitewide use</strong> allows notes outside courses for administrators and users who already have the system permission to use Side Notes. Enabling this switch does not grant that permission or access to another user’s notes.</p>';
 $string['adminhelp_sourcemove'] = 'Source links after a site move';
@@ -260,3 +260,69 @@ $string['tags:selectedfilters'] = 'Selected tags – all must match';
 $string['taskdeletecoursenotes'] = 'Clean up notes from a deleted course';
 $string['unknownpage'] = 'Moodle page';
 $string['viewnotescenter'] = 'View notes centre';
+
+$string['preserve_on_unenrol'] = 'Keep notes after unenrolment';
+
+$string['preserve_on_unenrol_desc'] = 'Keep personal course notes when the author loses their last enrolment. Otherwise, delete the notes and their screenshots.';
+
+$string['preserve_on_course_delete'] = 'Keep notes after course deletion';
+
+$string['preserve_on_course_delete_desc'] = 'Keep personal notes from deleted courses. Moodle cron processes the change in batches. Otherwise, delete those notes and their screenshots.';
+
+$string['retention:sourceunavailable'] = 'Kept from {$a}. The original course source is unavailable. You can read, export or delete this personal copy.';
+
+$string['adminhelp_retention'] = 'Keeping notes after course access ends';
+
+$string['retention_help'] = 'Choose separately what happens after the last enrolment ends and after a course is deleted. Kept notes remain private and read-only in the personal overview.';
+
+$string['adminhelp_retention_article'] = '<p>Both options are off by default. When an option is off, the corresponding course notes and screenshots are deleted. Removing one enrolment does not delete notes while another enrolment remains.</p><p>When enabled, notes retain their text, quotations, screenshots, private tags and original dates. The overview shows the former course name. Kept notes are read-only and can be exported or deleted, even when the author has no active courses. Existing archived notes remain archived.</p><p>A course-wide note becomes a personal overview entry; it is not shown on other pages. Keeping a note does not restore access to its former course. Course deletion is processed by Moodle cron using the option captured when the course was deleted. Account deletion and Moodle privacy erasure also delete kept notes.</p>';
+
+$string['privacy:metadata:retainedcourseid'] = 'The original course ID of a kept personal note.';
+
+$string['privacy:metadata:retainedcoursename'] = 'The original course name of a kept personal note.';
+
+$string['privacy:metadata:retentionreason'] = 'Whether a note was kept after unenrolment or course deletion.';
+
+
+$string['retention'] = 'Keeping notes';
+$string['retention:overviewhint'] = 'Your kept course notes are private and read-only. You can export or delete them.';
+$string['taskpreservecoursenotes'] = 'Keep personal notes from a deleted course';
+
+$string['sidebar:pagetab'] = 'This page';
+
+$string['sidebar:coursewidetab'] = 'Course-wide';
+
+$string['sidebar:sitewidetab'] = 'Site-wide';
+
+$string['sidebar:globalempty'] = 'You have no notes here yet. Choose where a note appears in the overview.';
+
+$string['settings:imagequota'] = 'Image storage per person (MiB)';
+
+$string['settings:imagequota_desc'] = 'Total screenshot storage across a person’s active, archived and kept notes. Enter 0 for unlimited storage. Existing images remain available if the limit is reduced.';
+
+$string['screenshot:quotaexceeded'] = 'Your Side Notes image storage limit ({$a} MiB) has been reached. Delete some images or ask an administrator to increase the limit.';
+
+$string['screenshot:reduce'] = 'Reduce new images before uploading';
+
+
+$string['images'] = 'Image storage';
+
+$string['adminhelp_images'] = 'Personal image storage';
+
+$string['images_help'] = 'The limit covers screenshots in all of a person’s notes, including archived and kept notes. A reduced limit blocks new images while existing images remain readable and exportable.';
+
+$string['adminhelp_images_article'] = '<p>Image storage per person (MiB) applies to all screenshots belonging to that person. Enter 0 for unlimited storage. Archived and kept notes count towards the limit. Deleting a screenshot or note frees its storage.</p><p>Reducing the limit preserves existing images. New uploads and imports containing images must fit within the remaining space. Text-only notes can still be created. The existing limits of 5 MiB per image and 10 images per note also apply to pasted images.</p>';
+
+$string['note:retry'] = 'Your draft remains open. Check your connection and edit the note again to retry saving.';
+
+$string['preferences:title'] = 'Note preferences';
+
+$string['imagepreferences'] = 'Image reduction';
+
+$string['imagepreferences_help'] = 'This personal setting applies to new images in the side panel and overview. Existing images remain unchanged.';
+
+$string['adminhelp_imagepreferences'] = 'Reducing new images';
+
+$string['adminhelp_imagepreferences_article'] = '<p>Open Note preferences in the notes overview and select Reduce new images before uploading. The setting is off initially and is saved for your account. It applies to new images pasted into the side panel and overview.</p><p>PNG, JPEG and WebP images can be resized to a maximum of 2,048 pixels on the longest side. JPEG and WebP use 85% quality. Side Notes uses the reduced image only if it takes less space. Check the readability of small text. GIFs and images already saved in your notes remain unchanged.</p>';
+
+$string['privacy:metadata:reduceimages'] = 'Personal preference for reducing new note images before upload.';

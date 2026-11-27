@@ -51,7 +51,7 @@ final class note_filters {
         $params += $tagparams;
         if ($search !== '') {
             $parts = [];
-            foreach (['content', 'quote', 'pagetitle'] as $field) {
+            foreach (['content', 'quote', 'pagetitle', 'retainedcoursename'] as $field) {
                 $parts[] = $DB->sql_like('qn.' . $field, ':search' . $field, false, false);
             }
             $parts[] = $DB->sql_like('c.fullname', ':searchcourse', false, false);
@@ -62,7 +62,7 @@ final class note_filters {
                     AND tis.tiuserid=:searchtaguserid AND ($name OR $raw))";
             $sql .= ' AND (' . implode(' OR ', $parts) . ')';
             $escaped = '%' . $DB->sql_like_escape($search) . '%';
-            foreach (['content', 'quote', 'pagetitle', 'course', 'tagname', 'tagrawname'] as $field) {
+            foreach (['content', 'quote', 'pagetitle', 'retainedcoursename', 'course', 'tagname', 'tagrawname'] as $field) {
                 $params['search' . $field] = $escaped;
             }
             $params += ['searchtagcomponent' => tag_manager::COMPONENT, 'searchtagitemtype' => tag_manager::ITEMTYPE,
